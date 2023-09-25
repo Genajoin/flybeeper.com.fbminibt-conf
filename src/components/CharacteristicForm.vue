@@ -131,7 +131,8 @@
       </table>
     </div>
     <!-- Добавьте аналогичные инпуты для остальных параметров -->
-    <button @click="updateCharacteristic" :disabled="!hasUnsavedChanges">Apply</button>
+<!--    <button @click="updateCharacteristic" :disabled="!hasUnsavedChanges">Apply</button>-->
+    <a @click="updateCharacteristic" :disabled="!hasUnsavedChanges" class="button-link" :class="{ 'disabled': !hasUnsavedChanges }">Apply</a>
   </form>
 </template>
 
@@ -248,5 +249,23 @@ export default {
 /* CSS для ограничения ширины элементов input */
 .input-field {
   max-width: 8ch; /* Установите максимальную ширину по вашему усмотрению */
+}
+
+.button-link {
+  background-color: green;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  margin-right: 10px;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 5px;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.button-link.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

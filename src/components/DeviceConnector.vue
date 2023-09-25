@@ -1,10 +1,13 @@
 <template>
   <div>
-    <button @click="connectToDevice" :disabled="isConnecting || isConnected">Connect</button>
-    <button @click="disconnectDevice" :disabled="isDisconnecting || !isConnected">Disconnect</button>
+<!--    <button @click="connectToDevice" :disabled="isConnecting || isConnected">Connect</button>-->
+<!--    <button @click="disconnectDevice" :disabled="isDisconnecting || !isConnected">Disconnect</button>-->
+    <a @click="connectToDevice" :disabled="isConnecting || isConnected" class="button-link" :class="{ 'disabled': isConnecting || isConnected }">Connect</a>
+    <a @click="disconnectDevice" :disabled="isDisconnecting || !isConnected" class="button-link red" :class="{ 'disabled': isDisconnecting || !isConnected }">Disconnect</a>
     <p v-if="isConnecting">Connecting...</p>
     <p v-if="isDisconnecting">Disconnecting...</p>
-    <p v-if="isConnected">Device {{devName}}} is connected. Battery level {{battLevel}}%, FW ver: {{firmwareRevision}}</p>
+    <p v-if="isConnected">Device {{devName}} is connected. Battery level {{battLevel}}%.</p>
+    <div v-if="isConnected && lastVer">FW ver: {{firmwareRevision}} (last FW is <a href="/update">{{lastVer.version}}</a>)</div>
     <p v-else>Device is disconnected.</p>
     <CharacteristicForm v-if="isConnected" :fbSettings="fbSettings" @updateCharacteristic="handleCharacteristicUpdate" />
     <!-- Компонент с ползунком для Simulate Vario -->
@@ -16,7 +19,7 @@
           :max="2000"
           :step="10"
           v-model="simulateVario"
-      /> cm/s. 0 - simulation off. <div v-if="isVolumeOff && simulateVario" class="red">Please set volume more than 1 to hear the simulation.</div>
+      /> cm/s. 0 - simulation off. <div v-if="isVolumeOff && simulateVario" class="redMarked">Please set volume more than 1 to hear the simulation.</div>
     </div>
   </div>
 </template>
@@ -58,7 +61,7 @@ export default {
       battLevel: 101,
       firmwareRevision: '',
       devName: '',
-
+      lastVer: null,
     };
   },
   components: {
@@ -67,6 +70,21 @@ export default {
   computed:{
     isVolumeOff() {
       return (this.fbSettings && this.fbSettings.buzzer_volume === 0);
+    }
+  },
+  async beforeMount() {
+    try {
+      const response = await fetch('/download/update.conf');
+
+      if (!response.ok) {
+        throw new Error('Не удалось загрузить JSON-файл');
+      }
+      const jsonData = await response.json();
+
+      this.lastVer = this.findLatestVersion(jsonData);
+
+    } catch (error) {
+      console.error('Ошибка при загрузке JSON-файла:', error);
     }
   },
   watch:{
@@ -86,7 +104,18 @@ export default {
     }
   },
   methods: {
+    findLatestVersion(dataArray) {
+      let latestVersion = null;
 
+      dataArray.forEach((item) => {
+        const version = parseFloat(item.version);
+        if (latestVersion === null || version > latestVersion) {
+          latestVersion = item;
+        }
+      });
+
+      return latestVersion;
+    },
     async connectToDevice() {
       if (this.isConnected || this.isConnecting) {
         return;
@@ -252,3 +281,32 @@ export default {
   },
 };
 </script>
+
+
+<style scoped>
+.button-link {
+  background-color: green;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  margin-right: 10px;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 5px;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.button-link.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.button-link.red {
+  background-color: red;
+}
+
+.redMarked {
+  color: red;
+}
+</style>

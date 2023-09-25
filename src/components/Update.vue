@@ -1,6 +1,6 @@
 <template>
   <div class="update">
-    <a :href="'/download/' + lastVer.filename" download
+    <a v-if="jsonData" :href="'/download/' + lastVer.filename" download
        class="download-button">Download firmware
     </a>
     <h1>How to update</h1>
@@ -13,8 +13,8 @@
     <h1>Changelog</h1>
     <div v-if="jsonData">
 
-    <div v-for="item in jsonData" :key="item.version">
-      <h2>ver.{{ item.version }} <a :href="'/download/' + item.filename" download>Download</a></h2>
+    <div v-if="jsonData" v-for="item in jsonData" :key="item.version">
+      <h2>ver.{{ item.version }} <a v-if="item.filename" :href="'/download/' + item.filename" download>Download</a></h2>
       <ul>
         <li v-for="desc in item.description" :key="desc">{{ desc }}</li>
       </ul>
