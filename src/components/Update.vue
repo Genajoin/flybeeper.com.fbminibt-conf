@@ -14,7 +14,7 @@
     <div v-if="jsonData">
 
     <div v-if="jsonData" v-for="item in jsonData" :key="item.version">
-      <h2>ver.{{ item.version }} <a v-if="item.filename" :href="'/download/' + item.filename" download>Download</a></h2>
+      <h2>ver.{{ item.version }} {{item.data}} <a v-if="item.filename" :href="'/download/' + item.filename" download>Download</a></h2>
       <ul>
         <li v-for="desc in item.description" :key="desc">{{ desc }}</li>
       </ul>

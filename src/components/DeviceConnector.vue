@@ -9,7 +9,7 @@
     <p v-if="isConnected">Device {{devName}} is connected. Battery level {{battLevel}}%.</p>
     <div v-if="isConnected && lastVer">FW ver: {{firmwareRevision}} (last FW is <a href="/update">{{lastVer.version}}</a>)</div>
     <p v-else>Device is disconnected.</p>
-    <CharacteristicForm v-if="isConnected" :fbSettings="fbSettings" @updateCharacteristic="handleCharacteristicUpdate" />
+    <CharacteristicForm v-if="isConnected" :fbSettings="fbSettings" :defaultSettings="defaultSettings" @updateCharacteristic="handleCharacteristicUpdate" />
     <!-- Компонент с ползунком для Simulate Vario -->
     <div v-if="isConnected">
       <label for="simulateVario">Simulate Vario: </label>
@@ -41,6 +41,19 @@ const indexes = {
   buzzer_simulate_vario_value: 106,
   uart_protocols: 108,
 };
+const defaultConf =         {
+  buzzer_volume: 1,
+  climb_tone_on_threshold_cm: 20,
+  climb_tone_off_threshold_cm: 30,
+  sink_tone_off_threshold_cm:-250,
+  sink_tone_on_threshold_cm:-270,
+  buzzer_vario_dots: [-2000, -1200, -300, -20, 0, 20, 100, 200, 300, 450, 1200, 2000],
+  buzzer_frequency_dots: [200, 280, 370, 398, 400, 472, 760, 1120, 1480, 2020, 4720, 6000],
+  buzzer_cycle_dots: [850, 750, 725, 748, 664, 596, 428, 323, 264, 211, 122, 100],
+  buzzer_duty_dots: [100, 90, 41, 53, 40, 41, 43, 46, 49, 54, 78, 90],
+  buzzer_simulate_vario_value:0,
+  uart_protocols:1,
+};
 
 export default {
   data() {
@@ -55,6 +68,7 @@ export default {
       isDisconnecting: false,
       isConnected: false,
       fbSettings: null,
+      defaultSettings: null,
       simulateVarioTimeout: null,
       simulateInProgress: false,
       simulateVario: 0, // Значение Simulate Vario
@@ -273,6 +287,7 @@ export default {
         };
 
         this.fbSettings = fbSettings;
+        this.defaultSettings = defaultConf;
         console.log('Parsed Data:', this.fbSettings);
       } catch (error) {
         console.error('Error parsing characteristic data:', error);
@@ -299,6 +314,7 @@ export default {
 
 .button-link.disabled {
   cursor: not-allowed;
+  background-color: grey;
   opacity: 0.6;
 }
 

@@ -130,16 +130,20 @@
         </tbody>
       </table>
     </div>
-    <!-- Добавьте аналогичные инпуты для остальных параметров -->
-<!--    <button @click="updateCharacteristic" :disabled="!hasUnsavedChanges">Apply</button>-->
+
     <a @click="updateCharacteristic" :disabled="!hasUnsavedChanges" class="button-link" :class="{ 'disabled': !hasUnsavedChanges }">Apply</a>
+    <a @click="resetToDefault"  class="button-link">Default</a>
+
   </form>
 </template>
 
 <script>
+import cloneDeep from 'lodash/cloneDeep';
+
 export default {
   props: {
     fbSettings: Object,
+    defaultSettings: Object,
   },
   data() {
     return {
@@ -175,39 +179,6 @@ export default {
     },
   },
   methods: {
-    // Рекурсивная функция для проверки наличия несохраненных изменений
-    hasUnsavedChangesRec(obj1, obj2) {
-      for (const key in obj1) {
-        if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
-          // Если ключ представляет объект в обоих объектах, вызываем рекурсивную проверку
-          if (this.hasUnsavedChangesRec(obj1[key], obj2[key])) {
-            return true;
-          }
-        } else if (Array.isArray(obj1[key]) && Array.isArray(obj2[key])) {
-          // Если ключ представляет массив в обоих объектах, сравниваем массивы
-          if (!this.arraysAreEqual(obj1[key], obj2[key])) {
-            return true;
-          }
-        } else if (obj1[key] !== obj2[key]) {
-          // В противном случае, сравниваем значения
-          return true;
-        }
-      }
-      return false;
-    },
-
-    // Функция для сравнения массивов
-    arraysAreEqual(arr1, arr2) {
-      if (arr1.length !== arr2.length) {
-        return false;
-      }
-      for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
-          return false;
-        }
-      }
-      return true;
-    },
     handleTableChange() {
       this.tableChanged = true;
     },
@@ -223,6 +194,9 @@ export default {
       // Обновите оригинальные значения для дальнейшего сравнения
       this.originalValues = {...this.formValues};
     },
+    resetToDefault(){
+      this.formValues = cloneDeep(this.defaultSettings);
+    }
   },
 };
 </script>
@@ -266,6 +240,7 @@ export default {
 
 .button-link.disabled {
   cursor: not-allowed;
+  background-color: grey;
   opacity: 0.6;
 }
 </style>
