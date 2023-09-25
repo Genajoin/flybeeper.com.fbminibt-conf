@@ -11,7 +11,8 @@ import HelloWorld from './components/Main.vue'
       <HelloWorld msg="FBminiBT Configurator" />
 
       <nav>
-        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/">Settings</RouterLink>
+        <RouterLink to="/update">Update</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </nav>
     </div>

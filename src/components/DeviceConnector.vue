@@ -4,7 +4,7 @@
     <button @click="disconnectDevice" :disabled="isDisconnecting || !isConnected">Disconnect</button>
     <p v-if="isConnecting">Connecting...</p>
     <p v-if="isDisconnecting">Disconnecting...</p>
-    <p v-if="isConnected">Device is connected. Battery level {{battLevel}}%</p>
+    <p v-if="isConnected">Device {{devName}}} is connected. Battery level {{battLevel}}%, FW ver: {{firmwareRevision}}</p>
     <p v-else>Device is disconnected.</p>
     <CharacteristicForm v-if="isConnected" :fbSettings="fbSettings" @updateCharacteristic="handleCharacteristicUpdate" />
     <!-- Компонент с ползунком для Simulate Vario -->
@@ -45,6 +45,7 @@ export default {
       device: null,
       settService: null,
       battService:null,
+      devInfoService: null,
       settCharacteristic: null,
       simuCharacteristic:null,
       isConnecting: false,
@@ -55,6 +56,8 @@ export default {
       simulateInProgress: false,
       simulateVario: 0, // Значение Simulate Vario
       battLevel: 101,
+      firmwareRevision: '',
+      devName: '',
 
     };
   },
@@ -71,7 +74,7 @@ export default {
       // Обработчик изменения значения Simulate Vario
       if (this.simulateInProgress) return;
       this.simulateInProgress = true;
-      const delay = 200; // Миллисекунды
+      const delay = 300; // Миллисекунды
       if (this.simulateVarioTimeout)
         clearTimeout(this.simulateVarioTimeout);
 
@@ -91,13 +94,12 @@ export default {
       try {
         this.isConnecting = true;
         this.device = await navigator.bluetooth.requestDevice({
-          //filters: [{ services: ['904baf04-5814-11ee-8c99-0242ac120000', 'battery_service'] }],
           filters: [{ name: 'FBminiBT' }],
-          optionalServices: ['904baf04-5814-11ee-8c99-0242ac120000', 'battery_service']
-          //acceptAllDevices: true,
+          optionalServices: ['904baf04-5814-11ee-8c99-0242ac120000', 'battery_service', 'device_information']
         });
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
         await this.device.gatt.connect();
+        this.devName = this.device.name;
         // Чтение данных после успешного подключения
         await this.readCharacteristicData();
         this.isConnected = true;
@@ -141,6 +143,11 @@ export default {
         const value = await battCharacteristic.readValue();
         this.battLevel = value.getUint8(0);
 
+        this.devInfoService = await this.device.gatt.getPrimaryService('device_information');
+        const devInfoFirmwareRevisionCharacteristic = await  this.devInfoService.getCharacteristic(0x2a26);
+        const revisionValue = await devInfoFirmwareRevisionCharacteristic.readValue();
+        let enc = new TextDecoder("utf-8");
+        this.firmwareRevision = enc.decode(revisionValue.buffer);
       } catch (error) {
         console.error('Error reading characteristic data:', error);
       }
