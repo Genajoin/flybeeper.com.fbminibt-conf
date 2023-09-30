@@ -30,6 +30,7 @@
           type="number"
           min="-2000"
           max="2000"
+          step="5"
           @input="handleInputChange"
       />
     </div>
@@ -42,18 +43,7 @@
           type="number"
           min="-2000"
           max="2000"
-          @input="handleInputChange"
-      />
-    </div>
-    <div>
-      <label for="sinkToneOffThresholdCm">Sink Tone Off Threshold (cm/s): </label>
-      <input
-          id="sinkToneOffThresholdCm"
-          v-model="formValues.sink_tone_off_threshold_cm"
-          class="input-field"
-          type="number"
-          min="-2000"
-          max="2000"
+          step="5"
           @input="handleInputChange"
       />
     </div>
@@ -66,6 +56,20 @@
           type="number"
           min="-2000"
           max="2000"
+          step="5"
+          @input="handleInputChange"
+      />
+    </div>
+    <div>
+      <label for="sinkToneOffThresholdCm">Sink Tone Off Threshold (cm/s): </label>
+      <input
+          id="sinkToneOffThresholdCm"
+          v-model="formValues.sink_tone_off_threshold_cm"
+          class="input-field"
+          type="number"
+          min="-2000"
+          max="2000"
+          step="5"
           @input="handleInputChange"
       />
     </div>
@@ -89,6 +93,7 @@
                 type="number"
                 min="-2000"
                 max="2000"
+                step="5"
                 v-model="formValues.buzzer_vario_dots[index]"
                 @input="handleTableChange"
             />
@@ -100,6 +105,7 @@
                 type="number"
                 min="100"
                 max="6000"
+                step="5"
                 v-model="formValues.buzzer_frequency_dots[index]"
                 @input="handleTableChange"
             />
@@ -111,6 +117,7 @@
                 type="number"
                 min="100"
                 max="1000"
+                step="5"
                 v-model="formValues.buzzer_cycle_dots[index]"
                 @input="handleTableChange"
             />
