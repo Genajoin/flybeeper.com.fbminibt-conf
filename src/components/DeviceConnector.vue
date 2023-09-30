@@ -2,6 +2,12 @@
   <div>
 <!--    <button @click="connectToDevice" :disabled="isConnecting || isConnected">Connect</button>-->
 <!--    <button @click="disconnectDevice" :disabled="isDisconnecting || !isConnected">Disconnect</button>-->
+    <!-- Проверка наличия модуля Bluetooth -->
+    <div v-if="!bleAvailable">
+      <p>Your device not support Bluetooth.</p>
+      <p>To use certain features, you may need a Bluetooth enabled device.</p>
+    </div>
+    <div v-else>
     <a @click="connectToDevice" :disabled="isConnecting || isConnected" class="button-link" :class="{ 'disabled': isConnecting || isConnected }">Connect</a>
     <a @click="disconnectDevice" :disabled="isDisconnecting || !isConnected" class="button-link red" :class="{ 'disabled': isDisconnecting || !isConnected }">Disconnect</a>
     <p v-if="isConnecting">Connecting...</p>
@@ -20,6 +26,8 @@
           :step="10"
           v-model="simulateVario"
       /> cm/s. 0 - simulation off. <div v-if="isVolumeOff && simulateVario" class="redMarked">Please set volume more than 1 to hear the simulation.</div>
+
+    </div>
     </div>
   </div>
 </template>
@@ -76,6 +84,7 @@ export default {
       firmwareRevision: '',
       devName: '',
       lastVer: null,
+      bleAvailable: "bluetooth" in navigator,
     };
   },
   components: {
