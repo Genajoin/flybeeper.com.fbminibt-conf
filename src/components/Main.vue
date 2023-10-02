@@ -1,4 +1,7 @@
 <script setup>
+
+import FlybeeperMini from "./FlybeeperMiniComponent.vue";
+
 defineProps({
   msg: {
     type: String,
@@ -9,6 +12,7 @@ defineProps({
 
 <template>
   <div class="greetings">
+    <flybeeper-mini/>
     <h1 class="green">{{ msg }}</h1>
     <h3>
       Let's make the variometer special!
