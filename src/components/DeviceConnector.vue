@@ -15,7 +15,11 @@
     <p v-if="isConnected">Device {{devName}} is connected. Battery level {{battLevel}}%.</p>
     <div v-if="isConnected && lastVer">FW ver: {{firmwareRevision}} (last FW is <a href="/update">{{lastVer.version}}</a>)</div>
     <p v-else>Device is disconnected.</p>
-    <CharacteristicForm v-if="isConnected" :fbSettings="fbSettings" :defaultSettings="defaultSettings" @updateCharacteristic="handleCharacteristicUpdate" />
+    <CharacteristicForm v-if="isConnected" @updateCharacteristic="handleCharacteristicUpdate"
+                        :fbSettings="fbSettings"
+                        :defaultSettings="defaultSettings"
+                        :log2Settings="log2Settings"
+                        :lin2Settings="lin2Settings" />
     <!-- Компонент с ползунком для Simulate Vario -->
     <div v-if="isConnected">
       <label for="simulateVario">Simulate Vario: </label>
@@ -62,6 +66,32 @@ const defaultConf =         {
   buzzer_simulate_vario_value:0,
   uart_protocols:1,
 };
+const log2Conf =         {
+  buzzer_volume: 1,
+  climb_tone_on_threshold_cm: 20,
+  climb_tone_off_threshold_cm: 30,
+  sink_tone_on_threshold_cm:-250,
+  sink_tone_off_threshold_cm:-270,
+  buzzer_vario_dots: [-1200, -300, -51, -50, 0, 10, 100, 250, 425, 600, 800, 1000],
+  buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 920, 1380, 1600, 1780, 1880, 2000],
+  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 552, 483, 412, 322, 241, 150],
+  buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
+  buzzer_simulate_vario_value:0,
+  uart_protocols:1,
+};
+const lin2Conf =         {
+  buzzer_volume: 1,
+  climb_tone_on_threshold_cm: 20,
+  climb_tone_off_threshold_cm: 30,
+  sink_tone_on_threshold_cm:-250,
+  sink_tone_off_threshold_cm:-270,
+  buzzer_vario_dots: [-1000, -300, -51, -50, 0, 10, 116, 267, 424, 600, 800, 1000],
+  buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 550, 763, 985, 1234, 1517, 2000],
+  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 552, 483, 412, 322, 241, 150],
+  buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
+  buzzer_simulate_vario_value:0,
+  uart_protocols:1,
+};
 
 export default {
   data() {
@@ -77,6 +107,8 @@ export default {
       isConnected: false,
       fbSettings: null,
       defaultSettings: null,
+      log2Settings: null,
+      lin2Settings: null,
       simulateVarioTimeout: null,
       simulateInProgress: false,
       simulateVario: 0, // Значение Simulate Vario
@@ -297,6 +329,8 @@ export default {
 
         this.fbSettings = fbSettings;
         this.defaultSettings = defaultConf;
+        this.log2Settings = log2Conf;
+        this.lin2Settings = lin2Conf;
         console.log('Parsed Data:', this.fbSettings);
       } catch (error) {
         console.error('Error parsing characteristic data:', error);

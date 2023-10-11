@@ -140,6 +140,8 @@
 
     <a @click="updateCharacteristic" :disabled="!hasUnsavedChanges" class="button-link" :class="{ 'disabled': !hasUnsavedChanges }">Apply</a>
     <a @click="resetToDefault"  class="button-link">Default</a>
+    <a @click="resetToLog2"  class="button-link">Log</a>
+    <a @click="resetToLin2"  class="button-link">Linear</a>
 
   </form>
 </template>
@@ -151,6 +153,8 @@ export default {
   props: {
     fbSettings: Object,
     defaultSettings: Object,
+    log2Settings: Object,
+    lin2Settings: Object,
   },
   data() {
     return {
@@ -203,6 +207,12 @@ export default {
     },
     resetToDefault(){
       this.formValues = cloneDeep(this.defaultSettings);
+    },
+    resetToLog2(){
+      this.formValues = cloneDeep(this.log2Settings);
+    },
+    resetToLin2(){
+      this.formValues = cloneDeep(this.lin2Settings);
     }
   },
 };

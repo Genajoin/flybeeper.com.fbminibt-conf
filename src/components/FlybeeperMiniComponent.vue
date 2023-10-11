@@ -24,8 +24,9 @@ export default {
         return {
           light: [
               { type: "AmbientLight", color: 0xaaaaaa},
-              { type: "DirectionalLight", position: { x: 20, y: 20, z: 70 }, color: 0xffffff, intensity: 1},
-              { type: "PointLight", color: "#ffffff", position: { x: 100, y: -100, z: -10 },intensity: .8}
+            { type: "DirectionalLight", position: { x: 20, y: 20, z: 70 }, color: 0x00ff33, intensity: 1},
+            { type: "DirectionalLight", position: { x: -20, y: -20, z: -70 }, color: 0xff0033, intensity: 1},
+              { type: "PointLight", color: "#ffffff", position: { x: -20, y: -90, z: -20 },intensity: .8}
           ],
           rotation: {
             x: 0,
@@ -33,7 +34,6 @@ export default {
             z: 0,
           },
           position: [0, 0],
-          controls: null,
         }
     },
 
