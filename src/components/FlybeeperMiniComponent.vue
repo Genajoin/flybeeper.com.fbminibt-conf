@@ -1,4 +1,5 @@
 <template>
+  <div class="view3d">
   <vue3d-loader
       :height="300"
       :width="300"
@@ -10,6 +11,7 @@
       :lights="light"
       :rotation="rotation"
   ></vue3d-loader>
+  </div>
 </template>
 
 
@@ -63,4 +65,8 @@ export default {
 </script>
 
 <style scoped>
+.view3d {
+  display: flex;
+  justify-content: center;
+}
 </style>
