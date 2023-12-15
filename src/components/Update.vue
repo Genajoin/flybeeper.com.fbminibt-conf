@@ -12,9 +12,10 @@
     </p>
     <h1>Changelog</h1>
     <div v-if="jsonData">
+      <p>Use <a href="https://t.me/flybeeperchat/26">polling</a> to vote for your favorite new feature</p>
 
     <div v-if="jsonData" v-for="item in jsonData" :key="item.version">
-      <h2>ver.{{ item.version }} - {{item.date}} <a v-if="item.filename" :href="'/download/' + item.filename" download>Download</a></h2>
+      <h2>ver.{{ item.version }} - {{item.date}} <a v-if="item.filename && item.version > 0" :href="'/download/' + item.filename" download>Download</a></h2>
       <ul>
         <li v-for="desc in item.description" :key="desc">{{ desc }}</li>
       </ul>
