@@ -1,5 +1,37 @@
 <template>
   <form @submit.prevent="updateCharacteristic">
+    <div v-if="firmwareRevision > '0.13'">
+      <label for="silentOnGround">Silent on the ground: </label>
+      <input
+          type="checkbox"
+          id="silentOnGround"
+          v-model="formValues.silent_on_ground"
+      />
+    </div>
+    <div v-if="firmwareRevision > '0.99'">
+      <label for="ble_never_sleep">Bluetooth never sleep: </label>
+      <input
+          type="checkbox"
+          id="ble_never_sleep"
+          v-model="formValues.ble_never_sleep"
+      />
+    </div>
+    <div v-if="firmwareRevision > '0.13'">
+      <label for="led_blinky_by_vario">LED blink by vario: </label>
+      <input
+          type="checkbox"
+          id="led_blinky_by_vario"
+          v-model="formValues.led_blinky_by_vario"
+      />
+    </div>
+    <div v-if="firmwareRevision > '0.99'">
+      <label for="hid_keyboard_off">Deactivate HID keyboard: </label>
+      <input
+          type="checkbox"
+          id="hid_keyboard_off"
+          v-model="formValues.hid_keyboard_off"
+      />
+    </div>
     <div>
       <!-- Выпадающий список для uart_protocols -->
       <div>
@@ -155,6 +187,7 @@ export default {
     defaultSettings: Object,
     log2Settings: Object,
     lin2Settings: Object,
+    firmwareRevision: String,
   },
   data() {
     return {

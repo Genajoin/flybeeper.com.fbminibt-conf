@@ -19,7 +19,9 @@
                         :fbSettings="fbSettings"
                         :defaultSettings="defaultSettings"
                         :log2Settings="log2Settings"
-                        :lin2Settings="lin2Settings" />
+                        :lin2Settings="lin2Settings"
+                        :firmwareRevision="firmwareRevision"
+    />
     <!-- Компонент с ползунком для Simulate Vario -->
     <div v-if="isConnected">
       <label for="simulateVario">Simulate Vario: </label>
@@ -30,7 +32,6 @@
           :step="10"
           v-model="simulateVario"
       /> cm/s. 0 - simulation off. <div v-if="isVolumeOff && simulateVario" class="redMarked">Please set volume more than 1 to hear the simulation.</div>
-
     </div>
     </div>
   </div>
@@ -52,6 +53,7 @@ const indexes = {
   buzzer_duty_dots: 82,
   buzzer_simulate_vario_value: 106,
   uart_protocols: 108,
+  feature_bits: 110,
 };
 const defaultConf =         {
   buzzer_volume: 1,
@@ -65,6 +67,10 @@ const defaultConf =         {
   buzzer_duty_dots: [100, 90, 41, 53, 40, 41, 43, 46, 49, 54, 78, 90],
   buzzer_simulate_vario_value:0,
   uart_protocols:1,
+  silent_on_ground:false,
+  ble_never_sleep:false,
+  led_blinky_by_vario:false,
+  hid_keyboard_off:false,
 };
 const log2Conf =         {
   buzzer_volume: 1,
@@ -78,6 +84,10 @@ const log2Conf =         {
   buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   buzzer_simulate_vario_value:0,
   uart_protocols:1,
+  silent_on_ground:false,
+  ble_never_sleep:false,
+  led_blinky_by_vario:false,
+  hid_keyboard_off:false,
 };
 const lin2Conf =         {
   buzzer_volume: 1,
@@ -91,6 +101,10 @@ const lin2Conf =         {
   buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   buzzer_simulate_vario_value:0,
   uart_protocols:1,
+  silent_on_ground:false,
+  ble_never_sleep:false,
+  led_blinky_by_vario:false,
+  hid_keyboard_off:false,
 };
 
 export default {
@@ -117,6 +131,7 @@ export default {
       devName: '',
       lastVer: null,
       bleAvailable: "bluetooth" in navigator,
+      silentOnGround: false,
     };
   },
   components: {
@@ -164,8 +179,9 @@ export default {
 
       dataArray.forEach((item) => {
         const version = parseFloat(item.version);
-        if (latestVersion === null || version > latestVersion) {
+        if (!latestVersion || (version > latestVersion.version)) {
           latestVersion = item;
+          latestVersion.version = version;
         }
       });
 
@@ -220,8 +236,6 @@ export default {
         this.simuCharacteristic = await this.settService.getCharacteristic('904baf04-5814-11ee-8c99-0242ac120002');
         const data = await this.settCharacteristic.readValue();
 
-        this.parseData(data);
-
         this.battService = await this.device.gatt.getPrimaryService('battery_service');
         const battCharacteristic = await this.battService.getCharacteristic(0x2a19);
         const value = await battCharacteristic.readValue();
@@ -232,6 +246,8 @@ export default {
         const revisionValue = await devInfoFirmwareRevisionCharacteristic.readValue();
         let enc = new TextDecoder("utf-8");
         this.firmwareRevision = enc.decode(revisionValue.buffer);
+
+        await this.parseData(data);
       } catch (error) {
         console.error('Error reading characteristic data:', error);
       }
@@ -239,8 +255,9 @@ export default {
     async writeCharacteristicData() {
       try {
         if (this.settCharacteristic) {
+          const bufferSize = this.firmwareRevision > '0.13' ? 111 : 110;
           // Создайте новый ArrayBuffer для записи данных
-          const buffer = new ArrayBuffer(110); // Размер буфера зависит от структуры fb_settings
+          const buffer = new ArrayBuffer(bufferSize); // Размер буфера зависит от структуры fb_settings
 
           // Создайте DataView для записи данных в буфер
           const view = new DataView(buffer);
@@ -260,6 +277,14 @@ export default {
           }
           view.setInt16(indexes.buzzer_simulate_vario_value, this.fbSettings.buzzer_simulate_vario_value,true);
           view.setInt16(indexes.uart_protocols, this.fbSettings.uart_protocols,true);
+
+          if (this.firmwareRevision > '0.13') {
+            const feature_bits = this.fbSettings.silent_on_ground
+                | this.fbSettings.ble_never_sleep << 1
+                | this.fbSettings.led_blinky_by_vario << 2
+                | this.fbSettings.hid_keyboard_off << 3;
+            view.setUint8(indexes.feature_bits, feature_bits);
+          }
 
           // Запишите буфер в характеристику
           await this.settCharacteristic.writeValue(buffer);
@@ -312,6 +337,13 @@ export default {
         const buzzer_simulate_vario_value = data.getInt16(indexes.buzzer_simulate_vario_value,true);
         const uart_protocols = data.getInt16(indexes.uart_protocols,true);
 
+        const feature_bits = this.firmwareRevision > '0.13' ? data.getUint8(indexes.feature_bits) : 0;
+
+        const silent_on_ground = feature_bits ? (feature_bits & 0b1) > 0 : false;
+        const ble_never_sleep = feature_bits ? (feature_bits & 0b10) > 0 : false;
+        const led_blinky_by_vario = feature_bits ? (feature_bits & 0b100) > 0 : false;
+        const hid_keyboard_off = feature_bits ? (feature_bits & 0b1000) > 0 : false;
+
         // Создайте объект fb_settings
         const fbSettings = {
           buzzer_volume,
@@ -325,6 +357,10 @@ export default {
           buzzer_duty_dots,
           buzzer_simulate_vario_value,
           uart_protocols,
+          silent_on_ground,
+          ble_never_sleep,
+          led_blinky_by_vario,
+          hid_keyboard_off,
         };
 
         this.fbSettings = fbSettings;
