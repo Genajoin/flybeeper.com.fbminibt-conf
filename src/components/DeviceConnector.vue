@@ -9,7 +9,13 @@
     </div>
     <div v-else>
     <a @click="connectToDevice" :disabled="isConnecting || isConnected" class="button-link" :class="{ 'disabled': isConnecting || isConnected }">Connect</a>
-    <a @click="disconnectDevice" :disabled="isDisconnecting || !isConnected" class="button-link red" :class="{ 'disabled': isDisconnecting || !isConnected }">Disconnect</a>
+    <a @click="disconnectDevice"
+       :disabled="isDisconnecting || !isConnected"
+       class="button-link red"
+       :class="{ 'disabled': isDisconnecting || !isConnected }"
+    >
+      Disconnect
+    </a>
     <p v-if="isConnecting">Connecting...</p>
     <p v-if="isDisconnecting">Disconnecting...</p>
     <p v-if="isConnected">Device {{devName}} is connected. Battery level {{battLevel}}%.</p>
@@ -178,8 +184,9 @@ export default {
       let latestVersion = null;
 
       dataArray.forEach((item) => {
-        const version = parseFloat(item.version);
-        if (!latestVersion || (version > latestVersion.version)) {
+        const verFloat = parseFloat(item.version);
+        const version = isNaN(verFloat) ? 0 : verFloat;
+        if ( !latestVersion || (version > latestVersion.version)) {
           latestVersion = item;
           latestVersion.version = version;
         }
@@ -391,14 +398,14 @@ export default {
   transition: background-color 0.3s ease;
 }
 
+.button-link.red {
+  background-color: red;
+}
+
 .button-link.disabled {
   cursor: not-allowed;
   background-color: grey;
   opacity: 0.6;
-}
-
-.button-link.red {
-  background-color: red;
 }
 
 .redMarked {
