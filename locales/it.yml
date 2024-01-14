@@ -1,0 +1,46 @@
+button:
+  about: Informazioni
+  cockpit: Cockpit
+  back: Indietro
+  go: Vai a
+  home: Home
+  toggle_dark: Attiva/disattiva modalità scura
+  toggle_langs: Cambia lingua
+  bluetooth: Attiva/disattiva Bluetooth
+  terminal: Terminale
+intro:
+  desc: Sensore di pressione atmosferica con Bluetooth
+not-found: Non trovato
+msg:
+  disconnected: Dispositivo disconnesso
+  connected: Dispositivo connesso
+  connecting: Connessione in corso
+  disconnecting: Disconnessione in corso
+  save-protocol: Salva protocollo
+  clear-protocol: Cancella
+  connect: Connetti
+  disconnect: Disconnetti
+param:
+  pressure: Pressione, Pa
+  altitude-p: Altitudine barometrica, m
+  altitude-g: Altitudine da satellite, m
+  speed-tas: Velocità dell'aria vera, km/h
+  speed-ias: Velocità dell'aria indicata, km/h
+  speed-eas: Velocità dell'aria equivalente, km/h
+  speed-g: Velocità da satellite, km/h
+  battery-level: Livello della batteria, %
+  temperature: Temperatura, °C
+  position: Coordinate, lat,lon
+  accuracy: Precisione, m
+  accuracy-altitude: Precisione dell'altitudine, m
+  heading: Direzione, °
+about:
+  p1: FlyBeeper PS1 — un dispositivo per parapendii e deltaplani. Il dispositivo è dotato di un sensore di pressione atmosferica e i dati vengono trasmessi via Bluetooth.
+  p2: Questa applicazione web può connettersi al dispositivo e visualizzare tutte le informazioni. Inoltre, con il permesso, è possibile visualizzare i dati della navigazione satellitare.
+  location-permission: Richiedi il permesso di posizione
+  geo-granted: Permesso di posizione concesso
+  geo-denied: Permesso di posizione negato. Aprire le impostazioni del browser per concedere i permessi.
+  p3: L'applicazione può essere installata e utilizzata offline.
+  install-app: Installa l'applicazione
+  p4: Puoi trovare una descrizione dettagliata del progetto sul sito web.
+  link-description: Pagina del progetto

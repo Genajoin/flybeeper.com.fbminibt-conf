@@ -1,0 +1,4 @@
+<template>
+  <TheParams />
+  <noSleep />
+</template>

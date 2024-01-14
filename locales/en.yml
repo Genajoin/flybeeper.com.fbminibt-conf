@@ -1,0 +1,46 @@
+button:
+  about: About
+  cockpit: Cockpit
+  back: Back
+  go: Go
+  home: Home
+  toggle_dark: Toggle Dark Mode
+  toggle_langs: Switch Language
+  bluetooth: Toggle Bluetooth
+  terminal: Terminal
+intro:
+  desc: Bluetooth Atmospheric Pressure Sensor
+not-found: Not Found
+msg:
+  disconnected: Device Disconnected
+  connected: Device Connected
+  connecting: Connecting
+  disconnecting: Disconnecting
+  save-protocol: Save Protocol to File
+  clear-protocol: Clear
+  connect: Connect
+  disconnect: Disconnect
+param:
+  pressure: Pressure, Pa
+  altitude-p: Barometric Altitude, m
+  altitude-g: Satellite Altitude, m
+  speed-tas: True Airspeed, km/h
+  speed-ias: Indicated Airspeed, km/h
+  speed-eas: Equivalent Airspeed, km/h
+  speed-g: Satellite Speed, km/h
+  battery-level: Battery Level, %
+  temperature: Temperature, °C
+  position: Coordinates, lat,lon
+  accuracy: Accuracy, m
+  accuracy-altitude: Altitude Accuracy, m
+  heading: Heading, °
+about:
+  p1: FlyBeeper PS1 — a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, and data is transmitted via Bluetooth.
+  p2: This web application can connect to the device and display all the information. Additionally, with permission, satellite navigation data can be displayed.
+  location-permission: Request Location Access
+  geo-granted: Location access granted
+  geo-denied: Location access denied. Open browser settings to grant permission.
+  p3: The application can be installed and used offline.
+  install-app: Install Application
+  p4: Detailed project description can be found on the website.
+  link-description: Project Page
