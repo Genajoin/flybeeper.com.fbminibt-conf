@@ -44,3 +44,26 @@ about:
   install-app: Anwendung installieren
   p4: Eine ausführliche Projektbeschreibung finden Sie auf der Website.
   link-description: Projektseite
+sett:
+  silent: Lautlos am Boden
+  bt-never-sleep: Bluetooth schläft nie
+  led-vario: LED-Blinken durch Vario
+  hid-off: Deaktiviere HID-Tastatur
+  uart: UART-Protokoll
+  buzz-vol: Summerlautstärke
+  climb-on: Aufstiegston bei Schwellenwert (cm/s)
+  climb-off: Ton für das Ende des Aufstiegs bei Schwellenwert (cm/s)
+  sink-on: Sinkton bei Schwellenwert (cm/s)
+  sink-off: Ton für das Ende des Sinkens bei Schwellenwert (cm/s)
+  vario: Vario
+  freq: Frequenz
+  cycle: Zyklus
+  duty: Dauer
+  apply: Anwenden
+  def: Standard
+  log: Logarithmisch
+  lin: Linear
+update:
+  how-to: Wie man aktualisiert
+  changelog: Änderungsprotokoll
+  descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät mit dem Namen `FBminiBT` und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet.

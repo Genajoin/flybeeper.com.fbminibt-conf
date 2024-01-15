@@ -1,3 +1,3 @@
 <template>
-  <Update />
+  <TheUpdate />
 </template>

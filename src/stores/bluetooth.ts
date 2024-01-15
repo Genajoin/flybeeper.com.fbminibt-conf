@@ -4,31 +4,38 @@ interface BtCh {
   characteristic: object | null
   value: number | string | null
 }
+
 interface iESS {
   temperature: BtCh
   pressure: BtCh
 }
+
 interface iLNS {
   tas: BtCh
   ias: BtCh
 }
+
 interface iDIS {
   modelNumberString: BtCh
   manufacturerNameString: BtCh
   firmwareRevisionString: BtCh
 }
+
 interface iBAS {
   batteryLevel: BtCh
 }
+
 interface iAIOS {
   digital: BtCh
 }
+
 interface iVarioCurves {
   buzzer_vario_dots
   buzzer_frequency_dots
   buzzer_cycle_dots
   buzzer_duty_dots
 }
+
 interface iFbMiniBtSettings {
   buzzer_volume: number
   climb_tone_on_threshold_cm: number
@@ -43,6 +50,7 @@ interface iFbMiniBtSettings {
   led_blinky_by_vario: boolean
   hid_keyboard_off: boolean
 }
+
 // Индекс начала чтения каждого значения в буфере данных
 const indexes = {
   buzzer_volume: 0,
@@ -68,14 +76,21 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     isDisconnecting: false,
     devName: '',
 
-    settings: null as iFbMiniBtSettings,
+    settings: {} as iFbMiniBtSettings,
 
     ess: { temperature: { characteristic: null, value: null }, pressure: { characteristic: null, value: null } } as iESS,
     lns: { tas: { characteristic: null, value: null }, ias: { characteristic: null, value: null } } as iLNS,
     aios: { digital: { characteristic: null, value: null } } as iAIOS,
     bas: { batteryLevel: { characteristic: null, value: null } } as iBAS,
-    dis: { modelNumberString: { characteristic: null, value: null }, manufacturerNameString: { characteristic: null, value: null }, firmwareRevisionString: { characteristic: null, value: null } } as iDIS,
-    fss: { miniBtSettings: { characteristic: null, value: null } as BtCh, miniBtSimulation: { characteristic: null, value: null } as BtCh },
+    dis: {
+      modelNumberString: { characteristic: null, value: null },
+      manufacturerNameString: { characteristic: null, value: null },
+      firmwareRevisionString: { characteristic: null, value: null },
+    } as iDIS,
+    fss: {
+      miniBtSettings: { characteristic: null, value: null } as BtCh,
+      miniBtSimulation: { characteristic: null, value: null } as BtCh,
+    },
   }),
   actions: {
     async toggleConnectionBT() {
@@ -87,22 +102,27 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     async connectToDevice() {
       if (!this.bleAvailable || this.isConnected || this.isConnecting)
         return
-
+      if (!('bluetooth' in navigator))
+        return
       try {
         this.isConnecting = true
 
         this.device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ['location_and_navigation', 'environmental_sensing', 'battery_service', 'device_information'],
+          filters: [{ namePrefix: 'FB' }],
+          optionalServices: [
+            'location_and_navigation',
+            'environmental_sensing',
+            'battery_service',
+            'device_information',
+            '904baf04-5814-11ee-8c99-0242ac120000',
+          ],
         })
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-        await this.device.gatt.connect()
+        const server = await this.device.gatt.connect()
         this.devName = this.device.name
-        this.isConnected = true
-        this.isConnecting = false
 
         // Получение списка сервисов
-        const services = await this.device.gatt.getPrimaryServices()
+        const services = await server.getPrimaryServices()
 
         // Поиск нужных сервисов по UUID
         const BAS = services.find(service => service.uuid === '0000180f-0000-1000-8000-00805f9b34fb') // battery_service
@@ -152,14 +172,9 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // FlyBeeper settings service
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
-
-          this.fss.miniBTsettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
-          if (this.fss.miniBTsettings.characteristic)
-            this.fss.miniBTsettings.value = await this.fss.miniBTsettings.characteristic.readValue()
-
+          this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
           this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-          if (this.fss.miniBtSimulation.characteristic)
-            this.fss.miniBtSimulation.value = await this.fss.miniBtSimulation.characteristic.readValue()
+          await this.readSettings()
         }
 
         // Environmental Sensing Service
@@ -195,6 +210,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             this.lns.ias.characteristic.addEventListener('characteristicvaluechanged', this.handleIasNotifications)
           }
         }
+        this.isConnected = true
+        this.isConnecting = false
       }
       catch (error) {
         // console.error('Error connecting to the device:', error);
@@ -264,7 +281,9 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.ess.temperature = { characteristic: null, value: null }
       this.bas.batteryLevel = { characteristic: null, value: null }
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
-      this.settings = null
+      this.fss.miniBtSettings = { characteristic: null, value: null }
+      this.fss.miniBtSimulation = { characteristic: null, value: null }
+      this.settings = {} as iFbMiniBtSettings
     },
     handlePressureNotifications(event) {
       const value = event.target.value
@@ -351,7 +370,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       } as iVarioCurves
 
       // Создайте объект fb_settings
-      const fbSettings = {
+      this.settings = {
         buzzer_volume,
         climb_tone_on_threshold_cm,
         climb_tone_off_threshold_cm,
@@ -365,7 +384,46 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         led_blinky_by_vario,
         hid_keyboard_off,
       } as iFbMiniBtSettings
-      this.settings = fbSettings
+    },
+
+    async writeMiniBtSettings(settings: iFbMiniBtSettings) {
+      if (!this.fss.miniBtSettings.characteristic)
+        return
+
+      const bufferSize = this.dis.firmwareRevisionString.value > '0.13' ? 111 : 110
+      // новый ArrayBuffer для записи данных
+      const buffer = new ArrayBuffer(bufferSize) // Размер буфера зависит от структуры fb_settings
+
+      //  DataView для записи данных в буфер
+      const view = new DataView(buffer)
+
+      //  буфер данными из fbSettings
+      view.setInt16(indexes.buzzer_volume, settings.buzzer_volume, true)
+      view.setInt16(indexes.climb_tone_on_threshold_cm, settings.climb_tone_on_threshold_cm, true)
+      view.setInt16(indexes.climb_tone_off_threshold_cm, settings.climb_tone_off_threshold_cm, true)
+      view.setInt16(indexes.sink_tone_off_threshold_cm, settings.sink_tone_off_threshold_cm, true)
+      view.setInt16(indexes.sink_tone_on_threshold_cm, settings.sink_tone_on_threshold_cm, true)
+      // заполнять буфер для остальных значений
+      for (let i = 0; i < 12; i++) {
+        view.setInt16(indexes.buzzer_vario_dots + i * 2, settings.curves.buzzer_vario_dots[i], true)
+        view.setInt16(indexes.buzzer_frequency_dots + i * 2, settings.curves.buzzer_frequency_dots[i], true)
+        view.setInt16(indexes.buzzer_cycle_dots + i * 2, settings.curves.buzzer_cycle_dots[i], true)
+        view.setInt16(indexes.buzzer_duty_dots + i * 2, settings.curves.buzzer_duty_dots[i], true)
+      }
+      view.setInt16(indexes.buzzer_simulate_vario_value, settings.buzzer_simulate_vario_value, true)
+      view.setInt16(indexes.uart_protocols, settings.uart_protocols, true)
+
+      if (this.dis.firmwareRevisionString.value > '0.13') {
+        const feature_bits = settings.silent_on_ground
+          | this.settings.ble_never_sleep << 1
+          | this.settings.led_blinky_by_vario << 2
+          | settings.hid_keyboard_off << 3
+        view.setUint8(indexes.feature_bits, feature_bits)
+      }
+
+      //  буфер в характеристику
+      this.fss.miniBtSettings.characteristic.writeValue(buffer)
+        .then(() => this.settings = settings)
     },
   },
 })

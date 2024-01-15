@@ -44,3 +44,26 @@ about:
   install-app: Installer l'application
   p4: Vous pouvez trouver une description détaillée du projet sur le site web.
   link-description: Page du projet
+sett:
+  silent: Silencieux au sol
+  bt-never-sleep: Bluetooth ne dort jamais
+  led-vario: Clignotement LED par vario
+  hid-off: Désactiver le clavier HID
+  uart: Protocole UART
+  buzz-vol: Volume du buzzer
+  climb-on: Tonalité de montée au seuil (cm/s)
+  climb-off: Tonalité de fin de montée au seuil (cm/s)
+  sink-on: Tonalité de descente au seuil (cm/s)
+  sink-off: Tonalité de fin de descente au seuil (cm/s)
+  vario: Vario
+  freq: Fréquence
+  cycle: Cycle
+  duty: Durée
+  apply: Appliquer
+  def: Par défaut
+  log: Logarithmique
+  lin: Linéaire
+update:
+  how-to: Comment mettre à jour
+  changelog: Journal des modifications
+  descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant le nom `FBminiBT` et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera.

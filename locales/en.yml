@@ -44,3 +44,26 @@ about:
   install-app: Install Application
   p4: Detailed project description can be found on the website.
   link-description: Project Page
+sett:
+  silent: Silent on the ground
+  bt-never-sleep: Bluetooth never sleep
+  led-vario: LED blink by vario
+  hid-off: Deactivate HID keyboard
+  uart: UART Protocol
+  buzz-vol: Buzzer Volume
+  climb-on: Climb Tone On Threshold (cm/s)
+  climb-off: Climb Tone Off Threshold (cm/s)
+  sink-on: Sink Tone On Threshold (cm/s)
+  sink-off: Sink Tone Off Threshold (cm/s)
+  vario: Vario
+  freq: Frequency
+  cycle: Cycle
+  duty: Duty
+  apply: Apply
+  def: Default
+  log: Log
+  lin: Linear
+update:
+  how-to: How to update
+  changelog: Changelog
+  descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device with a name `FBminiBT` and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot.

@@ -29,6 +29,11 @@ export default defineConfig({
       plugins: {
         vue: Vue({
           include: [/\.vue$/, /\.md$/],
+          template: {
+            compilerOptions: {
+              isCustomElement: tag => ['stripe-buy-button'].includes(tag),
+            },
+          },
         }),
       },
     }),

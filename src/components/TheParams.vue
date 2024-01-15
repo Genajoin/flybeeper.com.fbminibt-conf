@@ -136,7 +136,7 @@ watchEffect(() => {
     </template>
   </div>
   <div v-if="bt.isConnected">
-    {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} ver:{{ bt.dis.firmwareRevisionString.value }}
+    {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
   </div>
 </template>
 

@@ -19,20 +19,14 @@ document.head.appendChild(recaptchaScript)
   <div>
     <div py-4 />
     <p>
-      <a rel="noreferrer" href="https://market.flybeeper.com/device/p1" target="_blank">
-        FlyBeeper mini BT
-      </a>
+      <a btn href="https://market.flybeeper.com/device/mini-bt">FlyBeeper mini BT</a>
     </p>
     <p>
       <em text-sm opacity-75>{{ t('intro.desc') }}</em>
     </p>
     <StlComponent />
   </div>
-
-  <stripe-buy-button
-    buy-button-id="buy_btn_1OYH3IEVz0YmyuWXqi2D9ODj"
-    publishable-key="pk_live_JM1bcerUSdh78SyxYTRA5E6V00uWmrGEyu"
-  />
+  <stripe-buy-button buy-button-id="buy_btn_1OYH3IEVz0YmyuWXqi2D9ODj" publishable-key="pk_live_JM1bcerUSdh78SyxYTRA5E6V00uWmrGEyu" />
 </template>
 
 <route lang="yaml">
