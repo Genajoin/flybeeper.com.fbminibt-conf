@@ -1,4 +1,4 @@
-[**Download last firmware**](/download/app_update.0.14.bin)
+<button btn href="/download/app_update.0.14.bin">Download last firmware</button>
 
 **Version:** x.xx | **Date:** in the future | Use [polling](https://t.me/flybeeperchat/32) to vote for your favorite new feature
 

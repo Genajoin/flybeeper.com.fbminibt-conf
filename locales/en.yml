@@ -20,6 +20,8 @@ msg:
   clear-protocol: Clear
   connect: Connect
   disconnect: Disconnect
+  no-bluetooth: Your device not support Bluetooth.
+  need-bluetooth: To use certain features, you may need a Bluetooth enabled device.
 param:
   pressure: Pressure, Pa
   altitude-p: Barometric Altitude, m
@@ -63,6 +65,9 @@ sett:
   def: Default
   log: Log
   lin: Linear
+  sim-label1: Simulate Vario
+  sim-label2: cm/s. 0 - simulation off.
+  sim-label3: Please set volume more than 1 to hear the simulation.
 update:
   how-to: How to update
   changelog: Changelog

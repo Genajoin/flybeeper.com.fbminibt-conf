@@ -20,6 +20,9 @@ msg:
   clear-protocol: Löschen
   connect: Verbinden
   disconnect: Trennen
+  no-bluetooth: Ihr Gerät unterstützt kein Bluetooth.
+  need-bluetooth: Um bestimmte Funktionen zu nutzen, benötigen Sie ein Bluetooth-fähiges Gerät.
+
 param:
   pressure: Druck, Pa
   altitude-p: Barometrische Höhe, m
@@ -63,6 +66,10 @@ sett:
   def: Standard
   log: Logarithmisch
   lin: Linear
+  sim-label1: Vario simulieren
+  sim-label2: cm/s. 0 - Simulation aus.
+  sim-label3: Bitte stellen Sie die Lautstärke auf mehr als 1 ein, um die Simulation zu hören.
+
 update:
   how-to: Wie man aktualisiert
   changelog: Änderungsprotokoll

@@ -6,8 +6,8 @@ const { t } = useI18n()
 <template>
   <!-- Проверка наличия модуля Bluetooth -->
   <div v-if="!bt.bleAvailable">
-    <p>Your device not support Bluetooth.</p>
-    <p>To use certain features, you may need a Bluetooth enabled device.</p>
+    <p>{{ t('msg.no-bluetooth') }}</p>
+    <p>{{ t('msg.need-bluetooth') }}</p>
   </div>
 
   <div v-else p-4>
@@ -26,7 +26,7 @@ const { t } = useI18n()
 
     <a
       v-if="bt.isDisconnecting || !bt.isConnected" :disabled="bt.isConnecting || bt.isConnected"
-      class="button-link"
+      m-3 btn
       :class="{ disabled: bt.isConnecting || bt.isConnected }"
       @click="bt.connectToDevice"
     >
@@ -34,7 +34,7 @@ const { t } = useI18n()
     </a>
     <a
       v-if="bt.isConnecting || bt.isConnected" :disabled="bt.isDisconnecting || !bt.isConnected"
-      class="button-link red"
+      m-3 btn class="red"
       :class="{ disabled: bt.isDisconnecting || !bt.isConnected }"
       @click="bt.disconnectDevice"
     >
@@ -44,30 +44,5 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
-.button-link {
-  background-color: green;
-  color: white;
-  cursor: pointer;
-  padding: 10px 20px;
-  margin-right: 10px;
-  text-decoration: none;
-  display: inline-block;
-  border-radius: 5px;
-  margin-top: 10px;
-  transition: background-color 0.3s ease;
-}
 
-.button-link.red {
-  background-color: red;
-}
-
-.button-link.disabled {
-  cursor: not-allowed;
-  background-color: grey;
-  opacity: 0.6;
-}
-
-.redMarked {
-  color: red;
-}
 </style>

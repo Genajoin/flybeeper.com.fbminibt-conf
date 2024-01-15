@@ -425,6 +425,17 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.fss.miniBtSettings.characteristic.writeValue(buffer)
         .then(() => this.settings = settings)
     },
+
+    async SendSimulationVarioValue(value) {
+      if (!this.fss.miniBtSimulation.characteristic)
+        return
+
+      const buffer = new ArrayBuffer(2)
+      const view = new DataView(buffer)
+      view.setInt16(0, value, true)
+      this.fss.miniBtSimulation.characteristic.writeValue(buffer)
+    },
+
   },
 })
 

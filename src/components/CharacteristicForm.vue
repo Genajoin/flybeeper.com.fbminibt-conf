@@ -31,6 +31,9 @@ const firmwareRevision = computed(() => {
 const formValues = ref(cloneDeep(bt.settings))
 const originalValues = ref(cloneDeep(bt.settings))
 const tableChanged = ref(false)
+const simulateVario = ref(0)
+let simulateVarioTimeout = null
+let simulateInProgress = false
 
 // onMounted(() => {
 //   if (bt.settings) {
@@ -54,6 +57,23 @@ watch(() => bt.settings, (newSettings) => {
 watch(() => formValues, () => {
   tableChanged.value = JSON.stringify(formValues.value) !== JSON.stringify(originalValues.value)
 }, { deep: true })
+
+// Обработчик изменения значения Simulate Vario
+watch(simulateVario, (newValue) => {
+  if (!simulateInProgress || !newValue) {
+    simulateInProgress = true
+    if (simulateVarioTimeout)
+      clearTimeout(simulateVarioTimeout)
+
+    const delay = 300 // Миллисекунды
+    // Отправляем значение на устройство после задержки
+    simulateVarioTimeout = setTimeout(async () => {
+      await bt.SendSimulationVarioValue(newValue)
+      // console.log("simul")
+      simulateInProgress = false
+    }, delay)
+  }
+})
 
 async function updateCharacteristic() {
   await bt.writeMiniBtSettings(formValues.value)
@@ -240,11 +260,33 @@ function resetToLin2() {
         </tbody>
       </table>
     </div>
+
     <template v-if="formValues !== {}">
-      <a :disabled="!tableChanged" class="button-link" :class="{ disabled: !tableChanged }" @click="updateCharacteristic">{{ t('sett.apply') }}</a>
-      <a class="button-link" @click="resetToDefault">{{ t('sett.def') }}</a>
-      <a class="button-link" @click="resetToLog2">{{ t('sett.log') }}</a>
-      <a class="button-link" @click="resetToLin2">{{ t('sett.lin') }}</a>
+      <div p-4>
+        <label for="simulateVario">{{ t('sett.sim-label1') }}: </label>
+        <input
+          v-model="simulateVario"
+          type="number"
+          :min="-2000"
+          :max="2000"
+          :step="10"
+        > {{ t('sett.sim-label2') }} <div v-if="bt.settings.buzzer_volume === 0 && simulateVario" text-red-600>
+          {{ t('sett.sim-label3') }}
+        </div>
+      </div>
+
+      <button :disabled="!tableChanged" m-2 btn :class="{ disabled: !tableChanged }" @click="updateCharacteristic">
+        {{ t('sett.apply') }}
+      </button>
+      <button m-2 btn @click="resetToDefault">
+        {{ t('sett.def') }}
+      </button>
+      <button m-2 btn @click="resetToLog2">
+        {{ t('sett.log') }}
+      </button>
+      <button m-2 btn @click="resetToLin2">
+        {{ t('sett.lin') }}
+      </button>
     </template>
   </form>
 </template>

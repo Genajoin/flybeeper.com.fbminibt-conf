@@ -20,6 +20,9 @@ msg:
   clear-protocol: Effacer
   connect: Connecter
   disconnect: Déconnecter
+  no-bluetooth: Votre appareil ne prend pas en charge le Bluetooth.
+  need-bluetooth: Pour utiliser certaines fonctionnalités, vous aurez peut-être besoin d'un appareil compatible Bluetooth.
+
 param:
   pressure: Pression, Pa
   altitude-p: Altitude barométrique, m
@@ -63,6 +66,10 @@ sett:
   def: Par défaut
   log: Logarithmique
   lin: Linéaire
+  sim-label1: Simuler le Vario
+  sim-label2: cm/s. 0 - simulation éteinte.
+  sim-label3: Veuillez régler le volume à plus de 1 pour entendre la simulation.
+
 update:
   how-to: Comment mettre à jour
   changelog: Journal des modifications
