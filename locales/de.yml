@@ -56,10 +56,10 @@ sett:
   hid-off: Deaktiviere HID-Tastatur
   uart: UART-Protokoll
   buzz-vol: Summerlautstärke
-  climb-on: Aufstiegston bei Schwellenwert (cm/s)
-  climb-off: Ton für das Ende des Aufstiegs bei Schwellenwert (cm/s)
-  sink-on: Sinkton bei Schwellenwert (cm/s)
-  sink-off: Ton für das Ende des Sinkens bei Schwellenwert (cm/s)
+  climb-on: Beginn des Aufstiegs (cm/s)
+  climb-off: Ende des kleinen Aufstiegs (cm/s)
+  sink-on: Beginn des Sinkens (cm/s)
+  sink-off: Ende des kleinen Sinkens (cm/s)
   vario: Vario
   freq: Frequenz
   cycle: Zyklus
@@ -70,8 +70,8 @@ sett:
   def: Standard
   log: Logarithmisch
   lin: Linear
-  sim-label1: Vario simulieren
-  sim-label2: cm/s. 0 - Simulation aus.
+  sim-label1: Vario simulieren, cm/s
+  sim-label2: (0 - Simulation aus)
   sim-label3: Bitte stellen Sie die Lautstärke auf mehr als 1 ein, um die Simulation zu hören.
 
 update:

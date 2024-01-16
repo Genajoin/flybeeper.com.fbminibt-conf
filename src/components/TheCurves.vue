@@ -201,20 +201,12 @@ function drawGrid(ctx, xOffset, yOffset, canvasWidth, canvasHeight, gridSize) {
 </script>
 
 <template>
-  <div id="canvasContainer">
-    <canvas ref="canvasRef" width="600" height="340" />
-  </div>
+  <canvas ref="canvasRef" width="600" height="340" />
 </template>
 
 <style>
-#canvasContainer {
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 canvas {
-  display: block; /* Исключить отступы, свойственные строчным элементам */
+  /*display: block;  Исключить отступы, свойственные строчным элементам */
   max-width: 90vw;
   max-height: 90vh;
 }

@@ -56,10 +56,10 @@ sett:
   hid-off: Desactivar teclado HID
   uart: Protocolo UART
   buzz-vol: Volumen del zumbador
-  climb-on: Tono de ascenso en umbral (cm/s)
-  climb-off: Tono de fin de ascenso en umbral (cm/s)
-  sink-on: Tono de descenso en umbral (cm/s)
-  sink-off: Tono de fin de descenso en umbral (cm/s)
+  climb-on: Inicio de la subida (cm/s)
+  climb-off: Fin de la pequeña subida (cm/s)
+  sink-on: Inicio del descenso (cm/s)
+  sink-off: Fin de la pequeña bajada (cm/s)
   vario: Vario
   freq: Frecuencia
   cycle: Ciclo
@@ -70,9 +70,9 @@ sett:
   def: Predeterminado
   log: Logarítmico
   lin: Lineal
-  sim-label1: Simular Vario
-  sim-label2: cm/s. 0 - simulación apagada.
-  sim-label3: Por favor, ajusta el volumen a más de 1 para escuchar la simulación.
+  sim-label1: Simular Vario, cm/s
+  sim-label2: (0 - simulación apagada)
+  sim-label3: Por favor, ajusta el volumen a más de 0 para escuchar la simulación.
 
 update:
   how-to: Cómo actualizar

@@ -55,10 +55,10 @@ sett:
   hid-off: Deactivate HID keyboard
   uart: UART Protocol
   buzz-vol: Buzzer Volume
-  climb-on: Climb Tone On Threshold (cm/s)
-  climb-off: Climb Tone Off Threshold (cm/s)
-  sink-on: Sink Tone On Threshold (cm/s)
-  sink-off: Sink Tone Off Threshold (cm/s)
+  climb-on: Start climbing (cm/s)
+  climb-off: End of small climb (cm/s)
+  sink-on: Start sinking (cm/s)
+  sink-off: End of small sink (cm/s)
   vario: Vario
   freq: Frequency
   cycle: Cycle
@@ -69,10 +69,10 @@ sett:
   def: Default
   log: Log
   lin: Linear
-  sim-label1: Simulate Vario
-  sim-label2: cm/s. 0 - simulation off.
+  sim-label1: Simulate Vario, cm/s
+  sim-label2: (0 - simulation off)
   sim-label3: Please set volume more than 1 to hear the simulation.
-
+  restart-device: After applying the changes, you must turn off and turn on the device again.
 update:
   how-to: How to update
   changelog: Changelog

@@ -56,10 +56,10 @@ sett:
   hid-off: Désactiver le clavier HID
   uart: Protocole UART
   buzz-vol: Volume du buzzer
-  climb-on: Tonalité de montée au seuil (cm/s)
-  climb-off: Tonalité de fin de montée au seuil (cm/s)
-  sink-on: Tonalité de descente au seuil (cm/s)
-  sink-off: Tonalité de fin de descente au seuil (cm/s)
+  climb-on: Début de la montée (cm/s)
+  climb-off: Fin de la petite montée (cm/s)
+  sink-on: Début de la descente (cm/s)
+  sink-off: Fin de la petite descente (cm/s)
   vario: Vario
   freq: Fréquence
   cycle: Cycle
@@ -70,9 +70,9 @@ sett:
   def: Par défaut
   log: Logarithmique
   lin: Linéaire
-  sim-label1: Simuler le Vario
-  sim-label2: cm/s. 0 - simulation éteinte.
-  sim-label3: Veuillez régler le volume à plus de 1 pour entendre la simulation.
+  sim-label1: Simuler le Vario, cm/s
+  sim-label2: (0 - simulation éteinte)
+  sim-label3: Veuillez régler le volume à plus de 0 pour entendre la simulation.
 
 update:
   how-to: Comment mettre à jour
