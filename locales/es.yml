@@ -8,6 +8,8 @@ button:
   toggle_langs: Cambiar idioma
   bluetooth: Alternar Bluetooth
   terminal: Terminal
+  update: Actualización de firmware
+  settings: Configuración del dispositivo
 intro:
   desc: Sensor de presión atmosférica con Bluetooth
 not-found: No encontrado
@@ -63,6 +65,8 @@ sett:
   cycle: Ciclo
   duty: Duración
   apply: Aplicar
+  upload: Subir
+  download: Descargar
   def: Predeterminado
   log: Logarítmico
   lin: Lineal

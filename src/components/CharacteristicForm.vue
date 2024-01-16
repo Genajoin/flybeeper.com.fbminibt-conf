@@ -6,21 +6,21 @@ const { t } = useI18n()
 
 const defaultConf = {
   buzzer_vario_dots: [-2000, -1200, -300, -20, 0, 20, 100, 200, 300, 450, 1200, 2000],
-  buzzer_frequency_dots: [200, 280, 370, 398, 400, 472, 760, 1120, 1480, 2020, 4720, 6000],
-  buzzer_cycle_dots: [850, 750, 725, 748, 664, 596, 428, 323, 264, 211, 122, 100],
+  buzzer_frequency_dots: [200, 280, 370, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
+  buzzer_cycle_dots: [850, 750, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
   buzzer_duty_dots: [100, 90, 41, 53, 40, 41, 43, 46, 49, 54, 78, 90],
 }
 
 const log2Conf = {
-  buzzer_vario_dots: [-1200, -300, -51, -50, 0, 10, 100, 250, 425, 600, 800, 1000],
+  buzzer_vario_dots: [-1200, -300, -55, -50, 0, 10, 100, 250, 425, 600, 800, 1000],
   buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 920, 1380, 1600, 1780, 1880, 2000],
-  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 552, 483, 412, 322, 241, 150],
+  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
   buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
 }
 const lin2Conf = {
-  buzzer_vario_dots: [-1000, -300, -51, -50, 0, 10, 116, 267, 424, 600, 800, 1000],
-  buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 550, 763, 985, 1234, 1517, 2000],
-  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 552, 483, 412, 322, 241, 150],
+  buzzer_vario_dots: [-1000, -300, -55, -50, 0, 10, 115, 265, 425, 600, 800, 1000],
+  buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 550, 765, 985, 1235, 1520, 2000],
+  buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
   buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
 }
 
@@ -35,31 +35,21 @@ const simulateVario = ref(0)
 let simulateVarioTimeout = null
 let simulateInProgress = false
 
-// onMounted(() => {
-//   if (bt.settings) {
-//     return
-//   }
-//
-//   bt.readSettings()
-//     // .then(()=>{
-//     //   console.log("readSettings")
-//     // })
-//     // .catch(e=>console.log(e))
-// })
-
 watch(() => bt.settings, (newSettings) => {
-  // console.log("change ref settings")
   originalValues.value = cloneDeep(newSettings)
   formValues.value = cloneDeep(newSettings)
   tableChanged.value = false
 }, { deep: true })
 
+const theCurvesRef = ref()
+
 watch(() => formValues, () => {
+  theCurvesRef.value.updateCurves(formValues.value)
   tableChanged.value = JSON.stringify(formValues.value) !== JSON.stringify(originalValues.value)
 }, { deep: true })
 
 // Обработчик изменения значения Simulate Vario
-watch(simulateVario, (newValue) => {
+watch(() => simulateVario, (newValue) => {
   if (!simulateInProgress || !newValue) {
     simulateInProgress = true
     if (simulateVarioTimeout)
@@ -69,7 +59,6 @@ watch(simulateVario, (newValue) => {
     // Отправляем значение на устройство после задержки
     simulateVarioTimeout = setTimeout(async () => {
       await bt.SendSimulationVarioValue(newValue)
-      // console.log("simul")
       simulateInProgress = false
     }, delay)
   }
@@ -90,10 +79,39 @@ function resetToLog2() {
 function resetToLin2() {
   formValues.value.curves = cloneDeep(lin2Conf)
 }
+
+// Функция для скачивания JSON
+function downloadJson() {
+  const jsonString = JSON.stringify(formValues.value)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'FBminiBT-settings.json'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+const fileUploadInput = ref()
+// Функция для загрузки JSON из файла
+function uploadJson(event) {
+  const file = event.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formValues.value = JSON.parse(e.target.result)
+    }
+    reader.readAsText(file)
+    fileUploadInput.value.value = ''
+  }
+}
 </script>
 
 <template>
-  <form m-auto text-left prose @submit.prevent="updateCharacteristic">
+  <div m-auto max-w-200 text-left>
     <div v-if="formValues !== {} && firmwareRevision > '0.13'">
       <label for="silentOnGround">{{ t('sett.silent') }}: </label>
       <input
@@ -201,68 +219,81 @@ function resetToLin2() {
       >
     </div>
     <!-- Таблица для массивов настроек -->
-    <div v-if="formValues !== {} && formValues.curves !== {}" class="table-container">
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>{{ t('sett.vario') }}</th>
-            <th>{{ t('sett.freq') }}</th>
-            <th>{{ t('sett.cycle') }}</th>
-            <th>{{ t('sett.duty') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Массив buzzer_vario_dots -->
-          <tr v-for="(value, index) in formValues.curves.buzzer_vario_dots" :key="index">
-            <td>
-              <input
-                v-model="formValues.curves.buzzer_vario_dots[index]"
-                class="input-field"
-                type="number"
-                min="-2000"
-                max="2000"
-                step="5"
-              >
-            </td>
-            <!-- Массив buzzer_frequency_dots -->
-            <td>
-              <input
-                v-model="formValues.curves.buzzer_frequency_dots[index]"
-                class="input-field"
-                type="number"
-                min="100"
-                max="6000"
-                step="5"
-              >
-            </td>
-            <!-- Массив buzzer_cycle_dots -->
-            <td>
-              <input
-                v-model="formValues.curves.buzzer_cycle_dots[index]"
-                class="input-field"
-                type="number"
-                min="100"
-                max="1000"
-                step="5"
-              >
-            </td>
-            <!-- Массив buzzer_duty_dots -->
-            <td>
-              <input
-                v-model="formValues.curves.buzzer_duty_dots[index]"
-                class="input-field"
-                type="number"
-                min="2"
-                max="100"
-              >
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-if="formValues !== {} && formValues.curves !== {}">
+      <div class="responsive-table">
+        <table table>
+          <thead>
+            <tr>
+              <th>{{ t('sett.vario') }}</th>
+              <th>{{ t('sett.freq') }}</th>
+              <th>{{ t('sett.cycle') }}</th>
+              <th>{{ t('sett.duty') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Массив buzzer_vario_dots -->
+            <tr v-for="(value, index) in formValues.curves.buzzer_vario_dots" :key="index">
+              <td>
+                <input
+                  v-model="formValues.curves.buzzer_vario_dots[index]"
+                  class="input-field"
+                  type="number"
+                  min="-2000"
+                  max="2000"
+                  step="5"
+                >
+              </td>
+              <!-- Массив buzzer_frequency_dots -->
+              <td>
+                <input
+                  v-model="formValues.curves.buzzer_frequency_dots[index]"
+                  class="input-field"
+                  type="number"
+                  min="100"
+                  max="6000"
+                  step="5"
+                >
+              </td>
+              <!-- Массив buzzer_cycle_dots -->
+              <td>
+                <input
+                  v-model="formValues.curves.buzzer_cycle_dots[index]"
+                  class="input-field"
+                  type="number"
+                  min="100"
+                  max="1000"
+                  step="5"
+                >
+              </td>
+              <!-- Массив buzzer_duty_dots -->
+              <td>
+                <input
+                  v-model="formValues.curves.buzzer_duty_dots[index]"
+                  class="input-field"
+                  type="number"
+                  min="2"
+                  max="100"
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TheCurves ref="theCurvesRef" :settings="formValues" />
+      <div text-center>
+        <button m-2 btn @click="resetToDefault">
+          {{ t('sett.def') }}
+        </button>
+        <button m-2 btn @click="resetToLog2">
+          {{ t('sett.log') }}
+        </button>
+        <button m-2 btn @click="resetToLin2">
+          {{ t('sett.lin') }}
+        </button>
+      </div>
     </div>
-
     <template v-if="formValues !== {}">
-      <div p-4>
+      <div p-4 text-center>
         <label for="simulateVario">{{ t('sett.sim-label1') }}: </label>
         <input
           v-model="simulateVario"
@@ -270,25 +301,25 @@ function resetToLin2() {
           :min="-2000"
           :max="2000"
           :step="10"
-        > {{ t('sett.sim-label2') }} <div v-if="bt.settings.buzzer_volume === 0 && simulateVario" text-red-600>
+        >
+        {{ t('sett.sim-label2') }}
+        <div v-if="bt.settings.buzzer_volume === 0 && simulateVario" text-red-600>
           {{ t('sett.sim-label3') }}
         </div>
       </div>
-
-      <button :disabled="!tableChanged" m-2 btn :class="{ disabled: !tableChanged }" @click="updateCharacteristic">
-        {{ t('sett.apply') }}
-      </button>
-      <button m-2 btn @click="resetToDefault">
-        {{ t('sett.def') }}
-      </button>
-      <button m-2 btn @click="resetToLog2">
-        {{ t('sett.log') }}
-      </button>
-      <button m-2 btn @click="resetToLin2">
-        {{ t('sett.lin') }}
-      </button>
+      <div text-center>
+        <button :disabled="!tableChanged" m-2 btn :class="{ disabled: !tableChanged }" @click="updateCharacteristic">
+          {{ t('sett.apply') }}
+        </button>
+        <button m-2 btn @click="downloadJson">
+          {{ t('sett.download') }}
+        </button>
+        <label m-2 btn>{{ t('sett.upload') }}
+          <input ref="fileUploadInput" type="file" accept=".json" style="display: none" @change="uploadJson">
+        </label>
+      </div>
     </template>
-  </form>
+  </div>
 </template>
 
 <style>
@@ -298,9 +329,11 @@ function resetToLin2() {
 }
 
 .responsive-table {
+  display: flex;
   width: 100%;
   border-collapse: collapse;
   white-space: nowrap;
+  justify-content: center;
 }
 
 .responsive-table th,

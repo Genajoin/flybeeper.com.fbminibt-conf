@@ -12,19 +12,15 @@ export default {
         { type: 'DirectionalLight', position: { x: -20, y: -20, z: -70 }, color: '#FF0033', intensity: 0.8 },
         { type: 'PointLight', color: '#ffffff', position: { x: -20, y: -90, z: -20 }, intensity: 0.1 },
       ],
-      rotation: {
-        x: 0,
-        y: 0,
-        z: 0,
-      },
-      position: [0, 0],
+      rotation: { x: -200, y: 0, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
     }
   },
   watch: {
     position(newValue) {
       try {
         this.rotation.y = Math.PI / 2 * (newValue[0] / window.innerWidth - 0.5)
-        this.rotation.z = Math.PI / 2 * (newValue[1] / window.innerHeight - 0.5)
+        this.rotation.x = Math.PI / 2 * (newValue[1] / window.innerHeight - 0.5) - 200
       }
       catch (e) {
       }

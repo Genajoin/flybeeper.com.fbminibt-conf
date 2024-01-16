@@ -8,6 +8,8 @@ button:
   toggle_langs: Sprache wechseln
   bluetooth: Bluetooth umschalten
   terminal: Terminal
+  update: Firmware aktualisieren
+  settings: Geräteeinstellungen
 intro:
   desc: Bluetooth Atmosphärendrucksensor
 not-found: Nicht gefunden
@@ -63,6 +65,8 @@ sett:
   cycle: Zyklus
   duty: Dauer
   apply: Anwenden
+  upload: Hochladen
+  download: Herunterladen
   def: Standard
   log: Logarithmisch
   lin: Linear

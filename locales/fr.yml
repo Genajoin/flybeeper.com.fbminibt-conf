@@ -8,6 +8,8 @@ button:
   toggle_langs: Changer de langue
   bluetooth: Activer/désactiver le Bluetooth
   terminal: Terminal
+  update: Mise à jour du firmware
+  settings: Paramètres de l'appareil
 intro:
   desc: Capteur de pression atmosphérique avec Bluetooth
 not-found: Non trouvé
@@ -63,6 +65,8 @@ sett:
   cycle: Cycle
   duty: Durée
   apply: Appliquer
+  upload: Télécharger
+  download: Télécharger
   def: Par défaut
   log: Logarithmique
   lin: Linéaire
