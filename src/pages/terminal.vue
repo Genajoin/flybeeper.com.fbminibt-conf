@@ -5,20 +5,22 @@ import useLocationStore from '~/stores/location'
 
 const { t } = useI18n()
 const bt = useBluetoothStore()
-const gps = useLocationStore()
+const loc = useLocationStore()
 const log = ref<string>('')
+const calculateAltitudeP = ref<number | null>(null)
 
 watchEffect(() => {
   logData2()
+  calculateAltitudeP.value = bt.ess.pressure.characteristic && bt.ess.pressure.value !== null ? ((4433000 * (1.0 - (bt.ess.pressure.value / 101325.0) ** 0.1903)) | 0) / 100 : null
 })
 
 onMounted(() => {
-  gps.startWatchingSpeed()
+  loc.startWatchingSpeed()
   logData()
 })
 
 onBeforeUnmount(() => {
-  gps.stopWatchingSpeed()
+  loc.stopWatchingSpeed()
 })
 
 function getTimestamp() {
@@ -33,11 +35,11 @@ function getTimestamp() {
 
 function logData2() {
   const timestamp = getTimestamp()
-  log.value = `${timestamp};${bt.ess.pressure.value}\n${log.value}`
+  log.value = `${timestamp};${bt.ess.pressure.value};${bt.ess.temperature.value};${calculateAltitudeP.value};${loc.speed};${loc.heading};${loc.altitude};${loc.accuracy}\n${log.value}`
 }
 
 function logData() {
-  log.value = 'Timestamp;Pressure'
+  log.value = 'Timestamp;Pressure;Temperature;AltitudeP;Speed;Heading;AltitudeG;Accuracy'
 }
 
 function saveProtocolToFile() {
@@ -58,7 +60,7 @@ function clearProtocol() {
 
 <template>
   <DeviceConnector v-if="!bt.isConnected" />
-  <div v-if="bt.isConnected || gps.error === null">
+  <div v-if="bt.isConnected || loc.error === null">
     <button btn m="3 t8" @click="saveProtocolToFile">
       {{ t('msg.save-protocol') }}
     </button>

@@ -9,3 +9,4 @@ node_modules
 *.log
 cypress/downloads
 pnpm-lock.yaml
+*.d.ts
