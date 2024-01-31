@@ -6,7 +6,12 @@
 - _Decrease pressure sensor polling frequency:_ In silent mode to increase battery life.
 - _Automatically reduce the buzzer volume:_ When the ambient temperature drops to zero to reduce current consumption and prevent shutdown.
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
+
+**Version:** 0.15 | **Date:** Soon | Beta testing
+
 - _Deactivate HID keyboard:_ Config option.
+- _Default buzzer curves changed:_ More duty in sinking.
+- _Fix duplication data:_ Stopping data transfer via Nordic UART service if app subscribe to ESS. Eliminates duplication of data in xcTrack. Reduces energy consumption.
 
 **Version:** 0.14 | **Date:** 28.12.2023 | [**Download**](/download/app_update.0.14.bin)
 
