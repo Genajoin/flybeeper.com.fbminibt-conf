@@ -6,14 +6,6 @@ const { t } = useI18n()
 const bt = useBluetoothStore()
 const loc = useLocationStore()
 
-// Функция для получения значения характеристики по UUID
-function getCharacteristicValue(uuid) {
-  const val = bt.characteristicsData[uuid]
-  if (val == null)
-    return '--'
-  return bt.getValByUuid(uuid, val)
-}
-
 onMounted(() => {
   loc.startWatchingSpeed()
 })
@@ -26,12 +18,12 @@ onBeforeUnmount(() => {
 <template>
   <div class="container">
     <template v-if="bt.isConnected">
-      <div v-for="uuid in bt.subscribedCharacteristics" :key="uuid" class="cell">
+      <div v-for="cha in bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)" :key="cha" class="cell">
         <div text-sm opacity-50>
-          {{ t(`param.${uuid}`) }}
+          {{ t(`param.${cha.characteristic.uuid}`) }}
         </div>
         <div text-4xl>
-          {{ getCharacteristicValue(uuid) }}
+          {{ cha.formattedValue ? cha.formattedValue : "--" }}
         </div>
       </div>
     </template>

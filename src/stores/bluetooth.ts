@@ -122,43 +122,33 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           // Проверка, есть ли подписка на изменение для каждой характеристики
           for (const ch of characteristics) {
             const bleCharacteristic = new BleCharacteristicImpl(ch)
-            // await bleCharacteristic.getUserFormatDescriptor();
+            await bleCharacteristic.initialize()
             this.bleCharacteristics.push(bleCharacteristic)
-            await this.subscribeToCharacteristic(ch)
           }
         }
 
         // Поиск нужных сервисов по UUID
-        const DIS = services.find(service => service.uuid === '0000180a-0000-1000-8000-00805f9b34fb') // device_information
         const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
 
         // Чтение данных после успешного подключения
 
-        // Device Information Service
-        if (DIS) {
-          const characteristics = await DIS.getCharacteristics()
-
-          this.dis.firmwareRevisionString.characteristic = characteristics.find(ch => ch.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
-          if (this.dis.firmwareRevisionString.characteristic) {
-            const val = await this.dis.firmwareRevisionString.characteristic.readValue()
-            const enc = new TextDecoder('utf-8')
-            this.dis.firmwareRevisionString.value = enc.decode(val.buffer)
-          }
-
-          this.dis.modelNumberString.characteristic = characteristics.find(ch => ch.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
-          if (this.dis.modelNumberString.characteristic) {
-            const val = await this.dis.modelNumberString.characteristic.readValue()
-            const enc = new TextDecoder('utf-8')
-            this.dis.modelNumberString.value = enc.decode(val.buffer)
-          }
-
-          this.dis.manufacturerNameString.characteristic = characteristics.find(ch => ch.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
-          if (this.dis.manufacturerNameString.characteristic) {
-            const val = await this.dis.manufacturerNameString.characteristic.readValue()
-            const enc = new TextDecoder('utf-8')
-            this.dis.manufacturerNameString.value = enc.decode(val.buffer)
-          }
+        for (const ch of this.bleCharacteristics) {
+          if (ch.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
+            ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 }
         }
+
+        // Device Information Service
+        const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
+        if (fwRev)
+          this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
+
+        const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
+        if (modNum)
+          this.dis.modelNumberString.value = await modNum.getFormattedValue()
+
+        const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
+        if (manName)
+          this.dis.manufacturerNameString.value = await manName.getFormattedValue()
 
         // FlyBeeper settings service
         if (FSS) {
@@ -173,7 +163,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         this.isConnecting = false
       }
       catch (error) {
-        // console.error('Error connecting to the device:', error);
+        console.error('Error connecting to the device:', error)
         this.isConnecting = false
       }
     },
@@ -181,27 +171,19 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       if (!this.isConnected || this.isDisconnecting)
         return
 
-      // Получение списка сервисов
-      const services = await this.device.gatt.getPrimaryServices()
+      // Проход по характеристикам
+      for (const ch of this.bleCharacteristics)
+        await ch.unsubscribeFromNotifications()
 
-      // Проход по сервисам
-      for (const service of services) {
-        // Получение характеристик сервиса
-        const characteristics = await service.getCharacteristics()
-
-        // Проверка, есть ли подписка на изменение для каждой характеристики
-        for (const characteristic of characteristics)
-          await this.unsubscribeFromCharacteristic(characteristic)
-      }
       try {
         this.isDisconnecting = true
         await this.device.gatt.disconnect()
-        this.device.removeEventListener('gattserverdisconnected', this.onDisconnected)
+        // this.device.removeEventListener('gattserverdisconnected', this.onDisconnected)
         this.isConnected = false
         this.isDisconnecting = false
       }
       catch (error) {
-        // console.error('Error disconnecting from the device:', error)
+        console.error('Error disconnecting from the device:', error)
         this.isDisconnecting = false
       }
     },
@@ -218,28 +200,28 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.characteristicsData = {}
       this.bleCharacteristics = []
     },
-    async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
-      if (characteristic.properties.notify) {
-        await characteristic.startNotifications()
-        characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
-        this.subscribedCharacteristics.push(characteristic.uuid)
-        if (characteristic.properties.read)
-          await characteristic.readValue()
-      }
-    },
-    async unsubscribeFromCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
-      const index = this.subscribedCharacteristics.indexOf(characteristic.uuid)
-      if (index !== -1) {
-        await characteristic.stopNotifications()
-        characteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
-        this.subscribedCharacteristics.splice(index, 1)
-      }
-    },
-
-    async handleCharacteristicChange(event: Event) {
-      const characteristic = event.target as BluetoothRemoteGATTCharacteristic
-      this.characteristicsData[characteristic.uuid] = characteristic.value
-    },
+    // async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
+    //   if (characteristic.properties.notify) {
+    //     await characteristic.startNotifications()
+    //     characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
+    //     this.subscribedCharacteristics.push(characteristic.uuid)
+    //     if (characteristic.properties.read)
+    //       await characteristic.readValue()
+    //   }
+    // },
+    // async unsubscribeFromCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
+    //   const index = this.subscribedCharacteristics.indexOf(characteristic.uuid)
+    //   if (index !== -1) {
+    //     await characteristic.stopNotifications()
+    //     characteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
+    //     this.subscribedCharacteristics.splice(index, 1)
+    //   }
+    // },
+    //
+    // async handleCharacteristicChange(event: Event) {
+    //   const characteristic = event.target as BluetoothRemoteGATTCharacteristic
+    //   this.characteristicsData[characteristic.uuid] = characteristic.value
+    // },
     async readSettings() {
       if (!this.dis.manufacturerNameString.characteristic && this.dis.manufacturerNameString.value !== 'FlyBeeper')
         return
