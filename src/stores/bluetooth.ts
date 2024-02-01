@@ -117,6 +117,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             'environmental_sensing',
             'battery_service',
             'device_information',
+            'automation_io',
             '904baf04-5814-11ee-8c99-0242ac120000',
           ],
         })
@@ -228,12 +229,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
     async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
       if (characteristic.properties.notify) {
-        characteristic.startNotifications().then(() => {
-          characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
-          this.subscribedCharacteristics.push(characteristic.uuid)
-          if (characteristic.properties.read)
-            return characteristic.readValue()
-        })
+        await characteristic.startNotifications()
+        characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
+        this.subscribedCharacteristics.push(characteristic.uuid)
+        if (characteristic.properties.read)
+          await characteristic.readValue()
       }
     },
     async unsubscribeFromCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
@@ -377,7 +377,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
     getValByUuid(uuid, val) {
       switch (uuid) {
-        case '00002a19-0000-1000-8000-00805f9b34fb': // bat
+        case '00002a19-0000-1000-8000-00805f9b34fb': // battery
+        case '00002a56-0000-1000-8000-00805f9b34fb': // buttons
           return val.getUint8(0)
         case '234337bf-f931-4d2d-a13c-07e2f06a0249': // tas
         case '234337bf-f931-4d2d-a13c-07e2f06a0248': // ias
