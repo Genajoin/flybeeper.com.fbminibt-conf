@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useLocationStore } from '~/stores/location'
 
 const { t } = useI18n()
 const bt = useBluetoothStore()
-const calculateAltitudeP = ref<number | null>(null)
-const calculateEAS = ref<number | null>(null)
 const loc = useLocationStore()
+
+// Функция для получения значения характеристики по UUID
+function getCharacteristicValue(uuid) {
+  const val = bt.characteristicsData[uuid]
+  if (val == null)
+    return '--'
+  return bt.getValByUuid(uuid, val)
+}
 
 onMounted(() => {
   loc.startWatchingSpeed()
@@ -15,71 +21,17 @@ onMounted(() => {
 onBeforeUnmount(() => {
   loc.stopWatchingSpeed()
 })
-
-watchEffect(() => {
-  calculateAltitudeP.value = bt.ess.pressure.characteristic && bt.ess.pressure.value !== null ? 44330.0 * (1.0 - (bt.ess.pressure.value / 101325.0) ** 0.1903) : null
-  calculateEAS.value = bt.lns.tas.value != null ? bt.getEAS(bt.lns.tas.value, bt.ess.pressure.value, bt.ess.temperature.value) : null
-})
 </script>
 
 <template>
   <div class="container">
     <template v-if="bt.isConnected">
-      <div v-if="bt.lns.tas.characteristic" class="cell">
+      <div v-for="uuid in bt.subscribedCharacteristics" :key="uuid" class="cell">
         <div text-sm opacity-50>
-          {{ t('param.speed-tas') }}
+          {{ t(`param.${uuid}`) }}
         </div>
         <div text-4xl>
-          {{ bt.lns.tas.value !== null ? bt.lns.tas.value : '--' }}
-        </div>
-      </div>
-      <div v-if="bt.lns.ias.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.speed-ias') }}
-        </div>
-        <div text-4xl>
-          {{ bt.lns.ias.value !== null ? bt.lns.ias.value : '--' }}
-        </div>
-      </div>
-      <div v-if="bt.lns.tas.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.speed-eas') }}
-        </div>
-        <div text-4xl>
-          {{ calculateEAS !== null ? calculateEAS : '--' }}
-        </div>
-      </div>
-
-      <div v-if="bt.ess.pressure.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.altitude-p') }}
-        </div>
-        <div text-4xl>
-          {{ calculateAltitudeP !== null ? calculateAltitudeP.toFixed(1) : '--' }}
-        </div>
-      </div>
-      <div v-if="bt.ess.pressure.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.pressure') }}
-        </div>
-        <div text-4xl>
-          {{ bt.ess.pressure.value !== null ? bt.ess.pressure.value : '--' }}
-        </div>
-      </div>
-      <div v-if="bt.ess.temperature.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.temperature') }}
-        </div>
-        <div text-4xl>
-          {{ bt.ess.temperature.value !== null ? bt.ess.temperature.value : '--' }}
-        </div>
-      </div>
-      <div v-if="bt.bas.batteryLevel.characteristic" class="cell">
-        <div text-sm opacity-50>
-          {{ t('param.battery-level') }}
-        </div>
-        <div text-4xl :class="{ 'text-red-600': bt.bas.batteryLevel.value !== null && bt.bas.batteryLevel.value < 10 }">
-          {{ bt.bas.batteryLevel.value !== null ? bt.bas.batteryLevel.value : '--' }}
+          {{ getCharacteristicValue(uuid) }}
         </div>
       </div>
     </template>

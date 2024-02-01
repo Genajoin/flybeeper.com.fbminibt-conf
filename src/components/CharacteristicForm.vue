@@ -108,12 +108,28 @@ function uploadJson(event) {
     fileUploadInput.value.value = ''
   }
 }
+// const settings = ref()
+// function updateSetting(uuid) {
+//   // Обновление значения настройки
+//   console.log(`Updated setting ${uuid}: ${this.settings[uuid]}`);
+// }
 </script>
 
 <template>
   <template v-if="formValues !== {}">
     <div m-auto max-w-320 flex flex-wrap justify-center>
       <div text-right="" max-w-full min-w-340px flex-1>
+        <!--        <div> -->
+        <!--          <div v-for="characteristic in bt.FSSch" :key="characteristic.uuid"> -->
+        <!--            <label :for="characteristic.uuid">{{ characteristic.uuid }}</label> -->
+        <!--            <input -->
+        <!--              :id="characteristic.uuid" -->
+        <!--              v-model="settings[characteristic.uuid]" -->
+        <!--              type="number" -->
+        <!--              @input="updateSetting(characteristic.uuid)" -->
+        <!--            /> -->
+        <!--          </div> -->
+        <!--        </div> -->
         <div v-if="firmwareRevision >= '0.14'">
           <label for="silentOnGround">{{ t('sett.silent') }}: </label>
           <input

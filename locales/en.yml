@@ -38,6 +38,14 @@ param:
   accuracy: Accuracy, m
   accuracy-altitude: Altitude Accuracy, m
   heading: Heading, °
+  00002a6d-0000-1000-8000-00805f9b34fb: Pressure, Pa
+  00002a6c-0000-1000-8000-00805f9b34fb: Barometric Altitude, m
+  00002a6e-0000-1000-8000-00805f9b34fb: Temperature, °C
+  234337bf-f931-4d2d-a13c-07e2f06a0249: True Airspeed, km/h
+  234337bf-f931-4d2d-a13c-07e2f06a0248: Indicated Airspeed, km/h
+  ed3f945f-061e-45f3-ae59-1b26249ea7f4: Equivalent Airspeed, km/h
+  234337bf-f931-4d2d-a13c-07e2f06a0240: Different pressure, Pa
+  00002a19-0000-1000-8000-00805f9b34fb: Battery Level, %
 about:
   p1: FlyBeeper PS1 — a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, and data is transmitted via Bluetooth.
   p2: This web application can connect to the device and display all the information. Additionally, with permission, satellite navigation data can be displayed.
@@ -48,6 +56,8 @@ about:
   install-app: Install Application
   p4: Detailed project description can be found on the website.
   link-description: Project Page
+  link-blog: Project Page
+  link-market: FlyBeeper Shop
 sett:
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep

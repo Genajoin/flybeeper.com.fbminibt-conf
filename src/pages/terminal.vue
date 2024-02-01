@@ -7,16 +7,15 @@ const { t } = useI18n()
 const bt = useBluetoothStore()
 const loc = useLocationStore()
 const log = ref<string>('')
-const calculateAltitudeP = ref<number | null>(null)
+const header = ref<string>('')
 
 watchEffect(() => {
   logData2()
-  calculateAltitudeP.value = bt.ess.pressure.characteristic && bt.ess.pressure.value !== null ? ((4433000 * (1.0 - (bt.ess.pressure.value / 101325.0) ** 0.1903)) | 0) / 100 : null
 })
 
 onMounted(() => {
   loc.startWatchingSpeed()
-  logData()
+  getHeader()
 })
 
 onBeforeUnmount(() => {
@@ -34,16 +33,44 @@ function getTimestamp() {
 }
 
 function logData2() {
-  const timestamp = getTimestamp()
-  log.value = `${timestamp};${bt.ess.pressure.value};${bt.ess.temperature.value};${calculateAltitudeP.value};${loc.speed};${loc.heading};${loc.altitude};${loc.accuracy}\n${log.value}`
+  let logEntry = getTimestamp()
+
+  // Проход по всем значениям в characteristicsData
+  for (const uuid in bt.characteristicsData) {
+    if (Object.hasOwnProperty.call(bt.characteristicsData, uuid))
+      logEntry += `;${bt.getValByUuid(uuid, bt.characteristicsData[uuid])}`
+  }
+
+  // Добавление значений из loc
+  logEntry += `;${loc.speed || ''};${loc.heading || ''};${loc.altitude || ''};${loc.accuracy || ''}`
+
+  // Добавление к строке лога
+  log.value = `${logEntry}\n${log.value}`
 }
 
-function logData() {
-  log.value = 'Timestamp;Pressure;Temperature;AltitudeP;Speed;Heading;AltitudeG;Accuracy'
+function getHeader() {
+  const _header = ['Timestamp']
+
+  for (const key in bt.subscribedCharacteristics)
+    _header.push(`${t(`param.${bt.subscribedCharacteristics[key]}`)}`)
+
+  // Добавление значений из loc в заголовок
+  _header.push(t('param.speed-g'))
+  _header.push(t('param.heading'))
+  _header.push(t('param.altitude-g'))
+  _header.push(t('param.accuracy'))
+
+  // Преобразование заголовка в строку
+  header.value = `${_header.join(';')}`
 }
+
+watch(() => bt.subscribedCharacteristics.length, () => {
+  getHeader()
+  log.value = `${header.value}\n${log.value}`
+})
 
 function saveProtocolToFile() {
-  const blob = new Blob([log.value], { type: 'text/plain' })
+  const blob = new Blob([header.value, '\n', log.value], { type: 'text/plain' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
   const timestamp = getTimestamp()
@@ -54,7 +81,8 @@ function saveProtocolToFile() {
   document.body.removeChild(a)
 }
 function clearProtocol() {
-  logData()
+  log.value = ''
+  getHeader()
 }
 </script>
 
@@ -68,6 +96,7 @@ function clearProtocol() {
       {{ t('msg.clear-protocol') }}
     </button>
     <div mx-auto max-w-full w-120>
+      <pre text-left>{{ header }}</pre>
       <pre text-left>{{ log }}</pre>
     </div>
     <noSleep />

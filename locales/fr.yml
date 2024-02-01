@@ -39,6 +39,14 @@ param:
   accuracy: Précision, m
   accuracy-altitude: Précision d'altitude, m
   heading: Cap, °
+  00002a6d-0000-1000-8000-00805f9b34fb: Pression, Pa
+  00002a6c-0000-1000-8000-00805f9b34fb: Altitude barométrique, m
+  00002a6e-0000-1000-8000-00805f9b34fb: Température, °C
+  234337bf-f931-4d2d-a13c-07e2f06a0249: Vitesse de l'air véritable, km/h
+  234337bf-f931-4d2d-a13c-07e2f06a0248: Vitesse de l'air indiquée, km/h
+  ed3f945f-061e-45f3-ae59-1b26249ea7f4: Vitesse de l'air équivalente, km/h
+  234337bf-f931-4d2d-a13c-07e2f06a0240: Pression différente, Pa
+  00002a19-0000-1000-8000-00805f9b34fb: Niveau de batterie, %
 about:
   p1: FlyBeeper PS1 — un dispositif pour parapentes et deltaplanes. L'appareil est équipé d'un capteur de pression atmosphérique et les données sont transmises via Bluetooth.
   p2: Cette application web peut se connecter à l'appareil et afficher toutes les informations. De plus, avec la permission, il est possible d'afficher les données de navigation par satellite.
@@ -49,6 +57,8 @@ about:
   install-app: Installer l'application
   p4: Vous pouvez trouver une description détaillée du projet sur le site web.
   link-description: Page du projet
+  link-blog: Page du Projet
+  link-market: Boutique FlyBeeper
 sett:
   silent: Silencieux au sol
   bt-never-sleep: Bluetooth ne dort jamais

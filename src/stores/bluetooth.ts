@@ -5,15 +5,15 @@ interface BtCh {
   value: number | string | null
 }
 
-interface iESS {
-  temperature: BtCh
-  pressure: BtCh
-}
-
-interface iLNS {
-  tas: BtCh
-  ias: BtCh
-}
+// interface iESS {
+//   temperature: BtCh
+//   pressure: BtCh
+// }
+//
+// interface iLNS {
+//   tas: BtCh
+//   ias: BtCh
+// }
 
 interface iDIS {
   modelNumberString: BtCh
@@ -21,9 +21,9 @@ interface iDIS {
   firmwareRevisionString: BtCh
 }
 
-interface iBAS {
-  batteryLevel: BtCh
-}
+// interface iBAS {
+//   batteryLevel: BtCh
+// }
 
 interface iAIOS {
   digital: BtCh
@@ -70,18 +70,20 @@ const indexes = {
 export const useBluetoothStore = defineStore('bluetoothStore', {
   state: () => ({
     bleAvailable: 'bluetooth' in navigator,
-    device: null,
+    device: null as BluetoothDevice,
     isConnected: false,
     isConnecting: false,
     isDisconnecting: false,
     devName: '',
+    characteristicsData: {},
+    subscribedCharacteristics: [],
 
     settings: {} as iFbMiniBtSettings,
 
-    ess: { temperature: { characteristic: null, value: null }, pressure: { characteristic: null, value: null } } as iESS,
-    lns: { tas: { characteristic: null, value: null }, ias: { characteristic: null, value: null } } as iLNS,
+    // ess: { temperature: { characteristic: null, value: null }, pressure: { characteristic: null, value: null } } as iESS,
+    // lns: { tas: { characteristic: null, value: null }, ias: { characteristic: null, value: null } } as iLNS,
     aios: { digital: { characteristic: null, value: null } } as iAIOS,
-    bas: { batteryLevel: { characteristic: null, value: null } } as iBAS,
+    // bas: { batteryLevel: { characteristic: null, value: null } } as iBAS,
     dis: {
       modelNumberString: { characteristic: null, value: null },
       manufacturerNameString: { characteristic: null, value: null },
@@ -91,6 +93,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       miniBtSettings: { characteristic: null, value: null } as BtCh,
       miniBtSimulation: { characteristic: null, value: null } as BtCh,
     },
+    FSSch: null as BluetoothRemoteGATTService[],
   }),
   actions: {
     async toggleConnectionBT() {
@@ -124,24 +127,21 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // Получение списка сервисов
         const services = await server.getPrimaryServices()
 
+        // Проход по сервисам
+        for (const service of services) {
+          // Получение характеристик сервиса
+          const characteristics = await service.getCharacteristics()
+
+          // Проверка, есть ли подписка на изменение для каждой характеристики
+          for (const characteristic of characteristics)
+            await this.subscribeToCharacteristic(characteristic)
+        }
+
         // Поиск нужных сервисов по UUID
-        const BAS = services.find(service => service.uuid === '0000180f-0000-1000-8000-00805f9b34fb') // battery_service
         const DIS = services.find(service => service.uuid === '0000180a-0000-1000-8000-00805f9b34fb') // device_information
-        const ESS = services.find(service => service.uuid === '0000181a-0000-1000-8000-00805f9b34fb') // environmental_sensing
-        const LNS = services.find(service => service.uuid === '00001819-0000-1000-8000-00805f9b34fb') // location_and_navigation
         const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
 
         // Чтение данных после успешного подключения
-
-        // Battery Service
-        if (BAS) {
-          const characteristics = await BAS.getCharacteristics()
-          this.bas.batteryLevel.characteristic = characteristics.find(ch => ch.uuid === '00002a19-0000-1000-8000-00805f9b34fb')
-          if (this.bas.batteryLevel.characteristic) {
-            const value = await this.bas.batteryLevel.characteristic.readValue()
-            this.bas.batteryLevel.value = value.getUint8(0)
-          }
-        }
 
         // Device Information Service
         if (DIS) {
@@ -172,44 +172,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // FlyBeeper settings service
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
+          this.FSSch = characteristics
           this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
           this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
           await this.readSettings()
         }
 
-        // Environmental Sensing Service
-        if (ESS) {
-          const characteristics = await ESS.getCharacteristics()
-
-          this.ess.pressure.characteristic = characteristics.find(ch => ch.uuid === '00002a6d-0000-1000-8000-00805f9b34fb') // pressure
-          if (this.ess.pressure.characteristic) {
-            await this.ess.pressure.characteristic.startNotifications()
-            this.ess.pressure.characteristic.addEventListener('characteristicvaluechanged', this.handlePressureNotifications)
-          }
-
-          this.ess.temperature.characteristic = characteristics.find(ch => ch.uuid === '00002a6e-0000-1000-8000-00805f9b34fb') // temperature
-          if (this.ess.temperature.characteristic) {
-            await this.ess.temperature.characteristic.startNotifications()
-            this.ess.temperature.characteristic.addEventListener('characteristicvaluechanged', this.handleTemperatureNotifications)
-          }
-        }
-
-        // Location and Navigation Service
-        if (LNS) {
-          const characteristics = await LNS.getCharacteristics()
-
-          this.lns.tas.characteristic = characteristics.find(ch => ch.uuid === '234337bf-f931-4d2d-a13c-07e2f06a0249')
-          if (this.lns.tas.characteristic) {
-            await this.lns.tas.characteristic.startNotifications()
-            this.lns.tas.characteristic.addEventListener('characteristicvaluechanged', this.handleTasNotifications)
-          }
-
-          this.lns.ias.characteristic = characteristics.find(ch => ch.uuid === '234337bf-f931-4d2d-a13c-07e2f06a0248')
-          if (this.lns.ias.characteristic) {
-            await this.lns.ias.characteristic.startNotifications()
-            this.lns.ias.characteristic.addEventListener('characteristicvaluechanged', this.handleIasNotifications)
-          }
-        }
         this.isConnected = true
         this.isConnecting = false
       }
@@ -222,45 +190,22 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       if (!this.isConnected || this.isDisconnecting)
         return
 
-      if (this.ess.pressure.characteristic) {
-        try {
-          await this.ess.pressure.characteristic.stopNotifications()
-          this.ess.pressure.characteristic.removeEventListener('characteristicvaluechanged', this.handlePressureNotifications)
-        }
-        catch (error) {
-          // console.log(`Argh! ${error}`)
-        }
-      }
-      if (this.ess.temperature.characteristic) {
-        try {
-          await this.ess.temperature.characteristic.stopNotifications()
-          this.ess.temperature.characteristic.removeEventListener('characteristicvaluechanged', this.handleTemperatureNotifications)
-        }
-        catch (error) {
-          // console.log(`Argh! ${error}`)
-        }
-      }
-      if (this.lns.tas.characteristic) {
-        try {
-          await this.lns.tas.characteristic.stopNotifications()
-          this.lns.tas.characteristic.removeEventListener('characteristicvaluechanged', this.handleTasNotifications)
-        }
-        catch (error) {
-          // console.log(`Argh! ${error}`)
-        }
-      }
-      if (this.lns.ias.characteristic) {
-        try {
-          await this.lns.ias.characteristic.stopNotifications()
-          this.lns.ias.characteristic.removeEventListener('characteristicvaluechanged', this.handleIasNotifications)
-        }
-        catch (error) {
-          // console.log(`Argh! ${error}`)
-        }
+      // Получение списка сервисов
+      const services = await this.device.gatt.getPrimaryServices()
+
+      // Проход по сервисам
+      for (const service of services) {
+        // Получение характеристик сервиса
+        const characteristics = await service.getCharacteristics()
+
+        // Проверка, есть ли подписка на изменение для каждой характеристики
+        for (const characteristic of characteristics)
+          await this.unsubscribeFromCharacteristic(characteristic)
       }
       try {
         this.isDisconnecting = true
         await this.device.gatt.disconnect()
+        this.device.removeEventListener('gattserverdisconnected', this.onDisconnected)
         this.isConnected = false
         this.isDisconnecting = false
       }
@@ -273,42 +218,37 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       // Обработка отключения
       this.isConnected = false
       this.isDisconnecting = false
-      this.device = null
-
-      this.lns.tas = { characteristic: null, value: null }
-      this.lns.ias = { characteristic: null, value: null }
-      this.ess.pressure = { characteristic: null, value: null }
-      this.ess.temperature = { characteristic: null, value: null }
-      this.bas.batteryLevel = { characteristic: null, value: null }
+      this.device = {}
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
       this.fss.miniBtSettings = { characteristic: null, value: null }
       this.fss.miniBtSimulation = { characteristic: null, value: null }
       this.settings = {} as iFbMiniBtSettings
+      this.subscribedCharacteristics = []
+      this.characteristicsData = {}
     },
-    handlePressureNotifications(event) {
-      const value = event.target.value
-      const p = value.getUint32(0, true)
-      this.ess.pressure.value = p / 10
+    async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
+      if (characteristic.properties.notify) {
+        characteristic.startNotifications().then(() => {
+          characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
+          this.subscribedCharacteristics.push(characteristic.uuid)
+          if (characteristic.properties.read)
+            return characteristic.readValue()
+        })
+      }
     },
-    handleTemperatureNotifications(event) {
-      this.ess.temperature.value = event.target.value.getInt16(0, true) / 100
-    },
-    handleTasNotifications(event) {
-      this.lns.tas.value = event.target.value.getInt16(0, true) / 10
-    },
-    handleIasNotifications(event) {
-      this.lns.ias.value = event.target.value.getInt16(0, true) / 10
-    },
-    getEAS(v, p, t): null | number {
-      if (v == null || p == null || t == null)
-        return null
-      const M = 0.02895
-      const T = 273.15 + t
-      const rho = M * p / 8.31447 / T
-      const phi = rho / 1.225
-      return ((v * Math.sqrt(phi) * 10) | 0) / 10
+    async unsubscribeFromCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
+      const index = this.subscribedCharacteristics.indexOf(characteristic.uuid)
+      if (index !== -1) {
+        await characteristic.stopNotifications()
+        characteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
+        this.subscribedCharacteristics.splice(index, 1)
+      }
     },
 
+    async handleCharacteristicChange(event: Event) {
+      const characteristic = event.target as BluetoothRemoteGATTCharacteristic
+      this.characteristicsData[characteristic.uuid] = characteristic.value
+    },
     async readSettings() {
       if (!this.dis.manufacturerNameString.characteristic && this.dis.manufacturerNameString.value !== 'FlyBeeper')
         return
@@ -435,7 +375,24 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       view.setInt16(0, value, true)
       this.fss.miniBtSimulation.characteristic.writeValue(buffer)
     },
-
+    getValByUuid(uuid, val) {
+      switch (uuid) {
+        case '00002a19-0000-1000-8000-00805f9b34fb': // bat
+          return val.getUint8(0)
+        case '234337bf-f931-4d2d-a13c-07e2f06a0249': // tas
+        case '234337bf-f931-4d2d-a13c-07e2f06a0248': // ias
+        case 'ed3f945f-061e-45f3-ae59-1b26249ea7f4': // eas
+        case '234337bf-f931-4d2d-a13c-07e2f06a0240': // dp
+          return val.getInt16(0, true) / 10
+        case '00002a6e-0000-1000-8000-00805f9b34fb': // temperature
+        case '00002a6c-0000-1000-8000-00805f9b34fb': // elevation
+          return val.getInt16(0, true) / 100
+        case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
+          return val.getUint32(0, true) / 10
+        default:
+          return '--'
+      }
+    },
   },
 })
 
