@@ -1,29 +1,16 @@
 import { defineStore } from 'pinia'
+import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 
 interface BtCh {
   characteristic: object | null
   value: number | string | null
 }
 
-// interface iESS {
-//   temperature: BtCh
-//   pressure: BtCh
-// }
-//
-// interface iLNS {
-//   tas: BtCh
-//   ias: BtCh
-// }
-
 interface iDIS {
   modelNumberString: BtCh
   manufacturerNameString: BtCh
   firmwareRevisionString: BtCh
 }
-
-// interface iBAS {
-//   batteryLevel: BtCh
-// }
 
 interface iAIOS {
   digital: BtCh
@@ -77,7 +64,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     devName: '',
     characteristicsData: {},
     subscribedCharacteristics: [],
-
+    bleCharacteristics: [] as BleCharacteristicImpl[],
     settings: {} as iFbMiniBtSettings,
 
     // ess: { temperature: { characteristic: null, value: null }, pressure: { characteristic: null, value: null } } as iESS,
@@ -93,7 +80,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       miniBtSettings: { characteristic: null, value: null } as BtCh,
       miniBtSimulation: { characteristic: null, value: null } as BtCh,
     },
-    FSSch: null as BluetoothRemoteGATTService[],
+    FSSch: [] as BluetoothRemoteGATTService[],
   }),
   actions: {
     async toggleConnectionBT() {
@@ -132,10 +119,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         for (const service of services) {
           // Получение характеристик сервиса
           const characteristics = await service.getCharacteristics()
-
           // Проверка, есть ли подписка на изменение для каждой характеристики
-          for (const characteristic of characteristics)
-            await this.subscribeToCharacteristic(characteristic)
+          for (const ch of characteristics) {
+            const bleCharacteristic = new BleCharacteristicImpl(ch)
+            // await bleCharacteristic.getUserFormatDescriptor();
+            this.bleCharacteristics.push(bleCharacteristic)
+            await this.subscribeToCharacteristic(ch)
+          }
         }
 
         // Поиск нужных сервисов по UUID
@@ -226,6 +216,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.settings = {} as iFbMiniBtSettings
       this.subscribedCharacteristics = []
       this.characteristicsData = {}
+      this.bleCharacteristics = []
     },
     async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
       if (characteristic.properties.notify) {
