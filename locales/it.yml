@@ -47,7 +47,7 @@ param:
   ed3f945f-061e-45f3-ae59-1b26249ea7f4: Velocità dell'aria equivalente, km/h
   234337bf-f931-4d2d-a13c-07e2f06a0240: Pressione differente, Pa
   00002a19-0000-1000-8000-00805f9b34fb: Livello della batteria, %
-  00002a56-0000-1000-8000-00805f9b34fb: Pulsanti
+  00002a56-0000-1000-8000-00805f9b34fb: Pulsanti, Maschera di bit
 about:
   p1: FlyBeeper PS1 — un dispositivo per parapendii e deltaplani. Il dispositivo è dotato di un sensore di pressione atmosferica e i dati vengono trasmessi via Bluetooth.
   p2: Questa applicazione web può connettersi al dispositivo e visualizzare tutte le informazioni. Inoltre, con il permesso, è possibile visualizzare i dati della navigazione satellitare.
@@ -88,4 +88,4 @@ sett:
 update:
   how-to: Come aggiornare
   changelog: Registro modifiche
-  descr: è la migliore soluzione da utilizzare per aggiornare il firmware. Installa e avvia l'applicazione. Nella scheda `Scan`, cerca un dispositivo con il nome `FBminiBT` e fai clic sul pulsante `connect`. Sulla scheda che si apre, vicino al pulsante `disconnect`, fai clic sull'icona `DFU`. Seleziona il file firmware precedentemente scaricato `app_update.bin` nel file system. Seleziona `Test and Confirm` e premi `Ok`. Dopo 15 secondi, il file verrà trasferito, verificato e il dispositivo si riavvierà.
+  descr: è la migliore soluzione da utilizzare per aggiornare il firmware. Installa e avvia l'applicazione. Nella scheda `Scan`, cerca un dispositivo con il nome `FBminiBT` e fai clic sul pulsante `connect`. Sulla scheda che si apre, vicino al pulsante `disconnect`, fai clic sull'icona `DFU`. Seleziona il file firmware precedentemente scaricato `app_update.bin` nel file system. Seleziona `Test and Confirm` e premi `Ok`. Dopo 15 secondi, il file verrà trasferito, verificato e il dispositivo si riavvierà. La batteria deve essere carica.

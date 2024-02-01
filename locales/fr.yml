@@ -47,7 +47,7 @@ param:
   ed3f945f-061e-45f3-ae59-1b26249ea7f4: Vitesse de l'air équivalente, km/h
   234337bf-f931-4d2d-a13c-07e2f06a0240: Pression différente, Pa
   00002a19-0000-1000-8000-00805f9b34fb: Niveau de batterie, %
-  00002a56-0000-1000-8000-00805f9b34fb: Boutons
+  00002a56-0000-1000-8000-00805f9b34fb: Boutons, Masque de bits
 about:
   p1: FlyBeeper PS1 — un dispositif pour parapentes et deltaplanes. L'appareil est équipé d'un capteur de pression atmosphérique et les données sont transmises via Bluetooth.
   p2: Cette application web peut se connecter à l'appareil et afficher toutes les informations. De plus, avec la permission, il est possible d'afficher les données de navigation par satellite.
@@ -88,4 +88,4 @@ sett:
 update:
   how-to: Comment mettre à jour
   changelog: Journal des modifications
-  descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant le nom `FBminiBT` et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera.
+  descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant le nom `FBminiBT` et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera. La batterie doit être pleine.
