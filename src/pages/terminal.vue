@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref, watchEffect } from 'vue'
-import useBluetoothStore from '~/stores/bluetooth'
-import useLocationStore from '~/stores/location'
 
 const { t } = useI18n()
 const bt = useBluetoothStore()
@@ -34,12 +32,10 @@ function getTimestamp() {
 
 function logData2() {
   let logEntry = getTimestamp()
-
-  // Проход по всем значениям в characteristicsData
-  for (const uuid in bt.characteristicsData) {
-    if (Object.hasOwnProperty.call(bt.characteristicsData, uuid))
-      logEntry += `;${bt.getValByUuid(uuid, bt.characteristicsData[uuid])}`
-  }
+  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
+  // Проход по всем значениям в characteristics
+  for (const c of list)
+    logEntry += `;${c.formattedValue}`
 
   // Добавление значений из loc
   logEntry += `;${loc.speed || ''};${loc.heading || ''};${loc.altitude || ''};${loc.accuracy || ''}`
@@ -51,8 +47,9 @@ function logData2() {
 function getHeader() {
   const _header = ['Timestamp']
 
-  for (const key in bt.subscribedCharacteristics)
-    _header.push(`${t(`param.${bt.subscribedCharacteristics[key]}`)}`)
+  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
+  for (const c of list)
+    _header.push(`${t(`param.${c.characteristic.uuid}`)}`)
 
   // Добавление значений из loc в заголовок
   _header.push(t('param.speed-g'))
@@ -64,7 +61,7 @@ function getHeader() {
   header.value = `${_header.join(';')}`
 }
 
-watch(() => bt.subscribedCharacteristics.length, () => {
+watch(() => bt.bleCharacteristics.filter(c => c.characteristic.properties.notify).length, () => {
   getHeader()
   log.value = `${header.value}\n${log.value}`
 })

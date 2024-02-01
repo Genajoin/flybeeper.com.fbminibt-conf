@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useLocationStore } from '~/stores/location'
 
 const { t } = useI18n()
 const bt = useBluetoothStore()

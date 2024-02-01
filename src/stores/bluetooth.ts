@@ -200,28 +200,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.characteristicsData = {}
       this.bleCharacteristics = []
     },
-    // async subscribeToCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
-    //   if (characteristic.properties.notify) {
-    //     await characteristic.startNotifications()
-    //     characteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
-    //     this.subscribedCharacteristics.push(characteristic.uuid)
-    //     if (characteristic.properties.read)
-    //       await characteristic.readValue()
-    //   }
-    // },
-    // async unsubscribeFromCharacteristic(characteristic: BluetoothRemoteGATTCharacteristic) {
-    //   const index = this.subscribedCharacteristics.indexOf(characteristic.uuid)
-    //   if (index !== -1) {
-    //     await characteristic.stopNotifications()
-    //     characteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristicChange)
-    //     this.subscribedCharacteristics.splice(index, 1)
-    //   }
-    // },
-    //
-    // async handleCharacteristicChange(event: Event) {
-    //   const characteristic = event.target as BluetoothRemoteGATTCharacteristic
-    //   this.characteristicsData[characteristic.uuid] = characteristic.value
-    // },
+
     async readSettings() {
       if (!this.dis.manufacturerNameString.characteristic && this.dis.manufacturerNameString.value !== 'FlyBeeper')
         return
