@@ -151,79 +151,49 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   }
 
   formatValueByFormat(value, format, exponent) {
+    const dots = []
+
     switch (format) {
+      case 0x01: // bool
+        return value.getUint8(0) === 1
       case 0x04: // uint8
-        return exponent ? new DataView(value.buffer).getUint8(0) * 10 ** exponent : new DataView(value.buffer).getUint8(0)
+        return exponent ? value.getUint8(0) * 10 ** exponent : value.getUint8(0)
       case 0x06: // uint16
-        return exponent ? new DataView(value.buffer).getUint16(0, true) * 10 ** exponent : new DataView(value.buffer).getUint16(0, true)
-      case 0x07: // uint24
-        return exponent
-          ? (
-              (new DataView(value.buffer).getUint8(0) << 16)
-              | (new DataView(value.buffer).getUint8(1) << 8)
-              | new DataView(value.buffer).getUint8(2)
-            ) * 10 ** exponent
-          : (
-              (new DataView(value.buffer).getUint8(0) << 16)
-              | (new DataView(value.buffer).getUint8(1) << 8)
-              | new DataView(value.buffer).getUint8(2)
-            )
-
+        return exponent ? value.getUint16(0, true) * 10 ** exponent : value.getUint16(0, true)
       case 0x08: // uint32
-        return exponent ? new DataView(value.buffer).getUint32(0, true) * 10 ** exponent : new DataView(value.buffer).getUint32(0, true)
-
-      case 0x0A: // uint64
-        return exponent ? Number(new DataView(value.buffer).getBigUint64(0, true)) * 10 ** exponent : Number(new DataView(value.buffer).getBigUint64(0, true))
-
+        return exponent ? value.getUint32(0, true) * 10 ** exponent : value.getUint32(0, true)
       case 0x0C: // sint8
-        return exponent ? new DataView(value.buffer).getInt8(0) * 10 ** exponent : new DataView(value.buffer).getInt8(0)
-
+        return exponent ? value.getInt8(0) * 10 ** exponent : value.getInt8(0)
       case 0x0E: // sint16
-        return exponent ? new DataView(value.buffer).getInt16(0, true) * 10 ** exponent : new DataView(value.buffer).getInt16(0, true)
-
-      case 0x0F: // sint24
-        return exponent
-          ? (
-              (new DataView(value.buffer).getInt8(0) << 16)
-              | (new DataView(value.buffer).getUint8(1) << 8)
-              | new DataView(value.buffer).getUint8(2)
-            ) * 10 ** exponent
-          : (
-              (new DataView(value.buffer).getInt8(0) << 16)
-              | (new DataView(value.buffer).getUint8(1) << 8)
-              | new DataView(value.buffer).getUint8(2)
-            )
-
+        return exponent ? value.getInt16(0, true) * 10 ** exponent : value.getInt16(0, true)
       case 0x10: // sint32
-        return exponent ? new DataView(value.buffer).getInt32(0, true) * 10 ** exponent : new DataView(value.buffer).getInt32(0, true)
-
+        return exponent ? value.getInt32(0, true) * 10 ** exponent : value.getInt32(0, true)
       case 0x12: // sint64
-        return exponent ? Number(new DataView(value.buffer).getBigInt64(0, true)) * 10 ** exponent : Number(new DataView(value.buffer).getBigInt64(0, true))
-
+        return exponent ? Number(value.getBigInt64(0, true)) * 10 ** exponent : Number(value.getBigInt64(0, true))
       case 0x14: // float32
-        return exponent ? new DataView(value.buffer).getFloat32(0, true) * 10 ** exponent : new DataView(value.buffer).getFloat32(0, true)
-
+        return exponent ? value.getFloat32(0, true) * 10 ** exponent : value.getFloat32(0, true)
       case 0x15: // float64
-        return exponent ? new DataView(value.buffer).getFloat64(0, true) * 10 ** exponent : new DataView(value.buffer).getFloat64(0, true)
-
+        return exponent ? value.getFloat64(0, true) * 10 ** exponent : value.getFloat64(0, true)
       case 0x16: // EE 11073-20601 16-bit SFLOAT
-        return exponent ? this.decodeSFloat(new DataView(value.buffer).getUint16(0, true)) * 10 ** exponent : this.decodeSFloat(new DataView(value.buffer).getUint16(0, true))
-
+        return exponent ? this.decodeSFloat(value.getUint16(0, true)) * 10 ** exponent : this.decodeSFloat(value.getUint16(0, true))
       case 0x17: // IEEE 11073-20601 32-bit FLOAT
-        return exponent ? this.decodeFloat(new DataView(value.buffer).getUint32(0, true)) * 10 ** exponent : this.decodeFloat(new DataView(value.buffer).getUint32(0, true))
-
+        return exponent ? this.decodeFloat(value.getUint32(0, true)) * 10 ** exponent : this.decodeFloat(value.getUint32(0, true))
       case 0x18: // duint16  IEEE 11073-20601 nomenclature code
-        return exponent ? new DataView(value.buffer).getUint16(0, true) / 65536 * 10 ** exponent : new DataView(value.buffer).getUint16(0, true) / 65536
-
+        return exponent ? value.getUint16(0, true) / 65536 * 10 ** exponent : value.getUint16(0, true) / 65536
       case 0x19: // utf8s
-        return new TextDecoder('utf-8').decode(new DataView(value.buffer).buffer)
-
+        return new TextDecoder('utf-8').decode(value.buffer)
       case 0x1A: // utf16s
-        return new TextDecoder('utf-16').decode(new DataView(value.buffer).buffer)
+        return new TextDecoder('utf-16').decode(value.buffer)
+
+      case 0x1B: // struct
+        for (let i = 0; i < 12; i++)
+          dots[i] = value.getInt16(i * 2, true)
+
+        return dots
 
       default:
         console.error(`Unsupported value format: ${format}`)
-        return new DataView(value.buffer)
+        return value
     }
   }
 
@@ -281,6 +251,81 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     this.value = await this.getValue()
     this.formattedValue.value = this.value !== null ? this.formatValue(this.value) : null
     return this.formattedValue.value
+  }
+
+  async setFormattedValue(): Promise<any> {
+    if (this.presentationFormatDescriptor === null || this.formattedValue.value === null)
+      return
+    const value = this.convertFormattedValueToDataView(this.formattedValue, this.presentationFormatDescriptor.format, this.presentationFormatDescriptor.exponent)
+    if (!this.compareValues(value, this.value)) {
+      this.characteristic.writeValue(value)
+        .then(() => this.value = value)
+    }
+  }
+
+  /**
+   * Возвращает true если два DataView равны по данным
+   * @param value1
+   * @param value2
+   * @private
+   */
+  private compareValues(value1: DataView, value2: DataView): boolean {
+    if (value1.byteLength !== value2.byteLength)
+      return false
+
+    for (let i = 0; i < value1.byteLength; i++) {
+      const val1 = value1.getUint8(i)
+      const val2 = value2.getUint8(i)
+      if (val1 !== val2)
+        return false
+    }
+    return true
+  }
+
+  private convertFormattedValueToDataView(formattedValue: any, format: number, exponent: number): DataView {
+    let dataView: DataView
+
+    switch (format) {
+      case 0x01: // bool
+        dataView = new DataView(new ArrayBuffer(1))
+        dataView.setUint8(0, formattedValue ? 0x01 : 0x00)
+        break
+
+      case 0x0C: // sint8
+        // Преобразовать 8-битное целое значение
+        dataView = new DataView(new ArrayBuffer(1))
+        dataView.setInt8(0, formattedValue / (10 ** exponent))
+        break
+
+      case 0x0E: // sint16
+        // Преобразовать 16-битное целое значение
+        dataView = new DataView(new ArrayBuffer(2))
+        dataView.setInt16(0, formattedValue / (10 ** exponent), true) // true для little-endian
+        break
+
+      case 0x1B: // structure (array)
+        // Преобразовать formattedValue как массив int16 в dataView
+        if (Array.isArray(formattedValue) && formattedValue.every((value: any) => typeof value === 'number')) {
+          // Создаем новый буфер, в который будем записывать int16 значения
+          const buffer = new ArrayBuffer(formattedValue.length * 2)
+          const view = new DataView(buffer)
+
+          // Записываем каждое значение int16 в буфер
+          for (let i = 0; i < formattedValue.length; i++)
+            view.setInt16(i * 2, formattedValue[i], true) // Little-endian
+
+          dataView = view
+        }
+        else {
+          throw new Error('Invalid formattedValue for structure (array)')
+        }
+        break
+
+      default:
+        throw new Error(`Unsupported format: ${format}`)
+    }
+
+    return dataView
   }
 
   private async getDescriptors(): Promise<any> {

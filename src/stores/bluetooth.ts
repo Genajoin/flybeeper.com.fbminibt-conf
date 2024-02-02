@@ -12,10 +12,6 @@ interface iDIS {
   firmwareRevisionString: BtCh
 }
 
-interface iAIOS {
-  digital: BtCh
-}
-
 interface iVarioCurves {
   buzzer_vario_dots
   buzzer_frequency_dots
@@ -67,10 +63,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     bleCharacteristics: [] as BleCharacteristicImpl[],
     settings: {} as iFbMiniBtSettings,
 
-    // ess: { temperature: { characteristic: null, value: null }, pressure: { characteristic: null, value: null } } as iESS,
-    // lns: { tas: { characteristic: null, value: null }, ias: { characteristic: null, value: null } } as iLNS,
-    aios: { digital: { characteristic: null, value: null } } as iAIOS,
-    // bas: { batteryLevel: { characteristic: null, value: null } } as iBAS,
     dis: {
       modelNumberString: { characteristic: null, value: null },
       manufacturerNameString: { characteristic: null, value: null },
@@ -80,7 +72,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       miniBtSettings: { characteristic: null, value: null } as BtCh,
       miniBtSimulation: { characteristic: null, value: null } as BtCh,
     },
-    FSSch: [] as BluetoothRemoteGATTService[],
+
   }),
   actions: {
     async toggleConnectionBT() {
@@ -153,7 +145,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // FlyBeeper settings service
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
-          this.FSSch = characteristics
+
           this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
           this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
           await this.readSettings()
@@ -327,25 +319,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       view.setInt16(0, value, true)
       this.fss.miniBtSimulation.characteristic.writeValue(buffer)
     },
-    getValByUuid(uuid, val) {
-      switch (uuid) {
-        case '00002a19-0000-1000-8000-00805f9b34fb': // battery
-        case '00002a56-0000-1000-8000-00805f9b34fb': // buttons
-          return val.getUint8(0)
-        case '234337bf-f931-4d2d-a13c-07e2f06a0249': // tas
-        case '234337bf-f931-4d2d-a13c-07e2f06a0248': // ias
-        case 'ed3f945f-061e-45f3-ae59-1b26249ea7f4': // eas
-        case '234337bf-f931-4d2d-a13c-07e2f06a0240': // dp
-          return val.getInt16(0, true) / 10
-        case '00002a6e-0000-1000-8000-00805f9b34fb': // temperature
-        case '00002a6c-0000-1000-8000-00805f9b34fb': // elevation
-          return val.getInt16(0, true) / 100
-        case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
-          return val.getUint32(0, true) / 10
-        default:
-          return '--'
-      }
-    },
+
   },
 })
 
