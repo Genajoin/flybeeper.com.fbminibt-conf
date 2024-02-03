@@ -1,7 +1,9 @@
-<script setup>
+<script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
+import type { iFbMiniBtSettings } from '~/stores/bluetooth'
+import type { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 
-const props = defineProps(['settings'])
+const props = defineProps(['settings', 'cha'])
 
 const curveInfo = [
   { key: 'buzzer_vario_dots', label: 'Vario,cm/s', humanLabel: 'Buzzer Vario', min: -2000, max: 2000, color: '#005500', lineWidth: 2 },
@@ -18,8 +20,36 @@ let sett = null
 
 onMounted(async () => {
   isDarkMode = isDark.value
-  sett = props.settings
-  await redraw()
+  if (props.settings !== undefined) {
+    const _sett = props.settings as iFbMiniBtSettings
+    updateSettings(_sett)
+    sett = {
+      buzzer_vario_dots: _sett.curves.buzzer_vario_dots,
+      buzzer_frequency_dots: _sett.curves.buzzer_frequency_dots,
+      buzzer_cycle_dots: _sett.curves.buzzer_cycle_dots,
+      buzzer_duty_dots: _sett.curves.buzzer_duty_dots,
+      climb_tone_on_threshold_cm: _sett.climb_tone_on_threshold_cm,
+      climb_tone_off_threshold_cm: _sett.climb_tone_off_threshold_cm,
+      sink_tone_on_threshold_cm: _sett.sink_tone_on_threshold_cm,
+      sink_tone_off_threshold_cm: _sett.sink_tone_off_threshold_cm,
+    }
+    await redraw()
+  }
+  else if (props.cha !== undefined) {
+    const _sett = props.cha as BleCharacteristicImpl[]
+    updateSettings(_sett)
+    sett = {
+      buzzer_vario_dots: _sett.find(c => c.characteristic.uuid === '512d6d89-7a6f-461c-983e-902b68d40f56').formattedValue,
+      buzzer_frequency_dots: _sett.find(c => c.characteristic.uuid === '8c090502-81c4-4d29-8d10-6db20607ace9').formattedValue,
+      buzzer_cycle_dots: _sett.find(c => c.characteristic.uuid === '9c3b62c0-e227-4f1a-8342-7e647015555d').formattedValue,
+      buzzer_duty_dots: _sett.find(c => c.characteristic.uuid === '98c16914-00ad-47ba-b625-148f0baaec47').formattedValue,
+      climb_tone_on_threshold_cm: _sett.find(c => c.characteristic.uuid === 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48').formattedValue,
+      climb_tone_off_threshold_cm: _sett.find(c => c.characteristic.uuid === '1673f137-66c1-4ff0-8db3-69b9ed7c33e0').formattedValue,
+      sink_tone_on_threshold_cm: _sett.find(c => c.characteristic.uuid === 'b713f438-42fe-46fe-b052-371a3b9e433a').formattedValue,
+      sink_tone_off_threshold_cm: _sett.find(c => c.characteristic.uuid === '8a78979b-1425-4160-b34b-ac5aadddeb21').formattedValue,
+    }
+    await redraw()
+  }
 })
 
 async function redraw() {
@@ -27,9 +57,8 @@ async function redraw() {
   const ctx = canvasRef.value.getContext('2d')
   ctx.clearRect(0, 0, canvasRef.value.width, canvasRef.value.height)
 
-  drawThresholds(canvasRef.value, sett.climb_tone_on_threshold_cm, sett.climb_tone_off_threshold_cm, sett.sink_tone_on_threshold_cm, sett.sink_tone_off_threshold_cm, sett.curves.buzzer_vario_dots,
-  )
-  drawCurves(canvasRef.value, sett.curves)
+  drawThresholds(canvasRef.value, sett.climb_tone_on_threshold_cm, sett.climb_tone_off_threshold_cm, sett.sink_tone_on_threshold_cm, sett.sink_tone_off_threshold_cm, sett.buzzer_vario_dots)
+  drawCurves(canvasRef.value, sett)
 }
 
 const _isDarkFunc = useDark({
@@ -38,11 +67,37 @@ const _isDarkFunc = useDark({
     redraw()
   },
 })
-
+function updateSettings(_sett) {
+  if (props.settings !== undefined) {
+    sett = {
+      buzzer_vario_dots: _sett.curves.buzzer_vario_dots,
+      buzzer_frequency_dots: _sett.curves.buzzer_frequency_dots,
+      buzzer_cycle_dots: _sett.curves.buzzer_cycle_dots,
+      buzzer_duty_dots: _sett.curves.buzzer_duty_dots,
+      climb_tone_on_threshold_cm: _sett.climb_tone_on_threshold_cm,
+      climb_tone_off_threshold_cm: _sett.climb_tone_off_threshold_cm,
+      sink_tone_on_threshold_cm: _sett.sink_tone_on_threshold_cm,
+      sink_tone_off_threshold_cm: _sett.sink_tone_off_threshold_cm,
+    }
+  }
+  else if (props.cha !== undefined) {
+    sett = {
+      buzzer_vario_dots: _sett.find(c => c.characteristic.uuid === '512d6d89-7a6f-461c-983e-902b68d40f56').formattedValue,
+      buzzer_frequency_dots: _sett.find(c => c.characteristic.uuid === '8c090502-81c4-4d29-8d10-6db20607ace9').formattedValue,
+      buzzer_cycle_dots: _sett.find(c => c.characteristic.uuid === '9c3b62c0-e227-4f1a-8342-7e647015555d').formattedValue,
+      buzzer_duty_dots: _sett.find(c => c.characteristic.uuid === '98c16914-00ad-47ba-b625-148f0baaec47').formattedValue,
+      climb_tone_on_threshold_cm: _sett.find(c => c.characteristic.uuid === 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48').formattedValue * 100,
+      climb_tone_off_threshold_cm: _sett.find(c => c.characteristic.uuid === '1673f137-66c1-4ff0-8db3-69b9ed7c33e0').formattedValue * 100,
+      sink_tone_on_threshold_cm: _sett.find(c => c.characteristic.uuid === 'b713f438-42fe-46fe-b052-371a3b9e433a').formattedValue * 100,
+      sink_tone_off_threshold_cm: _sett.find(c => c.characteristic.uuid === '8a78979b-1425-4160-b34b-ac5aadddeb21').formattedValue * 100,
+    }
+  }
+}
 function updateCurves(newSettings) {
-  sett = newSettings
+  updateSettings(newSettings)
   redraw()
 }
+
 defineExpose({ updateCurves })
 
 function scaleX(x, minX, xRange, canvasWidth) {

@@ -25,14 +25,13 @@ const lin2Conf = {
 }
 
 const firmwareRevision = computed(() => {
-  return (bt.dis.firmwareRevisionString) ? bt.dis.firmwareRevisionString.value : '0.0'
+  return (bt.dis.firmwareRevisionString.characteristic) ? bt.dis.firmwareRevisionString.value : '0.0'
 })
 
 const formValues = ref(cloneDeep(bt.settings))
 const originalValues = ref(cloneDeep(bt.settings))
 const tableChanged = ref(false)
 const simulateVario = ref(0)
-
 let simulateVarioTimeout = null
 let simulateInProgress = false
 
@@ -66,9 +65,7 @@ watch(simulateVario, (newValue) => {
 })
 
 async function updateCharacteristic() {
-  // await bt.writeMiniBtSettings(formValues.value)
-  for (const characteristic of bt.bleCharacteristics.filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
-    await characteristic.setFormattedValue()
+  await bt.writeMiniBtSettings(formValues.value)
 }
 
 function resetToDefault() {
@@ -111,200 +108,122 @@ function uploadJson(event) {
     fileUploadInput.value.value = ''
   }
 }
-// const settings = ref()
-
-function getTypeFromPresentationFormat(presentationFormatDescriptor) {
-  if (!presentationFormatDescriptor)
-    return 'text'
-  switch (presentationFormatDescriptor.format) {
-    case 0x01: // bit
-      return 'checkbox'
-    case 0x19: // utf8s
-    case 0x1A: // utf16s
-      return 'text'
-    case 0x1B: // array
-      return 'array'
-    default:
-      return 'number'
-  }
-}
-function getHeaderbyUUID(uuid) {
-  switch (uuid) {
-    case '8c090502-81c4-4d29-8d10-6db20607ace9':
-      return 'Freq'
-    case '9c3b62c0-e227-4f1a-8342-7e647015555d':
-      return 'Cycle'
-    case '98c16914-00ad-47ba-b625-148f0baaec47':
-      return 'Duty'
-    case '512d6d89-7a6f-461c-983e-902b68d40f56':
-      return 'Vario'
-    default:
-      return 'undef'
-  }
-}
 </script>
 
 <template>
   <template v-if="formValues !== {}">
     <div m-auto max-w-320 flex flex-wrap justify-center>
-      <div max-w-full min-w-340px flex-1 text-right>
-        <!--        <template v-if="firmwareRevision >= '0.151'"> -->
-        <div
-          v-for="cha in bt.bleCharacteristics
-            .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-            .filter(c =>
-              c.presentationFormatDescriptor
-              && c.presentationFormatDescriptor.format > 0
-              && c.presentationFormatDescriptor.format !== 0x1B)
-            .sort((a, b) => a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format)"
-          :key="cha.characteristic.uuid"
-        >
-          <label :for="cha.characteristic.uuid">{{ cha.userFormatDescriptor }}: </label>
+      <div text-right="" max-w-full min-w-340px flex-1>
+        <div v-if="firmwareRevision >= '0.14'">
+          <label for="silentOnGround">{{ t('sett.silent') }}: </label>
           <input
-            :id="cha.characteristic.uuid"
-            v-model="cha.formattedValue"
-            class="input-field"
-            :type="getTypeFromPresentationFormat(cha.presentationFormatDescriptor)"
+            id="silentOnGround"
+            v-model="formValues.silent_on_ground"
+            type="checkbox"
           >
         </div>
-        <!--        </template> -->
-        <template v-if="firmwareRevision < '0.15'">
-          <div v-if="firmwareRevision >= '0.14'">
-            <label for="silentOnGround">{{ t('sett.silent') }}: </label>
-            <input
-              id="silentOnGround"
-              v-model="formValues.silent_on_ground"
-              type="checkbox"
-            >
-          </div>
-          <div v-if="firmwareRevision > '0.99'">
-            <label for="ble_never_sleep">{{ t('sett.bt-never-sleep') }}: </label>
-            <input
-              id="ble_never_sleep"
-              v-model="formValues.ble_never_sleep"
-              type="checkbox"
-            >
-          </div>
-          <div v-if="firmwareRevision >= '0.14'">
-            <label for="led_blinky_by_vario">{{ t('sett.led-vario') }}: </label>
-            <input
-              id="led_blinky_by_vario"
-              v-model="formValues.led_blinky_by_vario"
-              type="checkbox"
-            >
-          </div>
-          <div v-if="firmwareRevision >= '0.15'">
-            <label for="hid_keyboard_off">{{ t('sett.hid-off') }}: </label>
-            <input
-              id="hid_keyboard_off"
-              v-model="formValues.hid_keyboard_off"
-              type="checkbox"
-            >
-            <label v-if="originalValues.hid_keyboard_off !== formValues.hid_keyboard_off" for="hid_keyboard_off" pl-2 text-red-600> {{ t('sett.restart-device') }}</label>
-          </div>
+        <div v-if="firmwareRevision > '0.99'">
+          <label for="ble_never_sleep">{{ t('sett.bt-never-sleep') }}: </label>
+          <input
+            id="ble_never_sleep"
+            v-model="formValues.ble_never_sleep"
+            type="checkbox"
+          >
+        </div>
+        <div v-if="firmwareRevision >= '0.14'">
+          <label for="led_blinky_by_vario">{{ t('sett.led-vario') }}: </label>
+          <input
+            id="led_blinky_by_vario"
+            v-model="formValues.led_blinky_by_vario"
+            type="checkbox"
+          >
+        </div>
+        <div v-if="firmwareRevision >= '0.15'">
+          <label for="hid_keyboard_off">{{ t('sett.hid-off') }}: </label>
+          <input
+            id="hid_keyboard_off"
+            v-model="formValues.hid_keyboard_off"
+            type="checkbox"
+          >
+          <label v-if="originalValues.hid_keyboard_off !== formValues.hid_keyboard_off" for="hid_keyboard_off" pl-2 text-red-600> {{ t('sett.restart-device') }}</label>
+        </div>
+        <div>
+          <!-- Выпадающий список для uart_protocols -->
           <div>
-            <!-- Выпадающий список для uart_protocols -->
-            <div>
-              <label for="uartProtocols">{{ t('sett.uart') }}: </label>
-              <select id="uartProtocols" v-model="formValues.uart_protocols">
-                <option value="0">
-                  Nothing
-                </option>
-                <option value="1">
-                  PRS
-                </option>
-                <option value="2">
-                  POV
-                </option>
-              </select>
-            </div>
-            <label for="buzzerVolume">{{ t('sett.buzz-vol') }}: </label>
-            <input
-              id="buzzerVolume"
-              v-model="formValues.buzzer_volume"
-              class="input-field"
-              type="number"
-              min="0"
-              max="3"
-            >
+            <label for="uartProtocols">{{ t('sett.uart') }}: </label>
+            <select id="uartProtocols" v-model="formValues.uart_protocols">
+              <option value="0">
+                Nothing
+              </option>
+              <option value="1">
+                PRS
+              </option>
+              <option value="2">
+                POV
+              </option>
+            </select>
           </div>
-          <div>
-            <label for="climbToneOnThresholdCm">{{ t('sett.climb-on') }}: </label>
-            <input
-              id="climbToneOnThresholdCm"
-              v-model="formValues.climb_tone_on_threshold_cm"
-              class="input-field"
-              type="number"
-              min="-2000"
-              max="2000"
-              step="5"
-            >
-          </div>
-          <div>
-            <label for="climbToneOffThresholdCm">{{ t('sett.climb-off') }}: </label>
-            <input
-              id="climbToneOffThresholdCm"
-              v-model="formValues.climb_tone_off_threshold_cm"
-              class="input-field"
-              type="number"
-              min="-2000"
-              max="2000"
-              step="5"
-            >
-          </div>
-          <div>
-            <label for="sinkToneOnThresholdCm">{{ t('sett.sink-on') }}: </label>
-            <input
-              id="sinkToneOnThresholdCm"
-              v-model="formValues.sink_tone_on_threshold_cm"
-              class="input-field"
-              type="number"
-              min="-2000"
-              max="2000"
-              step="5"
-            >
-          </div>
-          <div>
-            <label for="sinkToneOffThresholdCm">{{ t('sett.sink-off') }}: </label>
-            <input
-              id="sinkToneOffThresholdCm"
-              v-model="formValues.sink_tone_off_threshold_cm"
-              class="input-field"
-              type="number"
-              min="-2000"
-              max="2000"
-              step="5"
-            >
-          </div>
-        </template>
+          <label for="buzzerVolume">{{ t('sett.buzz-vol') }}: </label>
+          <input
+            id="buzzerVolume"
+            v-model="formValues.buzzer_volume"
+            class="input-field"
+            type="number"
+            min="0"
+            max="3"
+          >
+        </div>
+        <div>
+          <label for="climbToneOnThresholdCm">{{ t('sett.climb-on') }}: </label>
+          <input
+            id="climbToneOnThresholdCm"
+            v-model="formValues.climb_tone_on_threshold_cm"
+            class="input-field"
+            type="number"
+            min="-2000"
+            max="2000"
+            step="5"
+          >
+        </div>
+        <div>
+          <label for="climbToneOffThresholdCm">{{ t('sett.climb-off') }}: </label>
+          <input
+            id="climbToneOffThresholdCm"
+            v-model="formValues.climb_tone_off_threshold_cm"
+            class="input-field"
+            type="number"
+            min="-2000"
+            max="2000"
+            step="5"
+          >
+        </div>
+        <div>
+          <label for="sinkToneOnThresholdCm">{{ t('sett.sink-on') }}: </label>
+          <input
+            id="sinkToneOnThresholdCm"
+            v-model="formValues.sink_tone_on_threshold_cm"
+            class="input-field"
+            type="number"
+            min="-2000"
+            max="2000"
+            step="5"
+          >
+        </div>
+        <div>
+          <label for="sinkToneOffThresholdCm">{{ t('sett.sink-off') }}: </label>
+          <input
+            id="sinkToneOffThresholdCm"
+            v-model="formValues.sink_tone_off_threshold_cm"
+            class="input-field"
+            type="number"
+            min="-2000"
+            max="2000"
+            step="5"
+          >
+        </div>
       </div>
       <!-- Таблица для массивов настроек -->
-      <template v-if="firmwareRevision >= '0.15'">
-        <div flex flex-1 justify-center p-4 text-center>
-          <div
-            v-for="cha in bt.bleCharacteristics
-              .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-              .filter(c => c.presentationFormatDescriptor
-                && c.presentationFormatDescriptor.format === 0x1B)
-              .sort((a, b) => a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format)" :key="cha.characteristic.uuid"
-          >
-            <div>{{ getHeaderbyUUID(cha.characteristic.uuid) }}</div>
-            <div v-for="(value, index) in cha.formattedValue" :key="index">
-              <input
-                :id="`${cha.characteristic.uuid}-${index}`"
-                v-model="cha.formattedValue[index]"
-                class="input-field"
-                type="number"
-                step="5"
-              >
-            </div>
-          </div>
-        </div>
-        <div flex flex-1 justify-center>
-          <TheCurves ref="theCurvesRef" :settings="formValues" />
-        </div>
-      </template>
-      <template v-else-if="formValues.curves !== {}">
+      <template v-if="formValues.curves !== {}">
         <div flex flex-1 justify-center>
           <table>
             <thead>

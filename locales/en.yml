@@ -10,9 +10,12 @@ button:
   terminal: Terminal
   update: Firmware update
   settings: Settings
+
 intro:
   desc: Bluetooth Atmospheric Pressure Sensor
+
 not-found: Not Found
+
 msg:
   disconnected: Device Disconnected
   connected: Device Connected
@@ -24,6 +27,7 @@ msg:
   disconnect: Disconnect
   no-bluetooth: Your device not support Bluetooth.
   need-bluetooth: To use certain features, you may need a Bluetooth enabled device.
+
 param:
   pressure: Pressure, Pa
   altitude-p: Barometric Altitude, m
@@ -47,6 +51,7 @@ param:
   234337bf-f931-4d2d-a13c-07e2f06a0240: Different pressure, Pa
   00002a19-0000-1000-8000-00805f9b34fb: Battery Level, %
   00002a56-0000-1000-8000-00805f9b34fb: Buttons, bit mask
+
 about:
   p1: FlyBeeper PS1 — a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, and data is transmitted via Bluetooth.
   p2: This web application can connect to the device and display all the information. Additionally, with permission, satellite navigation data can be displayed.
@@ -59,7 +64,23 @@ about:
   link-description: Project Page
   link-blog: Project Page
   link-market: FlyBeeper Shop
+
 sett:
+  daadb8a9-a566-450e-97d0-990a0c8487dd: Silent on the ground
+  d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth never sleep
+  a37e549a-f501-4e77-9c3d-291c85542471: LED blink by vario
+  86591053-2856-4f25-a35c-b753f0deea8f: Deactivate HID keyboard
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART Protocol
+  67f82d94-2b2a-4123-81c9-058e460c3d01: Buzzer Volume
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Start climbing (m/s)
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: End of small climb (m/s)
+  b713f438-42fe-46fe-b052-371a3b9e433a: Start sinking (m/s)
+  8a78979b-1425-4160-b34b-ac5aadddeb21: End of small sink (m/s)
+  512d6d89-7a6f-461c-983e-902b68d40f56: Vario
+  8c090502-81c4-4d29-8d10-6db20607ace9: Frequency
+  9c3b62c0-e227-4f1a-8342-7e647015555d: Cycle
+  98c16914-00ad-47ba-b625-148f0baaec47: Duty
+  904baf04-5814-11ee-8c99-0242ac120002: Simulate Vario, m/s (0-off)
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
   led-vario: LED blink by vario
@@ -84,6 +105,7 @@ sett:
   sim-label2: (0 - simulation off)
   sim-label3: Please set volume more than 1 to hear the simulation.
   restart-device: After applying the changes, you must turn off and turn on the device again.
+
 update:
   how-to: How to update
   changelog: Changelog

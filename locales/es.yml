@@ -60,7 +60,23 @@ about:
   link-description: Página del proyecto
   link-blog: Página del Proyecto
   link-market: Tienda FlyBeeper
+
 sett:
+  daadb8a9-a566-450e-97d0-990a0c8487dd: Silencioso en tierra
+  d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth nunca duerme
+  a37e549a-f501-4e77-9c3d-291c85542471: Parpadeo del LED por vario
+  86591053-2856-4f25-a35c-b753f0deea8f: Desactivar teclado HID
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: Protocolo UART
+  67f82d94-2b2a-4123-81c9-058e460c3d01: Volumen del zumbador
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Inicio de la subida (m/s)
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Fin de la pequeña subida (m/s)
+  b713f438-42fe-46fe-b052-371a3b9e433a: Inicio del descenso (m/s)
+  8a78979b-1425-4160-b34b-ac5aadddeb21: Fin de la pequeña bajada (m/s)
+  512d6d89-7a6f-461c-983e-902b68d40f56: Vario
+  8c090502-81c4-4d29-8d10-6db20607ace9: Frecuencia
+  9c3b62c0-e227-4f1a-8342-7e647015555d: Ciclo
+  98c16914-00ad-47ba-b625-148f0baaec47: Duración
+  904baf04-5814-11ee-8c99-0242ac120002: Simular Vario, m/s (0-apagada)
   silent: Silencioso en tierra
   bt-never-sleep: Bluetooth nunca duerme
   led-vario: Parpadeo del LED por vario

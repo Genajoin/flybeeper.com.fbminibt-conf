@@ -61,6 +61,22 @@ about:
   link-blog: Projektseite
   link-market: FlyBeeper-Shop
 sett:
+  daadb8a9-a566-450e-97d0-990a0c8487dd: Lautlos am Boden
+  d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth schläft nie
+  a37e549a-f501-4e77-9c3d-291c85542471: LED-Blinken durch Vario
+  86591053-2856-4f25-a35c-b753f0deea8f: Deaktiviere HID-Tastatur
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART-Protokoll
+  67f82d94-2b2a-4123-81c9-058e460c3d01: Summerlautstärke
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Beginn des Aufstiegs (m/s)
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Ende des kleinen Aufstiegs (m/s)
+  b713f438-42fe-46fe-b052-371a3b9e433a: Beginn des Sinkens (m/s)
+  8a78979b-1425-4160-b34b-ac5aadddeb21: Ende des kleinen Sinkens (m/s)
+  512d6d89-7a6f-461c-983e-902b68d40f56: Vario
+  8c090502-81c4-4d29-8d10-6db20607ace9: Frequenz
+  9c3b62c0-e227-4f1a-8342-7e647015555d: Zyklus
+  98c16914-00ad-47ba-b625-148f0baaec47: Dauer
+  904baf04-5814-11ee-8c99-0242ac120002: Vario simulieren, m/s (0-aus)
+
   silent: Lautlos am Boden
   bt-never-sleep: Bluetooth schläft nie
   led-vario: LED-Blinken durch Vario

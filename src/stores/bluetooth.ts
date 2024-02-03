@@ -19,7 +19,7 @@ interface iVarioCurves {
   buzzer_duty_dots
 }
 
-interface iFbMiniBtSettings {
+export interface iFbMiniBtSettings {
   buzzer_volume: number
   climb_tone_on_threshold_cm: number
   climb_tone_off_threshold_cm: number
