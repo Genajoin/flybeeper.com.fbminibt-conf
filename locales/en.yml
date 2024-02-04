@@ -53,7 +53,7 @@ param:
   00002a56-0000-1000-8000-00805f9b34fb: Buttons, bit mask
 
 about:
-  p1: FlyBeeper PS1 — a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, and data is transmitted via Bluetooth.
+  p1: The FlyBeeper mini BT is a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, an audible buzzer, and 4 buttons. Data is transmitted via Bluetooth.
   p2: This web application can connect to the device and display all the information. Additionally, with permission, satellite navigation data can be displayed.
   location-permission: Request Location Access
   geo-granted: Location access granted

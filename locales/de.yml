@@ -49,7 +49,7 @@ param:
   00002a19-0000-1000-8000-00805f9b34fb: Batteriestand, %
   00002a56-0000-1000-8000-00805f9b34fb: Tasten, Bitmaske
 about:
-  p1: FlyBeeper PS1 — ein Gerät für Gleitschirme und Drachen. Das Gerät verfügt über einen atmosphärischen Drucksensor, und die Daten werden über Bluetooth übertragen.
+  p1: Der FlyBeeper mini BT ist ein Gerät für Gleitschirme und Drachenflieger. Das Gerät verfügt über einen Atmosphärendrucksensor, einen akustischen Summer und 4 Tasten. Die Daten werden über Bluetooth übertragen.
   p2: Diese Webanwendung kann sich mit dem Gerät verbinden und alle Informationen anzeigen. Zusätzlich können bei Erlaubnis Daten der Satellitennavigation angezeigt werden.
   location-permission: Standortzugriff anfordern
   geo-granted: Standortzugriff gewährt

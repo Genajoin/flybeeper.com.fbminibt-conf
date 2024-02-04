@@ -49,7 +49,7 @@ param:
   00002a19-0000-1000-8000-00805f9b34fb: Livello della batteria, %
   00002a56-0000-1000-8000-00805f9b34fb: Pulsanti, Maschera di bit
 about:
-  p1: FlyBeeper PS1 — un dispositivo per parapendii e deltaplani. Il dispositivo è dotato di un sensore di pressione atmosferica e i dati vengono trasmessi via Bluetooth.
+  p1: Il FlyBeeper mini BT è un dispositivo per parapendisti e deltaplanisti. Il dispositivo è dotato di un sensore di pressione atmosferica, di un buzzer acustico e di 4 pulsanti. I dati vengono trasmessi tramite Bluetooth.
   p2: Questa applicazione web può connettersi al dispositivo e visualizzare tutte le informazioni. Inoltre, con il permesso, è possibile visualizzare i dati della navigazione satellitare.
   location-permission: Richiedi il permesso di posizione
   geo-granted: Permesso di posizione concesso
