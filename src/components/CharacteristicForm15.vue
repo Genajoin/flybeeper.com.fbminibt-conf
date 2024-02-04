@@ -24,53 +24,44 @@ const lin2Conf = {
   buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
 }
 
-const formValues = ref(cloneDeep(bt.settings))
-const originalValues = ref(cloneDeep(bt.settings))
 const tableChanged = ref(false)
 
 const buzzer_volume = computed(() => bt.bleCharacteristics
-  .find(c => c.characteristic.uuid === '67f82d94-2b2a-4123-81c9-058e460c3d01')
-  .formattedValue)
+  .find(c => c.characteristic.uuid === '67f82d94-2b2a-4123-81c9-058e460c3d01'))
 const simulator_value = computed(() => bt.bleCharacteristics
-  .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-  .formattedValue)
+  .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002'))
+const cha_in_table = computed(() => bt.bleCharacteristics
+  .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
+  && c.presentationFormatDescriptor
+  && c.presentationFormatDescriptor.format === 0x1B))
 
 let simulateVarioTimeout = null
 let simulateInProgress = false
 
-watch(() => bt.settings, (newSettings) => {
-  originalValues.value = cloneDeep(newSettings)
-  formValues.value = cloneDeep(newSettings)
-  tableChanged.value = false
-}, { deep: true })
-
 const theCurvesRef = ref()
 
-watch(() => formValues, () => {
-  theCurvesRef.value.updateCurves(formValues.value)
-  tableChanged.value = JSON.stringify(formValues.value) !== JSON.stringify(originalValues.value)
-}, { deep: true })
-
 // Обработчик изменения значения Simulate Vario
-watch(simulator_value, (newValue) => {
-  if (!simulateInProgress || !newValue) {
-    simulateInProgress = true
-    if (simulateVarioTimeout)
-      clearTimeout(simulateVarioTimeout)
+if (simulator_value) {
+  watch(() => bt.bleCharacteristics
+    .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+    .formattedValue, (newValue) => {
+    if (!simulateInProgress || !newValue) {
+      simulateInProgress = true
+      if (simulateVarioTimeout)
+        clearTimeout(simulateVarioTimeout)
 
-    const delay = 200 // Миллисекунды
-    // Отправляем значение на устройство после задержки
-    simulateVarioTimeout = setTimeout(async () => {
-      await bt.bleCharacteristics
-        .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-        .setFormattedValue()
-      simulateInProgress = false
-    }, delay)
-  }
-})
-
+      const delay = 200 // Миллисекунды
+      // Отправляем значение на устройство после задержки
+      simulateVarioTimeout = setTimeout(async () => {
+        await bt.bleCharacteristics
+          .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+          .setFormattedValue()
+        simulateInProgress = false
+      }, delay)
+    }
+  })
+}
 async function updateCharacteristic() {
-  // await bt.writeMiniBtSettings(formValues.value)
   for (const characteristic of bt.bleCharacteristics.filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
     await characteristic.setFormattedValue()
   tableChanged.value = false
@@ -104,7 +95,16 @@ function resetToLin2() {
 
 // Функция для скачивания JSON
 function downloadJson() {
-  const jsonString = JSON.stringify(formValues.value)
+  const exportObj = bt.bleCharacteristics
+    .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
+    .map((cha) => {
+      return {
+        uuid: cha.characteristic.uuid,
+        name: cha.userFormatDescriptor,
+        value: cha.formattedValue,
+      }
+    })
+  const jsonString = JSON.stringify(exportObj)
   const blob = new Blob([jsonString], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
 
@@ -124,7 +124,15 @@ function uploadJson(event) {
   if (file) {
     const reader = new FileReader()
     reader.onload = (e) => {
-      formValues.value = JSON.parse(e.target.result)
+      const importObj = JSON.parse(e.target.result)
+      importObj.forEach((importedCharacteristic) => {
+        const characteristic = bt.bleCharacteristics.find(c => c.characteristic.uuid === importedCharacteristic.uuid)
+
+        if (characteristic) {
+          characteristic.formattedValue = importedCharacteristic.value
+          handleInputChange()
+        }
+      })
     }
     reader.readAsText(file)
     fileUploadInput.value.value = ''
@@ -172,104 +180,105 @@ function getStepByUUID(uuid) {
 
 function handleInputChange() {
   tableChanged.value = true
-  theCurvesRef.value.updateCurves(bt.bleCharacteristics
+  theCurvesRef.value?.updateCurves(bt.bleCharacteristics
     .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
 }
 </script>
 
 <template>
-  <template v-if="formValues !== {}">
-    <div m-auto max-w-320 flex flex-wrap justify-center>
-      <div max-w-full min-w-340px flex-1 text-right>
-        <div
-          v-for="cha in bt.bleCharacteristics
-            .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-            .filter(c =>
-              c.presentationFormatDescriptor
-              && c.presentationFormatDescriptor.format > 0
-              && c.presentationFormatDescriptor.format !== 0x1B)
-            .sort((a, b) => {
-              // Сначала сортируем по format
-              const formatDiff = a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format;
-              if (formatDiff !== 0) {
-                return formatDiff;
-              }
-              // Если format одинаков, сортируем по userFormatDescriptor
-              return a.userFormatDescriptor.localeCompare(b.userFormatDescriptor);
-            })"
-          :key="cha.characteristic.uuid"
+  <div m-auto max-w-320 flex flex-wrap justify-center>
+    <div max-w-full min-w-340px flex-1 text-right>
+      <div
+        v-for="cha in bt.bleCharacteristics
+          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
+            && c.presentationFormatDescriptor
+            && c.presentationFormatDescriptor.format > 0
+            && c.presentationFormatDescriptor.format !== 0x1B)
+          .sort((a, b) => {
+            // Сначала сортируем по format
+            const formatDiff = a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format;
+            if (formatDiff !== 0) {
+              return formatDiff;
+            }
+            // Если format одинаков, сортируем по userFormatDescriptor
+            return a.userFormatDescriptor.localeCompare(b.userFormatDescriptor);
+          })"
+        :key="cha.characteristic.uuid"
+      >
+        <label :for="cha.characteristic.uuid">{{ t(`sett.${cha.characteristic.uuid}`) }}: </label>
+        <input
+          :id="cha.characteristic.uuid"
+          v-model="cha.formattedValue"
+          class="input-field"
+          :type="getTypeFromPresentationFormat(cha.presentationFormatDescriptor)"
+          :step="getStepByFormatDescriptor(cha.presentationFormatDescriptor)"
+          @input="handleInputChange()"
         >
-          <label :for="cha.characteristic.uuid">{{ t(`sett.${cha.characteristic.uuid}`) }}: </label>
+      </div>
+
+      <div
+        v-if="buzzer_volume && buzzer_volume.formattedValue === 0
+          && simulator_value && simulator_value.formattedValue !== 0.0"
+        text-red-600
+      >
+        {{ t('sett.sim-label3') }}
+      </div>
+    </div>
+
+    <!-- Таблица для массивов настроек -->
+
+    <div v-if="cha_in_table.length >= 4" flex flex-1 justify-center p-4 text-center>
+      <div
+        v-for="cha in bt.bleCharacteristics
+          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
+            && c.presentationFormatDescriptor
+            && c.presentationFormatDescriptor.format === 0x1B)
+          .sort((a, b) => a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format)" :key="cha.characteristic.uuid"
+      >
+        <div>{{ t(`sett.${cha.characteristic.uuid}`) }}</div>
+        <div v-for="(value, index) in cha.formattedValue" :key="index">
           <input
-            :id="cha.characteristic.uuid"
-            v-model="cha.formattedValue"
+            :id="`${cha.characteristic.uuid}-${index}`"
+            v-model="cha.formattedValue[index]"
             class="input-field"
-            :type="getTypeFromPresentationFormat(cha.presentationFormatDescriptor)"
-            :step="getStepByFormatDescriptor(cha.presentationFormatDescriptor)"
+            type="number"
+            :step="getStepByUUID(cha.characteristic.uuid)"
             @input="handleInputChange()"
           >
         </div>
-
-        <div v-if="buzzer_volume === 0 && simulator_value !== 0.0" text-red-600>
-          {{ t('sett.sim-label3') }}
-        </div>
-      </div>
-
-      <!-- Таблица для массивов настроек -->
-
-      <div flex flex-1 justify-center p-4 text-center>
-        <div
-          v-for="cha in bt.bleCharacteristics
-            .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-            .filter(c => c.presentationFormatDescriptor
-              && c.presentationFormatDescriptor.format === 0x1B)
-            .sort((a, b) => a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format)" :key="cha.characteristic.uuid"
-        >
-          <div>{{ t(`sett.${cha.characteristic.uuid}`) }}</div>
-          <div v-for="(value, index) in cha.formattedValue" :key="index">
-            <input
-              :id="`${cha.characteristic.uuid}-${index}`"
-              v-model="cha.formattedValue[index]"
-              class="input-field"
-              type="number"
-              :step="getStepByUUID(cha.characteristic.uuid)"
-              @input="handleInputChange()"
-            >
-          </div>
-        </div>
-      </div>
-      <div flex flex-1 justify-center>
-        <TheCurves
-          ref="theCurvesRef" :cha="bt.bleCharacteristics
-            .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')"
-        />
       </div>
     </div>
-
-    <div text-center>
-      <button m-2 btn @click="resetToDefault">
-        {{ t('sett.def') }}
-      </button>
-      <button m-2 btn @click="resetToLog2">
-        {{ t('sett.log') }}
-      </button>
-      <button m-2 btn @click="resetToLin2">
-        {{ t('sett.lin') }}
-      </button>
+    <div v-if="cha_in_table.length >= 4" flex flex-1 justify-center>
+      <TheCurves
+        ref="theCurvesRef" :cha="bt.bleCharacteristics
+          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')"
+      />
     </div>
+  </div>
 
-    <div text-center>
-      <button :disabled="!tableChanged" m-2 btn :class="{ disabled: !tableChanged }" @click="updateCharacteristic">
-        {{ t('sett.apply') }}
-      </button>
-      <button m-2 hidden btn @click="downloadJson">
-        {{ t('sett.download') }}
-      </button>
-      <label m-2 hidden btn>{{ t('sett.upload') }}
-        <input ref="fileUploadInput" type="file" accept=".json" style="display: none" @change="uploadJson">
-      </label>
-    </div>
-  </template>
+  <div v-if="cha_in_table.length >= 4" text-center>
+    <button m-2 btn @click="resetToDefault">
+      {{ t('sett.def') }}
+    </button>
+    <button m-2 btn @click="resetToLog2">
+      {{ t('sett.log') }}
+    </button>
+    <button m-2 btn @click="resetToLin2">
+      {{ t('sett.lin') }}
+    </button>
+  </div>
+
+  <div text-center>
+    <button :disabled="!tableChanged" m-2 btn :class="{ disabled: !tableChanged }" @click="updateCharacteristic">
+      {{ t('sett.apply') }}
+    </button>
+    <button m-2 btn @click="downloadJson">
+      {{ t('sett.download') }}
+    </button>
+    <label m-2 btn>{{ t('sett.upload') }}
+      <input ref="fileUploadInput" type="file" accept=".json" style="display: none" @change="uploadJson">
+    </label>
+  </div>
 </template>
 
 <style>

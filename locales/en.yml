@@ -81,6 +81,8 @@ sett:
   9c3b62c0-e227-4f1a-8342-7e647015555d: Cycle
   98c16914-00ad-47ba-b625-148f0baaec47: Duty
   904baf04-5814-11ee-8c99-0242ac120002: Simulate Vario, m/s (0-off)
+  904baf04-5814-11ee-8c99-0242ac120201: Pitot K factor (o.e.)
+  904baf04-5814-11ee-8c99-0242ac120202: Diffirencial Pressure offset, Pa
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
   led-vario: LED blink by vario
@@ -103,7 +105,7 @@ sett:
   lin: Linear
   sim-label1: Simulate Vario, cm/s
   sim-label2: (0 - simulation off)
-  sim-label3: Please set volume more than 1 to hear the simulation.
+  sim-label3: Please set volume more than 1 and press Apply to hear the simulation.
   restart-device: After applying the changes, you must turn off and turn on the device again.
 
 update:

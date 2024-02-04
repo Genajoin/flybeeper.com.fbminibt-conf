@@ -76,7 +76,8 @@ sett:
   9c3b62c0-e227-4f1a-8342-7e647015555d: Zyklus
   98c16914-00ad-47ba-b625-148f0baaec47: Dauer
   904baf04-5814-11ee-8c99-0242ac120002: Vario simulieren, m/s (0-aus)
-
+  904baf04-5814-11ee-8c99-0242ac120201: Pitot K-Faktor
+  904baf04-5814-11ee-8c99-0242ac120202: Differenzialdruck-Offset, Pa
   silent: Lautlos am Boden
   bt-never-sleep: Bluetooth schläft nie
   led-vario: LED-Blinken durch Vario

@@ -77,6 +77,8 @@ sett:
   9c3b62c0-e227-4f1a-8342-7e647015555d: Ciclo
   98c16914-00ad-47ba-b625-148f0baaec47: Durata
   904baf04-5814-11ee-8c99-0242ac120002: Simulare il Vario, m/s (0-disattivata)
+  904baf04-5814-11ee-8c99-0242ac120201: Fattore K Pitot
+  904baf04-5814-11ee-8c99-0242ac120202: Offset pressione differenziale, Pa
   silent: Silenzioso a terra
   bt-never-sleep: Bluetooth non dorme mai
   led-vario: Lampeggio LED dal vario
