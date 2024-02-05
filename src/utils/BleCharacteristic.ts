@@ -20,7 +20,7 @@ export interface BleCharacteristic {
 
 export class BleCharacteristicImpl implements BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
-  descriptors: BluetoothRemoteGATTDescriptor[]
+  descriptors: BluetoothRemoteGATTDescriptor[] = []
   value: any = null
   formattedValue: Ref<any> = ref(null)
   userFormatDescriptor: string | null = null
@@ -72,10 +72,10 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         const val = await userFormatDescriptor.readValue()
         const enc = new TextDecoder('utf-8')
         this.userFormatDescriptor = enc.decode(val.buffer)
-        console.log('Characteristic User Format Descriptor:', this.userFormatDescriptor)
+        // console.log('Characteristic User Format Descriptor:', this.userFormatDescriptor)
       }
       else {
-        console.log('Characteristic User Format Descriptor не найден.')
+        // console.log('Characteristic User Format Descriptor не найден.')
       }
     }
   }
@@ -92,7 +92,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   }
 
   async readPresentationFormatDescriptor(): Promise<void> {
-    if (!this.descriptors)
+    if (this.descriptors.length === 0)
       return
     const presentationFormatDescriptor = this.descriptors.find(
       descriptor => descriptor.uuid === '00002904-0000-1000-8000-00805f9b34fb',
@@ -118,10 +118,10 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         namespace,
       }
 
-      console.log('Characteristic Presentation Format Descriptor:', this.presentationFormatDescriptor)
+      // console.log('Characteristic Presentation Format Descriptor:', this.presentationFormatDescriptor)
     }
     else {
-      console.warn('Characteristic Presentation Format Descriptor не найден.')
+      // console.warn('Characteristic Presentation Format Descriptor не найден.')
     }
   }
 
@@ -192,7 +192,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         return dots
 
       default:
-        console.error(`Unsupported value format: ${format}`)
+        // console.error(`Unsupported value format: ${format}`)
         return value
     }
   }
@@ -229,7 +229,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return this.formatValueByFormat(value, format, exponent)
     }
     else {
-      console.warn('Presentation format descriptor is missing.')
+      // console.warn('Presentation format descriptor is missing.')
       return value
     }
   }
@@ -242,7 +242,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return this.value
     }
     catch (error) {
-      console.error('Error reading value:', error)
+      // console.error('Error reading value:', error)
       return null
     }
   }
@@ -333,7 +333,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       this.descriptors = await this.characteristic.getDescriptors()
     }
     catch (error) {
-      console.error('Error getting descriptors:', error)
+      this.descriptors = []
+      // console.error('Error getting descriptors:', error)
     }
   }
 

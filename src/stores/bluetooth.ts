@@ -155,7 +155,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         this.isConnecting = false
       }
       catch (error) {
-        console.error('Error connecting to the device:', error)
+        // console.error('Error connecting to the device:', error)
         this.isConnecting = false
       }
     },
@@ -175,7 +175,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         this.isDisconnecting = false
       }
       catch (error) {
-        console.error('Error disconnecting from the device:', error)
+        // console.error('Error disconnecting from the device:', error)
         this.isDisconnecting = false
       }
     },
