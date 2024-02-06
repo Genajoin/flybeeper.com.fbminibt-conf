@@ -86,6 +86,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       case 0x2712: return 'm/s'
       case 0x2724: return 'Pa'
       case 0x27A6: return 'km/h'
+      case 0x2728: return 'V'
       // Добавьте другие соответствия по необходимости
       default: return `Unknown Unit (${unitCode.toString(16)})`
     }

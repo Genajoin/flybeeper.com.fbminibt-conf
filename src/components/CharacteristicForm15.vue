@@ -40,27 +40,30 @@ let simulateInProgress = false
 
 const theCurvesRef = ref()
 
-// Обработчик изменения значения Simulate Vario
-if (simulator_value) {
-  watch(() => bt.bleCharacteristics
+onMounted(() => {
+  // Обработчик изменения значения Simulate Vario
+  const simulCh = bt.bleCharacteristics
     .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-    .formattedValue, (newValue) => {
-    if (!simulateInProgress || !newValue) {
-      simulateInProgress = true
-      if (simulateVarioTimeout)
-        clearTimeout(simulateVarioTimeout)
+  if (simulCh !== undefined) {
+    watch(() => simulCh.formattedValue, (newValue) => {
+      if (!simulateInProgress || !newValue) {
+        simulateInProgress = true
+        if (simulateVarioTimeout)
+          clearTimeout(simulateVarioTimeout)
 
-      const delay = 200 // Миллисекунды
-      // Отправляем значение на устройство после задержки
-      simulateVarioTimeout = setTimeout(async () => {
-        await bt.bleCharacteristics
-          .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-          .setFormattedValue()
-        simulateInProgress = false
-      }, delay)
-    }
-  })
-}
+        const delay = 200 // Миллисекунды
+        // Отправляем значение на устройство после задержки
+        simulateVarioTimeout = setTimeout(async () => {
+          await bt.bleCharacteristics
+            .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+            .setFormattedValue()
+          simulateInProgress = false
+        }, delay)
+      }
+    })
+  }
+})
+
 async function updateCharacteristic() {
   for (const characteristic of bt.bleCharacteristics.filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
     await characteristic.setFormattedValue()

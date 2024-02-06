@@ -48,6 +48,7 @@ param:
   234337bf-f931-4d2d-a13c-07e2f06a0240: Unterschiedlicher Druck, Pa
   00002a19-0000-1000-8000-00805f9b34fb: Batteriestand, %
   00002a56-0000-1000-8000-00805f9b34fb: Tasten, Bitmaske
+  b0c889e8-16d2-45ef-b615-387f6bca2370: Batteriespannung, V
 about:
   p1: Der FlyBeeper mini BT ist ein Gerät für Gleitschirme und Drachenflieger. Das Gerät verfügt über einen Atmosphärendrucksensor, einen akustischen Summer und 4 Tasten. Die Daten werden über Bluetooth übertragen.
   p2: Diese Webanwendung kann sich mit dem Gerät verbinden und alle Informationen anzeigen. Zusätzlich können bei Erlaubnis Daten der Satellitennavigation angezeigt werden.

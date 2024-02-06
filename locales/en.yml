@@ -51,6 +51,7 @@ param:
   234337bf-f931-4d2d-a13c-07e2f06a0240: Different pressure, Pa
   00002a19-0000-1000-8000-00805f9b34fb: Battery Level, %
   00002a56-0000-1000-8000-00805f9b34fb: Buttons, bit mask
+  b0c889e8-16d2-45ef-b615-387f6bca2370: Battery voltage, V
 
 about:
   p1: The FlyBeeper mini BT is a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, an audible buzzer, and 4 buttons. Data is transmitted via Bluetooth.
