@@ -12,8 +12,16 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 
 ## Project Setup
 
+### Docker
+
+Set .env file
+DEBUG=1 for dev
+DEBUG=0 for production
+
+To start
+
 ```sh
-npm install
+docker compose up --build --remove-orphans -d
 ```
 
 ### Compile and Hot-Reload for Development

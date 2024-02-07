@@ -1,0 +1,30 @@
+version: '3.4'
+services:
+  fbconfig-dev:
+    container_name: fbconfig-dev
+    image: node:20-alpine
+    command: sh -c "if [ '$DEBUG' = '1' ]; then corepack enable && pnpm dev; else corepack enable && pnpm i && pnpm build && pnpm preview; fi"
+    ports:
+      - '5173'
+    working_dir: /srv/app
+    volumes:
+      - type: bind
+        source: ./
+        target: /srv/app
+    tty: true
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - 'traefik.http.routers.${ROUTER}.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.${ROUTER}.entrypoints=https'
+      - 'traefik.http.routers.${ROUTER}.tls=true'
+      # - "traefik.http.routers.${ROUTER}.tls.certresolver=letsEncrypt"
+      - 'traefik.http.routers.${ROUTER}.middlewares=traefik-compress'
+      - traefik.http.middlewares.traefik-compress.compress=true
+      - traefik.http.middlewares.testHeader.headers.customrequestheaders.XPoweredBy=
+      - traefik.http.middlewares.testheader.headers.addvaryheader=true
+      - 'traefik.http.middlewares.noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow'
+networks:
+  traefik:
+    external: true
