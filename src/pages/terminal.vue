@@ -41,7 +41,7 @@ function logData2() {
   logEntry += `;${loc.speed || ''};${loc.heading || ''};${loc.altitude || ''};${loc.accuracy || ''}`
 
   // Добавление к строке лога
-  log.value = `${logEntry}\n${log.value}`
+  log.value = `${log.value}${logEntry}\n`
 }
 
 function getHeader() {
@@ -63,7 +63,7 @@ function getHeader() {
 
 watch(() => bt.bleCharacteristics.filter(c => c.characteristic.properties.notify).length, () => {
   getHeader()
-  log.value = `${header.value}\n${log.value}`
+  log.value = `${log.value}\n${header.value}`
 })
 
 function saveProtocolToFile() {

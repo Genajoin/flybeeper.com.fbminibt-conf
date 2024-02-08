@@ -22,7 +22,7 @@ onBeforeUnmount(() => {
           {{ t(`param.${cha.characteristic.uuid}`) }}
         </div>
         <div text-4xl>
-          {{ cha.formattedValue ? cha.formattedValue : "--" }}
+          {{ cha.formattedValue !== null ? cha.formattedValue : "--" }}
         </div>
       </div>
     </template>

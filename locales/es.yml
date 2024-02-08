@@ -49,6 +49,9 @@ param:
   00002a19-0000-1000-8000-00805f9b34fb: Nivel de batería, %
   00002a56-0000-1000-8000-00805f9b34fb: Botones, máscara de bits
   b0c889e8-16d2-45ef-b615-387f6bca2370: Voltaje de la batería, V
+  b4df8385-16d2-4037-b2ed-2e14e1f4fa27: Vario por presión, m/s
+  830ff7a0-367a-40e7-9038-4f00bda31f84: Vario por altitud, m/s
+
 about:
   p1: El FlyBeeper mini BT es un dispositivo para parapentes y ala delta. El dispositivo cuenta con un sensor de presión atmosférica, un zumbador audible y 4 botones. Los datos se transmiten mediante Bluetooth.
   p2: Esta aplicación web puede conectarse al dispositivo y mostrar toda la información. Además, con permiso, se pueden mostrar datos de navegación por satélite.
