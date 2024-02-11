@@ -86,6 +86,7 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Simulate Vario, m/s (0-off)
   904baf04-5814-11ee-8c99-0242ac120201: Pitot K factor (o.e.)
   904baf04-5814-11ee-8c99-0242ac120202: Diffirencial Pressure offset, Pa
+  1d63a595-05ee-43d0-ba27-d14b944d6f88: Vario averaging time (sec)
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
   led-vario: LED blink by vario

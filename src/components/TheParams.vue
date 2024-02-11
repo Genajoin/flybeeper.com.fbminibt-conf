@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const bt = useBluetoothStore()
 const loc = useLocationStore()
 
@@ -12,6 +12,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   loc.stopWatchingSpeed()
 })
+
+function getTranslation(cha) {
+  return te(`param.${cha.characteristic.uuid}`)
+    ? t(`param.${cha.characteristic.uuid}`)
+    : cha.userFormatDescriptor || cha.characteristic.uuid
+}
 </script>
 
 <template>
@@ -19,7 +25,7 @@ onBeforeUnmount(() => {
     <template v-if="bt.isConnected">
       <div v-for="cha in bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)" :key="cha" class="cell">
         <div text-sm opacity-50>
-          {{ t(`param.${cha.characteristic.uuid}`) }}
+          {{ getTranslation(cha) }}
         </div>
         <div text-4xl>
           {{ cha.formattedValue !== null ? cha.formattedValue : "--" }}

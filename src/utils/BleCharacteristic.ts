@@ -151,6 +151,22 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return (-1) ** exponent * (1 + mantissa / 2 ** 23) * 2 ** (exponent - 127)
   }
 
+  private exponentFormat(exponent, value): number {
+    switch (exponent) {
+      case null:
+      case 0:
+        return value
+      case -1:
+        return value / 10
+      case -2:
+        return value / 100
+      case -3:
+        return value / 1000
+      default:
+        return value * 10 ** exponent
+    }
+  }
+
   formatValueByFormat(value, format, exponent) {
     const dots = []
 
@@ -158,29 +174,29 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       case 0x01: // bool
         return value.getUint8(0) === 1
       case 0x04: // uint8
-        return exponent ? value.getUint8(0) * 10 ** exponent : value.getUint8(0)
+        return this.exponentFormat(exponent, value.getUint8(0))
       case 0x06: // uint16
-        return exponent ? value.getUint16(0, true) * 10 ** exponent : value.getUint16(0, true)
+        return this.exponentFormat(exponent, value.getUint16(0, true))
       case 0x08: // uint32
-        return exponent ? value.getUint32(0, true) * 10 ** exponent : value.getUint32(0, true)
+        return this.exponentFormat(exponent, value.getUint32(0, true))
       case 0x0C: // sint8
-        return exponent ? value.getInt8(0) * 10 ** exponent : value.getInt8(0)
+        return this.exponentFormat(exponent, value.getInt8(0))
       case 0x0E: // sint16
-        return exponent ? value.getInt16(0, true) * 10 ** exponent : value.getInt16(0, true)
+        return this.exponentFormat(exponent, value.getInt16(0, true))
       case 0x10: // sint32
-        return exponent ? value.getInt32(0, true) * 10 ** exponent : value.getInt32(0, true)
+        return this.exponentFormat(exponent, value.getInt32(0, true))
       case 0x12: // sint64
-        return exponent ? Number(value.getBigInt64(0, true)) * 10 ** exponent : Number(value.getBigInt64(0, true))
+        return this.exponentFormat(exponent, Number(value.getBigInt64(0, true)))
       case 0x14: // float32
-        return exponent ? value.getFloat32(0, true) * 10 ** exponent : value.getFloat32(0, true)
+        return this.exponentFormat(exponent, value.getFloat32(0, true))
       case 0x15: // float64
-        return exponent ? value.getFloat64(0, true) * 10 ** exponent : value.getFloat64(0, true)
+        return this.exponentFormat(exponent, value.getFloat64(0, true))
       case 0x16: // EE 11073-20601 16-bit SFLOAT
-        return exponent ? this.decodeSFloat(value.getUint16(0, true)) * 10 ** exponent : this.decodeSFloat(value.getUint16(0, true))
+        return this.exponentFormat(exponent, this.decodeSFloat(value.getUint16(0, true)))
       case 0x17: // IEEE 11073-20601 32-bit FLOAT
-        return exponent ? this.decodeFloat(value.getUint32(0, true)) * 10 ** exponent : this.decodeFloat(value.getUint32(0, true))
+        return this.exponentFormat(exponent, this.decodeFloat(value.getUint32(0, true)))
       case 0x18: // duint16  IEEE 11073-20601 nomenclature code
-        return exponent ? value.getUint16(0, true) / 65536 * 10 ** exponent : value.getUint16(0, true) / 65536
+        return this.exponentFormat(exponent, value.getUint16(0, true) / 65536)
       case 0x19: // utf8s
         return new TextDecoder('utf-8').decode(value.buffer)
       case 0x1A: // utf16s
@@ -200,19 +216,19 @@ export class BleCharacteristicImpl implements BleCharacteristic {
 
   formatValueByUUID(val, uuid) {
     switch (uuid) {
-      case '00002a19-0000-1000-8000-00805f9b34fb': // battery
-      case '00002a56-0000-1000-8000-00805f9b34fb': // buttons
-        return val.getUint8(0)
+      case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
+        return val.getUint32(0, true) / 10
       case '234337bf-f931-4d2d-a13c-07e2f06a0249': // tas
       case '234337bf-f931-4d2d-a13c-07e2f06a0248': // ias
       case 'ed3f945f-061e-45f3-ae59-1b26249ea7f4': // eas
       case '234337bf-f931-4d2d-a13c-07e2f06a0240': // dp
         return val.getInt16(0, true) / 10
+      case '00002a19-0000-1000-8000-00805f9b34fb': // battery
+      case '00002a56-0000-1000-8000-00805f9b34fb': // buttons
+        return val.getUint8(0)
       case '00002a6e-0000-1000-8000-00805f9b34fb': // temperature
       case '00002a6c-0000-1000-8000-00805f9b34fb': // elevation
         return val.getInt16(0, true) / 100
-      case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
-        return val.getUint32(0, true) / 10
       default:
         return null
     }
