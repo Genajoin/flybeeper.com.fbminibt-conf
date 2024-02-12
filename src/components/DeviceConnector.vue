@@ -14,6 +14,9 @@ const { t } = useI18n()
     <p v-if="bt.isConnecting">
       {{ t('msg.connecting') }}...
     </p>
+    <p v-else-if="bt.isFetching">
+      {{ bt.devName }} {{ t('msg.fetching') }}...
+    </p>
     <p v-else-if="bt.isDisconnecting">
       {{ t('msg.disconnecting') }}...
     </p>

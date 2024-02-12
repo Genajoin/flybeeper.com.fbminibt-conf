@@ -56,6 +56,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     device: null as BluetoothDevice,
     isConnected: false,
     isConnecting: false,
+    isFetching: false,
     isDisconnecting: false,
     devName: '',
     characteristicsData: {},
@@ -104,6 +105,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         const server = await this.device.gatt.connect()
         this.devName = this.device.name
 
+        this.isConnecting = false
+        this.isFetching = true
         // Получение списка сервисов
         const services = await server.getPrimaryServices()
 
@@ -152,12 +155,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
 
         this.isConnected = true
-        this.isConnecting = false
       }
       catch (error) {
         // console.error('Error connecting to the device:', error)
         this.isConnecting = false
       }
+      this.isFetching = false
     },
     async disconnectDevice() {
       if (!this.isConnected || this.isDisconnecting)

@@ -24,6 +24,7 @@ msg:
   disconnect: Trennen
   no-bluetooth: Ihr Gerät unterstützt kein Bluetooth.
   need-bluetooth: Um bestimmte Funktionen zu nutzen, benötigen Sie ein Bluetooth-fähiges Gerät.
+  fetching: Abrufen
 
 param:
   pressure: Druck, Pa
@@ -83,6 +84,7 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120201: Pitot K-Faktor
   904baf04-5814-11ee-8c99-0242ac120202: Differenzialdruck-Offset, Pa
   1d63a595-05ee-43d0-ba27-d14b944d6f88: Vario Durchschnittszeit (sek)
+  9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Verzögerungszeit für automatische Abschaltung des Stroms (Stunden)
   silent: Lautlos am Boden
   bt-never-sleep: Bluetooth schläft nie
   led-vario: LED-Blinken durch Vario
