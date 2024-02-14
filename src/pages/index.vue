@@ -6,6 +6,8 @@ defineOptions({
 })
 
 const { t } = useI18n()
+const bt = useBluetoothStore()
+bt.bleCharacteristics.forEach(ch => ch.unsubscribeFromNotifications())
 
 const recaptchaScript = document.createElement('script')
 recaptchaScript.setAttribute(

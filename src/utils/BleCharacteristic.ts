@@ -1,6 +1,7 @@
 // BleCharacteristic.ts
 
 import type { Ref } from 'vue-demi'
+import log from 'loglevel'
 
 export interface BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
@@ -16,6 +17,7 @@ export interface BleCharacteristic {
     description?: string
   } | null
   getValue: () => Promise<any>
+  isNotifying: boolean
 }
 
 export class BleCharacteristicImpl implements BleCharacteristic {
@@ -32,6 +34,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     description?: string
   } | null = null
 
+  isNotifying = false
   constructor(characteristic: BluetoothRemoteGATTCharacteristic) {
     this.characteristic = characteristic
   }
@@ -39,27 +42,34 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   private onNotification = async (event: Event) => {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic
     this.formattedValue.value = this.formatValue(characteristic.value)
-    // console.log('new val ', this.formattedValue.value)
+    log.debug('new val ', this.formattedValue.value)
   }
 
   async subscribeToNotifications(): Promise<void> {
     if (!this.characteristic.properties.notify)
       return
+    if (this.isNotifying)
+      return
 
-    await this.characteristic.startNotifications()
-
-    // Обработка уведомлений
-    this.characteristic.addEventListener('characteristicvaluechanged', this.onNotification)
+    this.characteristic.startNotifications().then(() => {
+      log.debug('start notify', this.characteristic.uuid)
+      this.isNotifying = true
+      // Обработка уведомлений
+      this.characteristic.addEventListener('characteristicvaluechanged', this.onNotification)
+    }).catch(this.isNotifying = false)
   }
 
   async unsubscribeFromNotifications(): Promise<void> {
-    if (!this.characteristic.properties.notify) {
+    if (!this.characteristic.properties.notify || !this.isNotifying) {
       // Характеристика не поддерживает уведомления, нечего отписываться
       return
     }
 
-    await this.characteristic.stopNotifications()
-    this.characteristic.removeEventListener('characteristicvaluechanged', this.onNotification)
+    this.characteristic.stopNotifications().then(() => {
+      log.debug('stop notify', this.characteristic.uuid)
+      this.isNotifying = false
+      this.characteristic.removeEventListener('characteristicvaluechanged', this.onNotification)
+    })
   }
 
   async getUserFormatDescriptor(): Promise<void> {
@@ -72,10 +82,10 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         const val = await userFormatDescriptor.readValue()
         const enc = new TextDecoder('utf-8')
         this.userFormatDescriptor = enc.decode(val.buffer)
-        // console.log('Characteristic User Format Descriptor:', this.userFormatDescriptor)
+        log.debug('Characteristic User Format Descriptor:', this.userFormatDescriptor)
       }
       else {
-        // console.log('Characteristic User Format Descriptor не найден.')
+        log.debug('Characteristic User Format Descriptor не найден.')
       }
     }
   }
@@ -87,6 +97,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       case 0x2724: return 'Pa'
       case 0x27A6: return 'km/h'
       case 0x2728: return 'V'
+      case 0x2703: return 'sec'
+      case 0x2761: return 'hour'
       // Добавьте другие соответствия по необходимости
       default: return `Unknown Unit (${unitCode.toString(16)})`
     }
@@ -119,10 +131,10 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         namespace,
       }
 
-      // console.log('Characteristic Presentation Format Descriptor:', this.presentationFormatDescriptor)
+      log.debug('Characteristic Presentation Format Descriptor:', this.presentationFormatDescriptor)
     }
     else {
-      // console.warn('Characteristic Presentation Format Descriptor не найден.')
+      log.debug('Characteristic Presentation Format Descriptor не найден.')
     }
   }
 
@@ -209,7 +221,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         return dots
 
       default:
-        // console.error(`Unsupported value format: ${format}`)
+        log.error(`Unsupported value format: ${format}`)
         return value
     }
   }
@@ -246,7 +258,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return this.formatValueByFormat(value, format, exponent)
     }
     else {
-      // console.warn('Presentation format descriptor is missing.')
+      log.warn('Presentation format descriptor is missing.')
       return value
     }
   }
@@ -259,7 +271,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return this.value
     }
     catch (error) {
-      // console.error('Error reading value:', error)
+      log.error('Error reading value:', error)
       return null
     }
   }
@@ -351,7 +363,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
     catch (error) {
       this.descriptors = []
-      // console.error('Error getting descriptors:', error)
+      log.error('Error getting descriptors:', error)
     }
   }
 
@@ -359,7 +371,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     await this.getDescriptors()
     await this.getUserFormatDescriptor()
     await this.readPresentationFormatDescriptor()
-    await this.subscribeToNotifications()
     await this.getFormattedValue()
+    // await this.subscribeToNotifications()
   }
 }

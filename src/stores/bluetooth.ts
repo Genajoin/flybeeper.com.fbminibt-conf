@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 
 interface BtCh {
@@ -101,9 +102,10 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             '904baf04-5814-11ee-8c99-0242ac120000',
           ],
         })
+        this.devName = this.device.name
+        log.info('connected to', this.devName)
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
         const server = await this.device.gatt.connect()
-        this.devName = this.device.name
 
         this.isConnecting = false
         this.isFetching = true
@@ -112,10 +114,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
         // Проход по сервисам
         for (const service of services) {
+          log.debug('SERVICE', service.uuid)
           // Получение характеристик сервиса
           const characteristics = await service.getCharacteristics()
           // Проверка, есть ли подписка на изменение для каждой характеристики
           for (const ch of characteristics) {
+            log.debug('characteristic', ch.uuid)
             const bleCharacteristic = new BleCharacteristicImpl(ch)
             await bleCharacteristic.initialize()
             this.bleCharacteristics.push(bleCharacteristic)
@@ -130,6 +134,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         for (const ch of this.bleCharacteristics) {
           if (ch.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
             ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 }
+          // await ch.subscribeToNotifications();
         }
 
         // Device Information Service

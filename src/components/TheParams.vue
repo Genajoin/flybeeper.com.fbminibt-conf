@@ -5,13 +5,27 @@ const { t, te } = useI18n()
 const bt = useBluetoothStore()
 const loc = useLocationStore()
 
-onMounted(() => {
+onMounted(async () => {
   loc.startWatchingSpeed()
+  await checkSubscribe(bt.isConnected)
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(async () => {
   loc.stopWatchingSpeed()
 })
+
+watch(() => bt.isConnected, async (newValue) => {
+  await checkSubscribe(newValue)
+})
+
+async function checkSubscribe(subscribe) {
+  for (const ch of bt.bleCharacteristics) {
+    if (subscribe)
+      await ch.subscribeToNotifications()
+    else
+      await ch.unsubscribeFromNotifications()
+  }
+}
 
 function getTranslation(cha) {
   return te(`param.${cha.characteristic.uuid}`)

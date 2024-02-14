@@ -1,5 +1,7 @@
 <script setup>
 const { t } = useI18n()
+const bt = useBluetoothStore()
+bt.bleCharacteristics.forEach(ch => ch.unsubscribeFromNotifications())
 </script>
 
 <template>

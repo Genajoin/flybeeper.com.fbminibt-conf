@@ -2,6 +2,8 @@
 const { t } = useI18n()
 const deferredPrompt = ref(null)
 const showInstallButton = ref(false)
+const bt = useBluetoothStore()
+bt.bleCharacteristics.forEach(ch => ch.unsubscribeFromNotifications())
 
 function installApp() {
   if (deferredPrompt.value) {

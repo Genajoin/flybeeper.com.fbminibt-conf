@@ -40,7 +40,9 @@ let simulateInProgress = false
 
 const theCurvesRef = ref()
 
-onMounted(() => {
+onMounted(async () => {
+  bt.bleCharacteristics.forEach(ch => ch.unsubscribeFromNotifications())
+
   // Обработчик изменения значения Simulate Vario
   const simulCh = bt.bleCharacteristics
     .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
