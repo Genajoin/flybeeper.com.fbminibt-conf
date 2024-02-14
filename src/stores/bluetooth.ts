@@ -104,7 +104,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         })
         this.devName = this.device.name
         log.info('connected to', this.devName)
-        this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
+
         const server = await this.device.gatt.connect()
 
         this.isConnecting = false
@@ -159,10 +159,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           await this.readSettings()
         }
 
+        this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
         this.isConnected = true
       }
       catch (error) {
-        // console.error('Error connecting to the device:', error)
+        log.error('Error connecting to the device:', error)
         this.isConnecting = false
       }
       this.isFetching = false
@@ -183,7 +184,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         this.isDisconnecting = false
       }
       catch (error) {
-        // console.error('Error disconnecting from the device:', error)
+        log.error('Error disconnecting from the device:', error)
         this.isDisconnecting = false
       }
     },
@@ -209,12 +210,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       switch (this.dis.modelNumberString.value) {
         case 'FBminiBT':
           await this.readMiniBtSettings()
-          break
-        case 'FbTAS':
-          break
-        case 'FbPs1':
-          break
-        case 'FbRc4':
           break
       }
     },
