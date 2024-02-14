@@ -7,25 +7,11 @@ const loc = useLocationStore()
 
 onMounted(async () => {
   loc.startWatchingSpeed()
-  await checkSubscribe(bt.isConnected)
 })
 
 onBeforeUnmount(async () => {
   loc.stopWatchingSpeed()
 })
-
-watch(() => bt.isConnected, async (newValue) => {
-  await checkSubscribe(newValue)
-})
-
-async function checkSubscribe(subscribe) {
-  for (const ch of bt.bleCharacteristics) {
-    if (subscribe)
-      await ch.subscribeToNotifications()
-    else
-      await ch.unsubscribeFromNotifications()
-  }
-}
 
 function getTranslation(cha) {
   return te(`param.${cha.characteristic.uuid}`)

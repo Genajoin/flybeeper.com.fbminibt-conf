@@ -14,25 +14,11 @@ watchEffect(() => {
 onMounted(async () => {
   loc.startWatchingSpeed()
   getHeader()
-  await checkSubscribe(bt.isConnected)
 })
 
 onBeforeUnmount(async () => {
   loc.stopWatchingSpeed()
 })
-
-watch(() => bt.isConnected, async (newValue) => {
-  await checkSubscribe(newValue)
-})
-
-async function checkSubscribe(subscribe) {
-  for (const ch of bt.bleCharacteristics) {
-    if (subscribe)
-      await ch.subscribeToNotifications()
-    else
-      await ch.unsubscribeFromNotifications()
-  }
-}
 
 function getTimestamp() {
   return new Date().toLocaleTimeString('en-GB', {

@@ -107,11 +107,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
         const server = await this.device.gatt.connect()
 
-        this.isConnecting = false
-        this.isFetching = true
         // Получение списка сервисов
         const services = await server.getPrimaryServices()
-
+        this.isConnecting = false
+        this.isFetching = true
+        log.info('fetching')
         // Проход по сервисам
         for (const service of services) {
           log.debug('SERVICE', service.uuid)
@@ -122,20 +122,14 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             log.debug('characteristic', ch.uuid)
             const bleCharacteristic = new BleCharacteristicImpl(ch)
             await bleCharacteristic.initialize()
+            await bleCharacteristic.subscribeToNotifications()
             this.bleCharacteristics.push(bleCharacteristic)
           }
         }
 
-        // Поиск нужных сервисов по UUID
-        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
-
         // Чтение данных после успешного подключения
-
-        for (const ch of this.bleCharacteristics) {
-          if (ch.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
-            ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 }
-          // await ch.subscribeToNotifications();
-        }
+        this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
+          .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
 
         // Device Information Service
         const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
@@ -151,6 +145,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           this.dis.manufacturerNameString.value = await manName.getFormattedValue()
 
         // FlyBeeper settings service
+        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
 

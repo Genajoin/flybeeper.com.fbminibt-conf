@@ -17,7 +17,6 @@ export interface BleCharacteristic {
     description?: string
   } | null
   getValue: () => Promise<any>
-  isNotifying: boolean
 }
 
 export class BleCharacteristicImpl implements BleCharacteristic {
@@ -34,7 +33,6 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     description?: string
   } | null = null
 
-  isNotifying = false
   constructor(characteristic: BluetoothRemoteGATTCharacteristic) {
     this.characteristic = characteristic
   }
@@ -48,28 +46,27 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   async subscribeToNotifications(): Promise<void> {
     if (!this.characteristic.properties.notify)
       return
-    if (this.isNotifying)
-      return
 
     this.characteristic.startNotifications().then(() => {
       log.debug('start notify', this.characteristic.uuid)
-      this.isNotifying = true
       // Обработка уведомлений
       this.characteristic.addEventListener('characteristicvaluechanged', this.onNotification)
-    }).catch(this.isNotifying = false)
+    }).catch()
   }
 
   async unsubscribeFromNotifications(): Promise<void> {
-    if (!this.characteristic.properties.notify || !this.isNotifying) {
+    if (!this.characteristic.properties.notify || !this.characteristic.service.connected) {
       // Характеристика не поддерживает уведомления, нечего отписываться
       return
     }
 
-    this.characteristic.stopNotifications().then(() => {
-      log.debug('stop notify', this.characteristic.uuid)
-      this.isNotifying = false
-      this.characteristic.removeEventListener('characteristicvaluechanged', this.onNotification)
-    })
+    this.characteristic.removeEventListener('characteristicvaluechanged', this.onNotification)
+
+    this.characteristic.stopNotifications()
+      .then(() => {
+        log.debug('stop notify', this.characteristic.uuid)
+      })
+      .catch()
   }
 
   async getUserFormatDescriptor(): Promise<void> {
