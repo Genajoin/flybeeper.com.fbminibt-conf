@@ -32,7 +32,7 @@ function getTimestamp() {
 
 function logData2() {
   let logEntry = getTimestamp()
-  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
+  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify && c.isNotified)
   // Проход по всем значениям в characteristics
   for (const c of list)
     logEntry += `;${c.formattedValue}`
@@ -47,7 +47,7 @@ function logData2() {
 function getHeader() {
   const _header = ['Timestamp']
 
-  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
+  const list = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify && c.isNotified)
   for (const c of list)
     _header.push(`${t(`param.${c.characteristic.uuid}`)}`)
 
@@ -61,7 +61,7 @@ function getHeader() {
   header.value = `${_header.join(';')}`
 }
 
-watch(() => bt.bleCharacteristics.filter(c => c.characteristic.properties.notify).length, () => {
+watch(() => bt.bleCharacteristics.filter(c => c.characteristic.properties.notify && c.isNotified).length, () => {
   getHeader()
   log.value = `${log.value}\n${header.value}`
 })

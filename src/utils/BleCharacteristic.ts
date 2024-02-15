@@ -25,6 +25,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   value: any = null
   formattedValue: Ref<any> = ref(null)
   userFormatDescriptor: string | null = null
+  isNotified: boolean = false
   presentationFormatDescriptor: {
     format: number
     exponent: number
@@ -47,26 +48,23 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (!this.characteristic.properties.notify)
       return
 
-    this.characteristic.startNotifications().then(() => {
-      log.debug('start notify', this.characteristic.uuid)
-      // Обработка уведомлений
-      this.characteristic.addEventListener('characteristicvaluechanged', this.onNotification)
-    }).catch()
+    await this.characteristic.startNotifications()
+    log.debug('start notify', this.characteristic.uuid)
+    this.characteristic.addEventListener('characteristicvaluechanged', this.onNotification)
+    this.isNotified = true
   }
 
   async unsubscribeFromNotifications(): Promise<void> {
-    if (!this.characteristic.properties.notify || !this.characteristic.service.connected) {
+    if (!this.characteristic.properties.notify) {
       // Характеристика не поддерживает уведомления, нечего отписываться
       return
     }
 
     this.characteristic.removeEventListener('characteristicvaluechanged', this.onNotification)
 
-    this.characteristic.stopNotifications()
-      .then(() => {
-        log.debug('stop notify', this.characteristic.uuid)
-      })
-      .catch()
+    this.isNotified = false
+    log.debug('stop notify', this.characteristic.uuid)
+    await this.characteristic.stopNotifications()
   }
 
   async getUserFormatDescriptor(): Promise<void> {
