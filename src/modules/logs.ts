@@ -9,7 +9,6 @@ export const install: UserModule = () => {
     log.info('loglevel: debug')
   }
   else {
-    log.setLevel(log.levels.ERROR)
-    // log.error('loglevel: err');
+    log.setLevel(log.levels.SILENT)
   }
 }
