@@ -1,15 +1,15 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps(['cha'])
 const { t, te } = useI18n()
-const MAX_VALUES = 1000 // Максимальное количество хранимых значений
+const MAX_VALUES = 300 // Максимальное количество хранимых значений
 const lastUpdated = ref(null)
 const isNotified = ref(false)
-let storedValues = JSON.parse(localStorage.getItem(props.cha.characteristic.uuid)) || []
 
 const backgroundSVG = ref('')
 const storageName = props.cha.characteristic.service.device.id + props.cha.characteristic.uuid
+let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
 
 onMounted(() => {
   watch(
@@ -21,13 +21,16 @@ onMounted(() => {
       lastUpdated.value = timeStamp.toLocaleTimeString()
       storedValues.push({ v: newValue, t: timeStamp.valueOf() })
       storedValues = storedValues.slice(-MAX_VALUES)
-      localStorage.setItem(storageName, JSON.stringify(storedValues))
 
       backgroundSVG.value = generateSVGContent(storedValues, 300, 100)
       isNotified.value = props.cha.isNotified
     },
     { immediate: true }, // Первоначальное выполнение обработчика сразу после монтирования компонента
   )
+})
+
+onBeforeUnmount(() => {
+  localStorage.setItem(storageName, JSON.stringify(storedValues))
 })
 
 function generateSVGContent(storedValues, svgWidth, svgHeight) {
@@ -107,7 +110,7 @@ async function notifyOff(ch) {
   height: 100%;
 }
 .lightTheme circle {
-  fill: #c2dac2;
+  fill: #ddf5e7;
 }
 
 .darkTheme circle {
