@@ -27,7 +27,6 @@ onBeforeUnmount(async () => {
     <template v-if="bt.isConnected">
       <TheParam v-for="cha in chas" :key="cha" :cha="cha" />
     </template>
-
     <template v-if="loc.error === null">
       <div class="cell">
         <div text-sm opacity-50>

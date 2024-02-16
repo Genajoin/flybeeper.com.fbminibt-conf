@@ -10,7 +10,7 @@ const bt = useBluetoothStore()
   <Suspense v-else>
     <TheTerminal />
     <template #fallback>
-      Loading...
+      <div i-carbon-fade m-auto animate-spin text-4xl />
     </template>
   </Suspense>
 </template>
