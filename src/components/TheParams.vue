@@ -5,6 +5,13 @@ import TheParam from '~/components/TheParam.vue'
 const { t } = useI18n()
 const bt = useBluetoothStore()
 const loc = useLocationStore()
+const chas = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
+
+for (const c of chas)
+  await c.initialize()
+
+for (const c of chas.filter(c => !c.isNotified && !c.isBlockNotify))
+  await c.subscribeToNotifications()
 
 onMounted(async () => {
   loc.startWatchingSpeed()
@@ -18,7 +25,7 @@ onBeforeUnmount(async () => {
 <template>
   <div class="container">
     <template v-if="bt.isConnected">
-      <TheParam v-for="cha in bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)" :key="cha" :cha="cha" />
+      <TheParam v-for="cha in chas" :key="cha" :cha="cha" />
     </template>
 
     <DeviceConnector v-else />

@@ -59,6 +59,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     isConnecting: false,
     isFetching: false,
     isDisconnecting: false,
+    isSubscribed: false,
     devName: '',
     characteristicsData: {},
     subscribedCharacteristics: [],
@@ -122,7 +123,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             log.debug('characteristic', ch.uuid)
             const bleCharacteristic = new BleCharacteristicImpl(ch)
             // await bleCharacteristic.initialize()
-            await bleCharacteristic.subscribeToNotifications()
+            // await bleCharacteristic.subscribeToNotifications()
             this.bleCharacteristics.push(bleCharacteristic)
           }
         }
@@ -155,10 +156,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-        for (const c of this.bleCharacteristics.filter(c => c.characteristic.properties.notify)) {
-          await c.initialize()
-          await c.subscribeToNotifications()
-        }
         this.isConnected = true
       }
       catch (error) {

@@ -1,4 +1,9 @@
 <template>
-  <TheParams />
+  <Suspense>
+    <TheParams />
+    <template #fallback>
+      Loading...
+    </template>
+  </Suspense>
   <noSleep />
 </template>

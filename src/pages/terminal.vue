@@ -7,5 +7,10 @@ const bt = useBluetoothStore()
 
 <template>
   <DeviceConnector v-if="!bt.isConnected" />
-  <TheTerminal v-else />
+  <Suspense v-else>
+    <TheTerminal />
+    <template #fallback>
+      Loading...
+    </template>
+  </Suspense>
 </template>

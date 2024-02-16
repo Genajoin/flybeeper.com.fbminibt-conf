@@ -12,6 +12,9 @@ const header = ref<string>('')
 const chas = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify)
 const subscribers: Map<string, Function> = new Map()
 
+for (const c of chas)
+  await c.initialize()
+
 onMounted(async () => {
   chas.filter(c => c.isNotified).forEach((c) => {
     const subscriber = subscriberFunction()

@@ -13,11 +13,13 @@ const isNotified = ref(false)
 const backgroundSVG = ref('')
 const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
 let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
+await ch.initialize()
 
-onMounted(() => {
+onMounted(async () => {
+  // await ch.subscribeToNotifications()
   ch.subscribe(subscriberFunction)
   log.debug(`Подписка на характеристику ${ch.characteristic.uuid}`)
-  isNotified.value = ch.isNotified
+  isNotified.value = ch.isNotified && !ch.isBlockNotify
   lastValue.value = ch.formattedValue
 })
 
@@ -30,7 +32,7 @@ onBeforeUnmount(() => {
 // Определение функции-подписчика
 function subscriberFunction(newValue: any) {
   lastValue.value = newValue
-  isNotified.value = ch.isNotified
+  isNotified.value = ch.isNotified && !ch.isBlockNotify
   if (newValue === null)
     return
   const timeStamp = new Date()
@@ -72,14 +74,13 @@ function getTranslation() {
 }
 
 async function notifyOff() {
-  if (ch.isNotified) {
+  ch.isBlockNotify = !ch.isBlockNotify
+  if (ch.isBlockNotify)
     await ch.unsubscribeFromNotifications()
-    isNotified.value = ch.isNotified
-  }
-  else {
+  else
     await ch.subscribeToNotifications()
-    isNotified.value = ch.isNotified
-  }
+
+  isNotified.value = ch.isNotified && !ch.isBlockNotify
 }
 </script>
 

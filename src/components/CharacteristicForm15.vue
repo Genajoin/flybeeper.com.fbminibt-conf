@@ -2,9 +2,10 @@
 import cloneDeep from 'lodash/cloneDeep'
 import { computed, onMounted, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+import TheSetting from '~/components/TheSetting.vue'
 
 const bt = useBluetoothStore()
-const { t, te } = useI18n()
+const { t } = useI18n()
 
 const defaultConf = {
   buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
@@ -27,12 +28,13 @@ const lin2Conf = {
 }
 
 const tableChanged = ref(false)
+const theCurvesRef = ref()
 
 const chas = bt.bleCharacteristics
   .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') as BleCharacteristic[]
 
-for (const c of chas.filter(c => !c.isInitialized))
-  c.initialize()
+for (const c of chas)
+  await c.initialize()
 
 const buzzer_volume = computed(() => bt.bleCharacteristics
   .find(c => c.characteristic.uuid === '67f82d94-2b2a-4123-81c9-058e460c3d01'))
@@ -43,8 +45,6 @@ const cha_in_table = computed(() => chas
 
 let simulateVarioTimeout = null
 let simulateInProgress = false
-
-const theCurvesRef = ref()
 
 onMounted(async () => {
   // Обработчик изменения значения Simulate Vario
@@ -146,31 +146,6 @@ function uploadJson(event) {
   }
 }
 
-function getTypeFromPresentationFormat(presentationFormatDescriptor) {
-  if (!presentationFormatDescriptor)
-    return 'text'
-  switch (presentationFormatDescriptor.format) {
-    case 0x01: // bit
-      return 'checkbox'
-    case 0x19: // utf8s
-    case 0x1A: // utf16s
-      return 'text'
-    case 0x1B: // array
-      return 'array'
-    default:
-      return 'number'
-  }
-}
-
-function getStepByFormatDescriptor(formatDescriptor) {
-  if (!formatDescriptor)
-    return 1
-  if (formatDescriptor.format > 0x01 && formatDescriptor.format < 0x14)
-    return 10 ** formatDescriptor.exponent
-
-  return 1
-}
-
 function getStepByUUID(uuid) {
   switch (uuid) {
     case '8c090502-81c4-4d29-8d10-6db20607ace9': // freq
@@ -189,43 +164,22 @@ function handleInputChange() {
   tableChanged.value = true
   theCurvesRef.value?.updateCurves(chas)
 }
-function getTranslation(cha) {
-  return (te(`sett.${cha.characteristic.uuid}`))
-    ? t(`sett.${cha.characteristic.uuid}`)
-    : cha.userFormatDescriptor || cha.characteristic.uuid
-}
 </script>
 
 <template>
   <div m-auto max-w-320 flex flex-wrap justify-center>
     <div max-w-full min-w-340px flex-1 text-right>
-      <div
-        v-for="cha in chas
-          .filter(c => c.presentationFormatDescriptor
-            && c.presentationFormatDescriptor.format > 0
-            && c.presentationFormatDescriptor.format !== 0x1B)
-          .sort((a, b) => {
-            // Сначала сортируем по format
-            const formatDiff = a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format;
-            if (formatDiff !== 0) {
-              return formatDiff;
-            }
-            // Если format одинаков, сортируем по userFormatDescriptor
-            return a.userFormatDescriptor.localeCompare(b.userFormatDescriptor);
-          })"
-        :key="cha.characteristic.uuid"
-      >
-        <label :for="cha.characteristic.uuid">{{ getTranslation(cha) }}: </label>
-        <input
-          :id="cha.characteristic.uuid"
-          v-model="cha.formattedValue"
-          class="input-field"
-          :type="getTypeFromPresentationFormat(cha.presentationFormatDescriptor)"
-          :step="getStepByFormatDescriptor(cha.presentationFormatDescriptor)"
-          @input="handleInputChange()"
-        >
-      </div>
+      <TheSetting
+        v-for="cha in chas.sort((a, b) => {
+          // Сначала сортируем по format
+          const formatDiff = a.presentationFormatDescriptor?.format - b.presentationFormatDescriptor?.format;
+          if (formatDiff !== 0)
+            return formatDiff
 
+          // Если format одинаков, сортируем по userFormatDescriptor
+          return a.userFormatDescriptor?.localeCompare(b.userFormatDescriptor);
+        })" :key="cha" :cha="cha" @change="handleInputChange"
+      />
       <div
         v-if="buzzer_volume && buzzer_volume.formattedValue === 0
           && simulator_value && simulator_value.formattedValue !== 0.0"

@@ -8,6 +8,7 @@ export interface BleCharacteristic {
   value: any
   formattedValue: any
   userFormatDescriptor: string | null
+  isBlockNotify: boolean
   isNotified: boolean
   isInitialized: boolean
   presentationFormatDescriptor: {
@@ -32,6 +33,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   value: any = null
   formattedValue: any = null
   userFormatDescriptor: string | null = null
+  isBlockNotify: boolean = false
   isNotified: boolean = false
   isInitialized: boolean = false
   presentationFormatDescriptor: {
@@ -53,12 +55,13 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic
     this.value = characteristic.value
     this.formattedValue = this.formatValue(characteristic.value)
-    this.notifySubscribers(this.formattedValue)
+    if (!this.isBlockNotify)
+      this.notifySubscribers(this.formattedValue)
     // log.debug('new val ', this.formattedValue)
   }
 
   async subscribeToNotifications(): Promise<void> {
-    if (!this.characteristic.properties.notify)
+    if (this.isNotified || !this.characteristic.properties.notify)
       return
 
     await this.characteristic.startNotifications()
@@ -397,10 +400,13 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   }
 
   async initialize(): Promise<void> {
+    if (this.isInitialized)
+      return
     await this.getDescriptors()
     await this.getUserFormatDescriptor()
     await this.readPresentationFormatDescriptor()
     await this.getFormattedValue()
     this.isInitialized = true
+    log.debug('характеристика инициализирована', this.characteristic.uuid)
   }
 }
