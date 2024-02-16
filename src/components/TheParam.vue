@@ -13,10 +13,8 @@ const isNotified = ref(false)
 const backgroundSVG = ref('')
 const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
 let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
-await ch.initialize()
 
 onMounted(async () => {
-  // await ch.subscribeToNotifications()
   ch.subscribe(subscriberFunction)
   log.debug(`Подписка на характеристику ${ch.characteristic.uuid}`)
   isNotified.value = ch.isNotified && !ch.isBlockNotify

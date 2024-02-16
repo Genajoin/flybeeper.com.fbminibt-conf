@@ -1,5 +1,10 @@
+<script setup lang="ts">
+const bt = useBluetoothStore()
+</script>
+
 <template>
-  <Suspense>
+  <DeviceConnector v-if="!bt.isConnected" />
+  <Suspense v-else>
     <TheParams />
     <template #fallback>
       Loading...

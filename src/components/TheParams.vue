@@ -28,8 +28,6 @@ onBeforeUnmount(async () => {
       <TheParam v-for="cha in chas" :key="cha" :cha="cha" />
     </template>
 
-    <DeviceConnector v-else />
-
     <template v-if="loc.error === null">
       <div class="cell">
         <div text-sm opacity-50>
