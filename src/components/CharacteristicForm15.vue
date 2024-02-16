@@ -257,10 +257,8 @@ function getTranslation(cha) {
         </div>
       </div>
     </div>
-    <div v-if="cha_in_table.length >= 4" flex flex-1 justify-center>
-      <TheCurves
-        ref="theCurvesRef" :cha="chas"
-      />
+    <div v-if="cha_in_table.filter(c => c.formattedValue !== null).length >= 4" flex flex-1 justify-center>
+      <TheCurves ref="theCurvesRef" :cha="chas" />
     </div>
   </div>
 

@@ -10,3 +10,5 @@ node_modules
 cypress/downloads
 pnpm-lock.yaml
 *.d.ts
+/.env
+/.vscode/extensions.json
