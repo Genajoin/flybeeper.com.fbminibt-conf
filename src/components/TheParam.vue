@@ -1,37 +1,45 @@
-<script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+<script setup lang="ts">
+import log from 'loglevel'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic.js'
 
 const props = defineProps(['cha'])
 const { t, te } = useI18n()
+const ch = props.cha as BleCharacteristic
 const MAX_VALUES = 300 // Максимальное количество хранимых значений
-const lastUpdated = ref(null)
+const lastValue = ref('--')
+const lastUpdated = ref('')
 const isNotified = ref(false)
-
 const backgroundSVG = ref('')
-const storageName = props.cha.characteristic.service.device.id + props.cha.characteristic.uuid
+const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
 let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
 
 onMounted(() => {
-  watch(
-    () => props.cha?.formattedValue,
-    (newValue) => {
-      if (!newValue)
-        return // Проверка на наличие значения formattedValue
-      const timeStamp = new Date()
-      lastUpdated.value = timeStamp.toLocaleTimeString()
-      storedValues.push({ v: newValue, t: timeStamp.valueOf() })
-      storedValues = storedValues.slice(-MAX_VALUES)
-
-      backgroundSVG.value = generateSVGContent(storedValues, 300, 100)
-      isNotified.value = props.cha.isNotified
-    },
-    { immediate: true }, // Первоначальное выполнение обработчика сразу после монтирования компонента
-  )
+  ch.subscribe(subscriberFunction)
+  log.debug(`Подписка на характеристику ${ch.characteristic.uuid}`)
+  isNotified.value = ch.isNotified
+  lastValue.value = ch.formattedValue
 })
 
 onBeforeUnmount(() => {
+  ch.unsubscribe(subscriberFunction)
+  log.debug(`Одписка от характеристики ${ch.characteristic.uuid}`)
   localStorage.setItem(storageName, JSON.stringify(storedValues))
 })
+
+// Определение функции-подписчика
+function subscriberFunction(newValue: any) {
+  lastValue.value = newValue
+  isNotified.value = ch.isNotified
+  if (newValue === null)
+    return
+  const timeStamp = new Date()
+  lastUpdated.value = timeStamp.toLocaleTimeString()
+  storedValues.push({ v: newValue, t: timeStamp.valueOf() })
+  storedValues = storedValues.slice(-MAX_VALUES)
+  backgroundSVG.value = generateSVGContent(storedValues, 300, 100)
+  // log.info('Значение изменено:', newValue);
+}
 
 function generateSVGContent(storedValues, svgWidth, svgHeight) {
   const maxValue = Math.max(...storedValues.map(({ v }) => v)) // Максимальное значение
@@ -57,12 +65,13 @@ function generateSVGContent(storedValues, svgWidth, svgHeight) {
   return svgContent
 }
 
-function getTranslation(cha) {
-  return te(`param.${cha.characteristic.uuid}`)
-    ? t(`param.${cha.characteristic.uuid}`)
-    : cha.userFormatDescriptor || cha.characteristic.uuid
+function getTranslation() {
+  return te(`param.${ch.characteristic.uuid}`)
+    ? t(`param.${ch.characteristic.uuid}`)
+    : ch.userFormatDescriptor || ch.characteristic.uuid
 }
-async function notifyOff(ch) {
+
+async function notifyOff() {
   if (ch.isNotified) {
     await ch.unsubscribeFromNotifications()
     isNotified.value = ch.isNotified
@@ -75,16 +84,16 @@ async function notifyOff(ch) {
 </script>
 
 <template>
-  <div v-if="cha" class="cell" @click="notifyOff(cha)">
+  <div class="cell" @click="notifyOff()">
     <div class="background">
       <svg class="graph" :class="[isDark ? 'darkTheme' : 'lightTheme']" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100">
         <g v-html="backgroundSVG" />
       </svg>
       <div text-sm opacity-50>
-        {{ getTranslation(cha) }}
+        {{ getTranslation() }}
       </div>
       <div v-if="isNotified" text-4xl class="value">
-        {{ cha.formattedValue !== null ? cha.formattedValue : "--" }}
+        {{ lastValue !== null ? lastValue : "--" }}
       </div>
       <div text="sm right" opacity-50>
         {{ lastUpdated }}

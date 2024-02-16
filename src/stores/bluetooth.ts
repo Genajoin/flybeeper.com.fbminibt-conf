@@ -103,7 +103,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           ],
         })
         this.devName = this.device.name
-        log.info('connected to', this.devName)
+        log.info('Connecting to', this.devName)
 
         const server = await this.device.gatt.connect()
 
@@ -146,7 +146,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
         // FlyBeeper settings service
         const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
-        if (FSS) {
+        if (FSS && Number.parseFloat(this.dis.firmwareRevisionString.value as string) <= 0.15) {
           const characteristics = await FSS.getCharacteristics()
 
           this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
@@ -159,6 +159,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       }
       catch (error) {
         log.error('Error connecting to the device:', error)
+        this.isConnected = true
+        await this.disconnectDevice()
         this.isConnecting = false
       }
       this.isFetching = false
@@ -173,15 +175,14 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
       try {
         this.isDisconnecting = true
+        this.isConnected = false
         await this.device.gatt.disconnect()
         // this.device.removeEventListener('gattserverdisconnected', this.onDisconnected)
-        this.isConnected = false
-        this.isDisconnecting = false
       }
       catch (error) {
         log.error('Error disconnecting from the device:', error)
-        this.isDisconnecting = false
       }
+      this.isDisconnecting = false
     },
     onDisconnected() {
       // Обработка отключения

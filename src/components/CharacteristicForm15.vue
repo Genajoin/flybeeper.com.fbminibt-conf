@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 
 const bt = useBluetoothStore()
 const { t, te } = useI18n()
@@ -26,14 +28,18 @@ const lin2Conf = {
 
 const tableChanged = ref(false)
 
+const chas = bt.bleCharacteristics
+  .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') as BleCharacteristic[]
+
+for (const c of chas.filter(c => !c.isInitialized))
+  c.initialize()
+
 const buzzer_volume = computed(() => bt.bleCharacteristics
   .find(c => c.characteristic.uuid === '67f82d94-2b2a-4123-81c9-058e460c3d01'))
 const simulator_value = computed(() => bt.bleCharacteristics
   .find(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002'))
-const cha_in_table = computed(() => bt.bleCharacteristics
-  .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
-  && c.presentationFormatDescriptor
-  && c.presentationFormatDescriptor.format === 0x1B))
+const cha_in_table = computed(() => chas
+  .filter(c => c.presentationFormatDescriptor && c.presentationFormatDescriptor.format === 0x1B))
 
 let simulateVarioTimeout = null
 let simulateInProgress = false
@@ -65,13 +71,13 @@ onMounted(async () => {
 })
 
 async function updateCharacteristic() {
-  for (const characteristic of bt.bleCharacteristics.filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
+  for (const characteristic of chas)
     await characteristic.setFormattedValue()
   tableChanged.value = false
 }
 
 function resetValue(uuid, value) {
-  bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
+  chas.find(c => c.characteristic.uuid === uuid)
     .formattedValue = cloneDeep(value)
 }
 
@@ -98,15 +104,13 @@ function resetToLin2() {
 
 // Функция для скачивания JSON
 function downloadJson() {
-  const exportObj = bt.bleCharacteristics
-    .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-    .map((cha) => {
-      return {
-        uuid: cha.characteristic.uuid,
-        name: cha.userFormatDescriptor,
-        value: cha.formattedValue,
-      }
-    })
+  const exportObj = chas.map((cha) => {
+    return {
+      uuid: cha.characteristic.uuid,
+      name: cha.userFormatDescriptor,
+      value: cha.formattedValue,
+    }
+  })
   const jsonString = JSON.stringify(exportObj)
   const blob = new Blob([jsonString], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -183,8 +187,7 @@ function getStepByUUID(uuid) {
 
 function handleInputChange() {
   tableChanged.value = true
-  theCurvesRef.value?.updateCurves(bt.bleCharacteristics
-    .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'))
+  theCurvesRef.value?.updateCurves(chas)
 }
 function getTranslation(cha) {
   return (te(`sett.${cha.characteristic.uuid}`))
@@ -197,9 +200,8 @@ function getTranslation(cha) {
   <div m-auto max-w-320 flex flex-wrap justify-center>
     <div max-w-full min-w-340px flex-1 text-right>
       <div
-        v-for="cha in bt.bleCharacteristics
-          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
-            && c.presentationFormatDescriptor
+        v-for="cha in chas
+          .filter(c => c.presentationFormatDescriptor
             && c.presentationFormatDescriptor.format > 0
             && c.presentationFormatDescriptor.format !== 0x1B)
           .sort((a, b) => {
@@ -237,9 +239,8 @@ function getTranslation(cha) {
 
     <div v-if="cha_in_table.length >= 4" flex flex-1 justify-center p-4 text-center>
       <div
-        v-for="cha in bt.bleCharacteristics
-          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000'
-            && c.presentationFormatDescriptor
+        v-for="cha in chas
+          .filter(c => c.presentationFormatDescriptor
             && c.presentationFormatDescriptor.format === 0x1B)
           .sort((a, b) => a.presentationFormatDescriptor.format - b.presentationFormatDescriptor.format)" :key="cha.characteristic.uuid"
       >
@@ -258,8 +259,7 @@ function getTranslation(cha) {
     </div>
     <div v-if="cha_in_table.length >= 4" flex flex-1 justify-center>
       <TheCurves
-        ref="theCurvesRef" :cha="bt.bleCharacteristics
-          .filter(c => c.characteristic.service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')"
+        ref="theCurvesRef" :cha="chas"
       />
     </div>
   </div>

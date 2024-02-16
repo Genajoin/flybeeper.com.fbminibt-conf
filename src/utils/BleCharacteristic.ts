@@ -1,14 +1,15 @@
 // BleCharacteristic.ts
 
-import type { Ref } from 'vue-demi'
 import log from 'loglevel'
 
 export interface BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
   descriptors: BluetoothRemoteGATTDescriptor[]
   value: any
-  formattedValue: Ref<any>
+  formattedValue: any
   userFormatDescriptor: string | null
+  isNotified: boolean
+  isInitialized: boolean
   presentationFormatDescriptor: {
     format: number
     exponent: number
@@ -17,15 +18,22 @@ export interface BleCharacteristic {
     description?: string
   } | null
   getValue: () => Promise<any>
+  subscribeToNotifications: () => Promise<void>
+  unsubscribeFromNotifications: () => Promise<void>
+  setFormattedValue: () => Promise<void>
+  initialize: () => Promise<void>
+  subscribe: (callback: (value: any) => void) => void
+  unsubscribe: (callback: (value: any) => void) => void
 }
 
 export class BleCharacteristicImpl implements BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
   descriptors: BluetoothRemoteGATTDescriptor[] = []
   value: any = null
-  formattedValue: Ref<any> = ref(null)
+  formattedValue: any = null
   userFormatDescriptor: string | null = null
   isNotified: boolean = false
+  isInitialized: boolean = false
   presentationFormatDescriptor: {
     format: number
     exponent: number
@@ -34,14 +42,19 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     description?: string
   } | null = null
 
+  // Список подписчиков
+  private subscribers: ((value: any) => void)[] = []
+
   constructor(characteristic: BluetoothRemoteGATTCharacteristic) {
     this.characteristic = characteristic
   }
 
   private onNotification = async (event: Event) => {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic
-    this.formattedValue.value = this.formatValue(characteristic.value)
-    log.debug('new val ', this.formattedValue.value)
+    this.value = characteristic.value
+    this.formattedValue = this.formatValue(characteristic.value)
+    this.notifySubscribers(this.formattedValue)
+    // log.debug('new val ', this.formattedValue)
   }
 
   async subscribeToNotifications(): Promise<void> {
@@ -65,6 +78,25 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     this.isNotified = false
     log.debug('stop notify', this.characteristic.uuid)
     await this.characteristic.stopNotifications()
+  }
+
+  // Метод для добавления подписчика
+  public subscribe(callback: (value: any) => void) {
+    this.subscribers.push(callback)
+  }
+
+  // Метод для удаления подписчика
+  public unsubscribe(callback: (value: any) => void) {
+    const index = this.subscribers.indexOf(callback)
+    if (index !== -1)
+      this.subscribers.splice(index, 1)
+  }
+
+  // Метод для оповещения всех подписчиков об изменении значения
+  private notifySubscribers(value: any) {
+    this.subscribers.forEach((callback) => {
+      callback(value)
+    })
   }
 
   async getUserFormatDescriptor(): Promise<void> {
@@ -246,11 +278,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (valByUUID !== null)
       return valByUUID
 
-    const presentationFormat = this.presentationFormatDescriptor
-    if (presentationFormat) {
-      const format = presentationFormat.format
-      const exponent = presentationFormat.exponent
-      return this.formatValueByFormat(value, format, exponent)
+    if (this.presentationFormatDescriptor) {
+      return this.formatValueByFormat(value, this.presentationFormatDescriptor.format, this.presentationFormatDescriptor.exponent)
     }
     else {
       log.warn('Presentation format descriptor is missing.')
@@ -271,14 +300,19 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  async getFormattedValue(): Promise<any> {
+  async getFormattedValue() {
     this.value = await this.getValue()
-    this.formattedValue.value = this.value !== null ? this.formatValue(this.value) : null
-    return this.formattedValue.value
+    if (this.value !== null) {
+      this.formattedValue = this.formatValue(this.value)
+      return this.formattedValue
+    }
+    else {
+      return null
+    }
   }
 
-  async setFormattedValue(): Promise<any> {
-    if (this.presentationFormatDescriptor === null || this.formattedValue.value === null)
+  async setFormattedValue() {
+    if (this.presentationFormatDescriptor === null || this.formattedValue === null)
       return
     const value = this.convertFormattedValueToDataView(this.formattedValue, this.presentationFormatDescriptor.format, this.presentationFormatDescriptor.exponent)
     if (!this.compareValues(value, this.value)) {
@@ -306,42 +340,42 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     return true
   }
 
-  private convertFormattedValueToDataView(formattedValue: any, format: number, exponent: number): DataView {
+  private convertFormattedValueToDataView(_formattedValue: any, format: number, exponent: number): DataView {
     let dataView: DataView
 
     switch (format) {
       case 0x01: // bool
         dataView = new DataView(new ArrayBuffer(1))
-        dataView.setUint8(0, formattedValue ? 0x01 : 0x00)
+        dataView.setUint8(0, _formattedValue ? 0x01 : 0x00)
         break
 
       case 0x0C: // sint8
         // Преобразовать 8-битное целое значение
         dataView = new DataView(new ArrayBuffer(1))
-        dataView.setInt8(0, formattedValue / (10 ** exponent))
+        dataView.setInt8(0, _formattedValue / (10 ** exponent))
         break
 
       case 0x0E: // sint16
         // Преобразовать 16-битное целое значение
         dataView = new DataView(new ArrayBuffer(2))
-        dataView.setInt16(0, formattedValue / (10 ** exponent), true) // true для little-endian
+        dataView.setInt16(0, _formattedValue / (10 ** exponent), true) // true для little-endian
         break
 
       case 0x1B: // structure (array)
-        // Преобразовать formattedValue как массив int16 в dataView
-        if (Array.isArray(formattedValue) && formattedValue.every((value: any) => typeof value === 'number')) {
+        // Преобразовать _formattedValue как массив int16 в dataView
+        if (Array.isArray(_formattedValue) && _formattedValue.every((value: any) => typeof value === 'number')) {
           // Создаем новый буфер, в который будем записывать int16 значения
-          const buffer = new ArrayBuffer(formattedValue.length * 2)
+          const buffer = new ArrayBuffer(_formattedValue.length * 2)
           const view = new DataView(buffer)
 
           // Записываем каждое значение int16 в буфер
-          for (let i = 0; i < formattedValue.length; i++)
-            view.setInt16(i * 2, formattedValue[i], true) // Little-endian
+          for (let i = 0; i < _formattedValue.length; i++)
+            view.setInt16(i * 2, _formattedValue[i], true) // Little-endian
 
           dataView = view
         }
         else {
-          throw new Error('Invalid formattedValue for structure (array)')
+          throw new Error('Invalid Value for structure (array)')
         }
         break
 
@@ -358,7 +392,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
     catch (error) {
       this.descriptors = []
-      log.error('Error getting descriptors:', error)
+      log.warn('Descriptors is missing')
     }
   }
 
@@ -367,6 +401,6 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     await this.getUserFormatDescriptor()
     await this.readPresentationFormatDescriptor()
     await this.getFormattedValue()
-    // await this.subscribeToNotifications()
+    this.isInitialized = true
   }
 }
