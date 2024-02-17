@@ -10,6 +10,9 @@ const bt = useBluetoothStore()
   <Suspense v-else>
     <TheTerminal />
     <template #fallback>
+      <div p-4>
+        {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
+      </div>
       <div i-carbon-fade m-auto animate-spin text-4xl />
     </template>
   </Suspense>

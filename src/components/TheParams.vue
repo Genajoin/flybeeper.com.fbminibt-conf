@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import TheParam from '~/components/TheParam.vue'
 
 const { t } = useI18n()
@@ -24,9 +24,7 @@ onBeforeUnmount(async () => {
 
 <template>
   <div class="container">
-    <template v-if="bt.isConnected">
-      <TheParam v-for="cha in chas" :key="cha" :cha="cha" />
-    </template>
+    <TheParam v-for="cha in chas" :key="cha" :cha="cha" />
     <template v-if="loc.error === null">
       <div class="cell">
         <div text-sm opacity-50>
@@ -75,9 +73,6 @@ onBeforeUnmount(async () => {
         </div>
       </div>
     </template>
-  </div>
-  <div v-if="bt.isConnected">
-    {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
   </div>
 </template>
 
