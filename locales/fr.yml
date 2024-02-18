@@ -84,7 +84,7 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Simuler le Vario, m/s (0-éteinte)
   904baf04-5814-11ee-8c99-0242ac120201: Facteur K du Pitot
   904baf04-5814-11ee-8c99-0242ac120202: Décalage de pression différentielle, Pa
-  1d63a595-05ee-43d0-ba27-d14b944d6f88: Temps moyen de vario (sec)
+  7e035080-7417-4393-959a-58505ef9cf4a: Temps moyen de vario (sec)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Temps de retard pour la mise hors tension automatique de l'alimentation (heures)
   silent: Silencieux au sol
   bt-never-sleep: Bluetooth ne dort jamais

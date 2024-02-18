@@ -84,7 +84,7 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Simular Vario, m/s (0-apagada)
   904baf04-5814-11ee-8c99-0242ac120201: Factor K de Pitot
   904baf04-5814-11ee-8c99-0242ac120202: Desplazamiento de presión diferencial, Pa
-  1d63a595-05ee-43d0-ba27-d14b944d6f88: Tiempo promedio de vario (seg)
+  7e035080-7417-4393-959a-58505ef9cf4a: Tiempo promedio de vario (seg)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Tiempo de retardo para apagado automático de energía (horas)
   silent: Silencioso en tierra
   bt-never-sleep: Bluetooth nunca duerme

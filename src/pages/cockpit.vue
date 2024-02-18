@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const bt = useBluetoothStore()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -8,8 +9,9 @@ const bt = useBluetoothStore()
     <Suspense>
       <TheParams />
       <template #fallback>
-        <div p-4 />
-        <div i-carbon-fade m-auto animate-spin text-4xl />
+        <p>
+          {{ t('msg.fetching') }}...
+        </p>
       </template>
     </Suspense>
     <div v-if="bt.isConnected">

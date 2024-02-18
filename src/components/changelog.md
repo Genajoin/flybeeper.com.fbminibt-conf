@@ -1,4 +1,4 @@
-<button btn href="/download/app_update.0.14.bin">Download last firmware</button>
+<button btn href="/download/app_update.0.16.bin">Download last firmware</button>
 
 **Version:** x.xx | **Date:** in the future | Use [polling](https://t.me/flybeeperchat/32) to vote for your favorite new feature
 
@@ -7,11 +7,20 @@
 - _Automatically reduce the buzzer volume:_ When the ambient temperature drops to zero to reduce current consumption and prevent shutdown.
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
 
-**Version:** 0.15 | **Date:** Soon | Beta testing
+**Version:** 0.16 | **Date:** 19.02.2024 | [**Download**](/download/app_update.0.16.bin)
 
-- _Deactivate HID keyboard:_ Config option.
+- _Battery voltage by bluetooth:_ New battery characteristic available to notify.
+- _Stop battery charge measurement:_ Reduce power consumption in off mode and bluetooth disconnected mode.
+- _Double filtration:_ The first filter is pressure, the second is vario. The result is a smoother pressure output via Bluetooth.
+- _Vario by bluetooth:_ New vario characteristic available to notify.
+- _Vario averaging time:_ Config option. Smoothing response vario to pressure changes. Has no effect on pressure data (vario only).
+- _Power off timeout:_ Config option. The time after which the device will automatically turn off.
+- _New settings storage:_ A unified settings system for all flyBeeper devices.
+- _Deactivate HID keyboard:_ Config option. Highly recommend set this checkbox if you not use buttons now. HID keyboard is deprecated.
 - _Default buzzer curves changed:_ More duty in sinking.
 - _Fix duplication data:_ Stopping data transfer via Nordic UART service if app subscribe to ESS. Eliminates duplication of data in xcTrack. Reduces energy consumption.
+
+**Version:** 0.15 | **Date:** -- | beta testing fail
 
 **Version:** 0.14 | **Date:** 28.12.2023 | [**Download**](/download/app_update.0.14.bin)
 
