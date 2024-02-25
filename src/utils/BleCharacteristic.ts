@@ -2,6 +2,11 @@
 
 import log from 'loglevel'
 
+export interface LogEntry {
+  timestamp: number // Метка времени
+  value: any // Значение
+}
+
 export interface BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
   descriptors: BluetoothRemoteGATTDescriptor[]
@@ -11,6 +16,7 @@ export interface BleCharacteristic {
   isBlockNotify: boolean
   isNotified: boolean
   isInitialized: boolean
+  entryArray: LogEntry[]
   presentationFormatDescriptor: {
     format: number
     exponent: number
@@ -36,6 +42,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   isBlockNotify: boolean = false
   isNotified: boolean = false
   isInitialized: boolean = false
+  entryArray: LogEntry[] = []
   presentationFormatDescriptor: {
     format: number
     exponent: number
@@ -55,9 +62,11 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic
     this.value = characteristic.value
     this.formattedValue = this.formatValue(characteristic.value)
-    if (!this.isBlockNotify)
+    if (!this.isBlockNotify) {
       this.notifySubscribers(this.formattedValue)
-    // log.debug('new val ', this.formattedValue)
+      this.entryArray.push({ timestamp: Date.now(), value: this.formattedValue })
+      // log.debug('new val ', this.formattedValue)
+    }
   }
 
   async subscribeToNotifications(): Promise<void> {
@@ -103,20 +112,41 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   }
 
   async getUserFormatDescriptor(): Promise<void> {
-    if (!this.userFormatDescriptor && this.descriptors) {
-      const userFormatDescriptor = this.descriptors.find(
-        descriptor => descriptor.uuid === '00002901-0000-1000-8000-00805f9b34fb',
-      )
+    if (!this.userFormatDescriptor) {
+      if (this.descriptors.length) {
+        const userFormatDescriptor = this.descriptors.find(
+          descriptor => descriptor.uuid === '00002901-0000-1000-8000-00805f9b34fb',
+        )
 
-      if (userFormatDescriptor) {
-        const val = await userFormatDescriptor.readValue()
-        const enc = new TextDecoder('utf-8')
-        this.userFormatDescriptor = enc.decode(val.buffer)
-        log.debug('Characteristic User Format Descriptor:', this.userFormatDescriptor)
+        if (userFormatDescriptor) {
+          const val = await userFormatDescriptor.readValue()
+          const enc = new TextDecoder('utf-8')
+          this.userFormatDescriptor = enc.decode(val.buffer)
+          log.debug('Characteristic User Format Descriptor:', this.userFormatDescriptor)
+        }
+        else {
+          log.debug('Characteristic User Format Descriptor не найден.')
+          this.userFormatDescriptor = this.getUserFormatDescriptorByUUID()
+        }
       }
       else {
-        log.debug('Characteristic User Format Descriptor не найден.')
+        this.userFormatDescriptor = this.getUserFormatDescriptorByUUID()
       }
+    }
+  }
+
+  private getUserFormatDescriptorByUUID() {
+    switch (this.characteristic.uuid) {
+      case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
+        return 'Pressure, Pa'
+      case '00002a19-0000-1000-8000-00805f9b34fb': // battery
+        return 'Battery level, %'
+      case '00002a6e-0000-1000-8000-00805f9b34fb': // temperature
+        return 'Temperature, °C'
+      case '00002a6c-0000-1000-8000-00805f9b34fb': // elevation
+        return 'Elevation, m'
+      default:
+        return null
     }
   }
 

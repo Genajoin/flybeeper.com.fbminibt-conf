@@ -12,6 +12,8 @@ button:
   settings: Impostazioni dispositivo
 intro:
   desc: Sensore di pressione atmosferica con Bluetooth
+  device-list: Elenco dei dispositivi
+
 not-found: Non trovato
 msg:
   disconnected: Dispositivo disconnesso
@@ -25,6 +27,8 @@ msg:
   no-bluetooth: Il tuo dispositivo non supporta il Bluetooth.
   need-bluetooth: Per utilizzare alcune funzionalità, potrebbe essere necessario un dispositivo abilitato al Bluetooth.
   fetching: Recupero
+  pause: Pausa
+  resume: Riprendere
 
 param:
   pressure: Pressione, Pa
@@ -54,8 +58,8 @@ param:
   830ff7a0-367a-40e7-9038-4f00bda31f84: Vario per altitudine, m/s
 
 about:
-  p1: Il FlyBeeper mini BT è un dispositivo per parapendisti e deltaplanisti. Il dispositivo è dotato di un sensore di pressione atmosferica, di un buzzer acustico e di 4 pulsanti. I dati vengono trasmessi tramite Bluetooth.
-  p2: Questa applicazione web può connettersi al dispositivo e visualizzare tutte le informazioni. Inoltre, con il permesso, è possibile visualizzare i dati della navigazione satellitare.
+  p1: FlyBeeper - Dispositivi per parapendio e deltaplano. I dispositivi dispongono di vari sensori. I dati elaborati vengono trasmessi tramite Bluetooth.
+  p2: Questa applicazione web può connettersi al dispositivo, modificarne le impostazioni e visualizzare tutti i dati trasmessi dal dispositivo. Qui è possibile trovare l'ultima versione del firmware, la cronologia delle modifiche e una descrizione della procedura di aggiornamento. Inoltre, con il permesso, è possibile visualizzare i dati di navigazione satellitare.
   location-permission: Richiedi il permesso di posizione
   geo-granted: Permesso di posizione concesso
   geo-denied: Permesso di posizione negato. Aprire le impostazioni del browser per concedere i permessi.
@@ -71,7 +75,7 @@ sett:
   d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth non dorme mai
   a37e549a-f501-4e77-9c3d-291c85542471: Lampeggio LED dal vario
   86591053-2856-4f25-a35c-b753f0deea8f: Disattiva la tastiera HID
-  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: Protocollo UART
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: Protocollo UART (1 - PRS, 2 - POV)
   67f82d94-2b2a-4123-81c9-058e460c3d01: Volume del buzzer
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Inizio della salita (m/s)
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Fine della piccola salita (m/s)
@@ -113,4 +117,4 @@ sett:
 update:
   how-to: Come aggiornare
   changelog: Registro modifiche
-  descr: è la migliore soluzione da utilizzare per aggiornare il firmware. Installa e avvia l'applicazione. Nella scheda `Scan`, cerca un dispositivo con il nome `FBminiBT` e fai clic sul pulsante `connect`. Sulla scheda che si apre, vicino al pulsante `disconnect`, fai clic sull'icona `DFU`. Seleziona il file firmware precedentemente scaricato `app_update.bin` nel file system. Seleziona `Test and Confirm` e premi `Ok`. Dopo 15 secondi, il file verrà trasferito, verificato e il dispositivo si riavvierà. La batteria deve essere carica.
+  descr: è la migliore soluzione da utilizzare per aggiornare il firmware. Installa e avvia l'applicazione. Nella scheda `Scan`, cerca un dispositivo e fai clic sul pulsante `connect`. Sulla scheda che si apre, vicino al pulsante `disconnect`, fai clic sull'icona `DFU`. Seleziona il file firmware precedentemente scaricato `app_update.bin` nel file system. Seleziona `Test and Confirm` e premi `Ok`. Dopo 15 secondi, il file verrà trasferito, verificato e il dispositivo si riavvierà. La batteria deve essere carica.

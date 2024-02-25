@@ -66,6 +66,9 @@ async function requestLocationPermission() {
   <p mx-auto mt-3 max-w-full w-160 text-left>
     {{ t('about.p1') }}
   </p>
+  <a m-4 mt-3 btn href="/devices">
+    {{ t('intro.device-list') }}
+  </a>
   <p mx-auto mt-3 max-w-full w-160 text-left>
     {{ t('about.p2') }}
   </p>
@@ -84,11 +87,6 @@ async function requestLocationPermission() {
   <button v-if="showInstallButton" mt-3 btn @click="installApp">
     {{ t('about.install-app') }}
   </button>
-  <p mx-auto mt-3 max-w-full w-160 text-left>
-    {{ t('about.p4') }}
-  </p>
-  <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-mini-bt/">{{ t('about.link-blog') }}</a>
-  <a m-4 mt-3 btn href="https://market.flybeeper.com/device/mini-bt">{{ t('about.link-market') }}</a>
   <div />
 </template>
 

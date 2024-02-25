@@ -13,7 +13,7 @@ button:
 
 intro:
   desc: Bluetooth Atmospheric Pressure Sensor
-
+  device-list: Device list
 not-found: Not Found
 
 msg:
@@ -28,6 +28,8 @@ msg:
   no-bluetooth: Your device not support Bluetooth.
   need-bluetooth: To use certain features, you may need a Bluetooth enabled device.
   fetching: Fetching
+  pause: Pause
+  resume: Resume
 
 param:
   pressure: Pressure, Pa
@@ -57,8 +59,8 @@ param:
   830ff7a0-367a-40e7-9038-4f00bda31f84: Vario by altitude, m/s
 
 about:
-  p1: The FlyBeeper mini BT is a device for paragliders and hang gliders. The device features an atmospheric pressure sensor, an audible buzzer, and 4 buttons. Data is transmitted via Bluetooth.
-  p2: This web application can connect to the device and display all the information. Additionally, with permission, satellite navigation data can be displayed.
+  p1: FlyBeeper - Devices for paragliders and hang gliders. The devices feature various sensors. Processed data is transmitted via Bluetooth.
+  p2: This web application can connect to the device, change its settings, and display all data transmitted from the device. Here you can find the latest firmware version, changelog, and a description of the update procedure. Additionally, with permission, satellite navigation data can be displayed.
   location-permission: Request Location Access
   geo-granted: Location access granted
   geo-denied: Location access denied. Open browser settings to grant permission.
@@ -74,7 +76,7 @@ sett:
   d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth never sleep
   a37e549a-f501-4e77-9c3d-291c85542471: LED blink by vario
   86591053-2856-4f25-a35c-b753f0deea8f: Deactivate HID keyboard
-  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART Protocol
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART Protocol (1 - PRS, 2 - POV)
   67f82d94-2b2a-4123-81c9-058e460c3d01: Buzzer Volume
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Start climbing (m/s)
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: End of small climb (m/s)
@@ -117,4 +119,4 @@ sett:
 update:
   how-to: How to update
   changelog: Changelog
-  descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device with a name `FBminiBT` and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.
+  descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.

@@ -12,6 +12,8 @@ button:
   settings: Paramètres de l'appareil
 intro:
   desc: Capteur de pression atmosphérique avec Bluetooth
+  device-list: Liste des appareils
+
 not-found: Non trouvé
 msg:
   disconnected: Dispositif déconnecté
@@ -25,6 +27,8 @@ msg:
   no-bluetooth: Votre appareil ne prend pas en charge le Bluetooth.
   need-bluetooth: Pour utiliser certaines fonctionnalités, vous aurez peut-être besoin d'un appareil compatible Bluetooth.
   fetching: Récupération
+  pause: Pause
+  resume: Reprendre
 
 param:
   pressure: Pression, Pa
@@ -54,8 +58,8 @@ param:
   830ff7a0-367a-40e7-9038-4f00bda31f84: Vario par altitude, m/s
 
 about:
-  p1: Le FlyBeeper mini BT est un appareil destiné aux parapentistes et aux deltaplanistes. L'appareil est équipé d'un capteur de pression atmosphérique, d'un avertisseur sonore et de 4 boutons. Les données sont transmises via Bluetooth.
-  p2: Cette application web peut se connecter à l'appareil et afficher toutes les informations. De plus, avec la permission, il est possible d'afficher les données de navigation par satellite.
+  p1: FlyBeeper - Dispositifs pour parapentes et deltaplanes. Les dispositifs disposent de différents capteurs. Les données traitées sont transmises via Bluetooth.
+  p2: Cette application web peut se connecter au dispositif, en modifier les paramètres et afficher toutes les données transmises par le dispositif. Vous pouvez trouver ici la dernière version du micrologiciel, l'historique des modifications et une description de la procédure de mise à jour. De plus, avec autorisation, les données de navigation par satellite peuvent être affichées.
   location-permission: Demander la permission d'emplacement
   geo-granted: Permission d'emplacement accordée
   geo-denied: Permission d'emplacement refusée. Ouvrez les paramètres du navigateur pour accorder les permissions.
@@ -71,7 +75,7 @@ sett:
   d9eec180-344e-41e3-8c18-adf312dce8bb: Bluetooth ne dort jamais
   a37e549a-f501-4e77-9c3d-291c85542471: Clignotement LED par vario
   86591053-2856-4f25-a35c-b753f0deea8f: Désactiver le clavier HID
-  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: Protocole UART
+  84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: Protocole UART (1 - PRS, 2 - POV)
   67f82d94-2b2a-4123-81c9-058e460c3d01: Volume du buzzer
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Début de la montée (m/s)
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Fin de la petite montée (m/s)
@@ -113,4 +117,4 @@ sett:
 update:
   how-to: Comment mettre à jour
   changelog: Journal des modifications
-  descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant le nom `FBminiBT` et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera. La batterie doit être pleine.
+  descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera. La batterie doit être pleine.

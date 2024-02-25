@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const bt = useBluetoothStore()
-const { t } = useI18n()
 </script>
 
 <template>
@@ -9,12 +8,10 @@ const { t } = useI18n()
     <Suspense>
       <TheParams />
       <template #fallback>
-        <p>
-          {{ t('msg.fetching') }}...
-        </p>
+        <div i-carbon-fade m-auto animate-spin text-4xl />
       </template>
     </Suspense>
-    <div v-if="bt.isConnected">
+    <div>
       {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
     </div>
     <noSleep />

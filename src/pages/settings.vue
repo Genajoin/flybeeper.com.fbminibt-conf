@@ -3,10 +3,10 @@ const bt = useBluetoothStore()
 </script>
 
 <template>
-  <div v-if="bt.isConnected" p-4>
-    {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
-  </div>
   <template v-if="bt.isConnected">
+    <div p-4>
+      {{ bt.dis.manufacturerNameString.value }} {{ bt.dis.modelNumberString.value }} {{ bt.dis.firmwareRevisionString.value }}
+    </div>
     <Suspense>
       <CharacteristicForm
         v-if="bt.dis.modelNumberString.value === 'FBminiBT'
