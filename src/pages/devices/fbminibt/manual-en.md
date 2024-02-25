@@ -1,4 +1,6 @@
-## FlyBeeper mini BT Manual
+# FlyBeeper mini BT
+
+## Manual
 
 ### Control
 
@@ -46,4 +48,4 @@ Vario, Frequency, Cycle, Duty - a table describing curves of frequency (Hz), per
 
 In the lower part of the configurator, in the "Simulate Vario" field, you can enter any variometer value and hear how the device will sound at a given vertical speed. All values are entered in cm/s.
 
-[BACK](/devices/fbminibt)
+<router-link to="/devices/fbminibt">BACK</router-link>

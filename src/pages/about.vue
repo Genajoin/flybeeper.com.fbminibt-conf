@@ -66,9 +66,9 @@ async function requestLocationPermission() {
   <p mx-auto mt-3 max-w-full w-160 text-left>
     {{ t('about.p1') }}
   </p>
-  <a m-4 mt-3 btn href="/devices">
+  <router-link m-4 mt-3 btn to="/devices">
     {{ t('intro.device-list') }}
-  </a>
+  </router-link>
   <p mx-auto mt-3 max-w-full w-160 text-left>
     {{ t('about.p2') }}
   </p>
@@ -87,6 +87,11 @@ async function requestLocationPermission() {
   <button v-if="showInstallButton" mt-3 btn @click="installApp">
     {{ t('about.install-app') }}
   </button>
+  <div mx-auto w-50>
+    <a href="https://play.google.com/store/apps/details?id=com.flybeeper.fbminibt_conf.twa&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1">
+      <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png">
+    </a>
+  </div>
   <div />
 </template>
 

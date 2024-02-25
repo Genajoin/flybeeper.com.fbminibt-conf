@@ -10,6 +10,8 @@ button:
   terminal: Terminal
   update: Firmware aktualisieren
   settings: Geräteeinstellungen
+  manual: Handbuch
+  buy-now: Jetzt kaufen
 
 intro:
   desc: Bluetooth Atmosphärendrucksensor

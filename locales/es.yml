@@ -10,6 +10,8 @@ button:
   terminal: Terminal
   update: Actualización de firmware
   settings: Configuración del dispositivo
+  manual: Manual
+  buy-now: Comprar ahora
 
 intro:
   desc: Sensor de presión atmosférica con Bluetooth

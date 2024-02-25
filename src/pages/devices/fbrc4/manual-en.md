@@ -1,4 +1,6 @@
-## FlyBeeper Remote Control 4 Manual
+# FlyBeeper Remote Control 4
+
+## Manual
 
 ### Operating Modes
 
@@ -14,4 +16,4 @@ You can test the device through the graphical interface. You need device with Bl
 
 Currently, the device does not have available settings. However, in future firmware updates, there will be an option to activate HID mode, which is supported by a large amount of software but requires a higher level of connection, including the pairing procedure.
 
-[BACK](/devices/fbrc4)
+<router-link to="/devices/fbrc4">BACK</router-link>

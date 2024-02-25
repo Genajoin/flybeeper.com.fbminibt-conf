@@ -10,6 +10,9 @@ button:
   terminal: Терминал
   update: Обновление прошивки
   settings: Настройки устройства
+  manual: Инструкция
+  buy-now: Купить сейчас
+
 intro:
   desc: Вариометр с блютус
   device-list: Список устройств

@@ -1,4 +1,6 @@
-## FlyBeeper Pressure Sensor Manual
+# FlyBeeper Pressure Sensor
+
+## Manual
 
 ### Control
 
@@ -14,4 +16,4 @@ You can test the device through the graphical interface. You need device with Bl
 
 At the current point, the device does not have accessible settings, but new firmware updates will include the ability to change the sensor polling frequency and data transmission frequency.
 
-[BACK](/devices/fbps1)
+<router-link to="/devices/fbps1">BACK</router-link>

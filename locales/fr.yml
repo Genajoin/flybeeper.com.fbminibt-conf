@@ -10,6 +10,9 @@ button:
   terminal: Terminal
   update: Mise à jour du firmware
   settings: Paramètres de l'appareil
+  manual: Manuel
+  buy-now: Acheter maintenant
+
 intro:
   desc: Capteur de pression atmosphérique avec Bluetooth
   device-list: Liste des appareils

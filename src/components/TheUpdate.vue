@@ -11,7 +11,7 @@ const { t } = useI18n()
       Connect for Mobile application</a> - {{ t('update.descr') }}
   </p>
 
-  <a m-4 mt-3 btn href="/devices">
+  <router-link m-4 mt-3 btn to="/devices">
     {{ t('intro.device-list') }}
-  </a>
+  </router-link>
 </template>

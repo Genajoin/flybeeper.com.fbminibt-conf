@@ -10,7 +10,9 @@ const { t } = useI18n()
 
 <template>
   <StlComponent />
-  <a m-4 mt-3 btn href="/devices">{{ t('intro.device-list') }}</a>
+  <router-link m-4 mt-3 btn to="/devices">
+    {{ t('intro.device-list') }}
+  </router-link>
 </template>
 
 <route lang="yaml">

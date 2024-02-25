@@ -1,10 +1,10 @@
 <script setup lang="ts">
 useHead({
-  title: 'FlyBeeper mini BT',
+  title: 'FlyBeeper Configurator',
   meta: [
     {
       name: 'description',
-      content: 'Variometer with bluetooth',
+      content: 'Change settings of FlyBeeper device with bluetooth',
     },
     {
       name: 'theme-color',

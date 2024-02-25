@@ -10,6 +10,8 @@ button:
   terminal: Terminal
   update: Firmware update
   settings: Settings
+  manual: Manual
+  buy-now: Buy now
 
 intro:
   desc: Bluetooth Atmospheric Pressure Sensor

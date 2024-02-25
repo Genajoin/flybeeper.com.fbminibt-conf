@@ -1,4 +1,6 @@
-## FlyBeeper True Air Speed Manual
+# FlyBeeper True Air Speed
+
+## Manual
 
 ### Operating Modes
 
@@ -14,4 +16,4 @@ You can test the device through the graphical interface. You need a device with 
 
 Currently, the device does not have available settings, but in future firmware updates, there will be an opportunity to change the sensor polling frequency and data transmission frequency.
 
-[BACK](/devices/fbtas)
+<router-link to="/devices/fbtas">BACK</router-link>

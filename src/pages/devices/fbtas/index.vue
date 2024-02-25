@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 </script>
 
 <template>
@@ -13,11 +13,19 @@ const { t } = useI18n()
   <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-tas">{{ t('about.link-blog') }}</a>
   <a m-4 mt-3 btn href="https://market.flybeeper.com/device/tas">{{ t('about.link-market') }}</a>
   <div />
-  <a m-4 mt-3 btn href="/devices/fbtas/changelog">{{ t('update.changelog') }}</a>
-  <a m-4 mt-3 btn href="/devices/fbtas/manual-en">Manual EN</a>
-  <a m-4 mt-3 btn href="/devices/fbtas/manual-ru">Manual RU</a>
+  <router-link m-4 mt-3 btn to="/devices/fbtas/changelog">
+    {{ t('update.changelog') }}
+  </router-link>
+  <router-link m-4 mt-3 btn to="/devices/fbtas/manual-en">
+    {{ t('button.manual') }} EN
+  </router-link>
+  <router-link v-if="locale === 'ru'" m-4 mt-3 btn to="/devices/fbtas/manual-ru">
+    {{ t('button.manual') }} RU
+  </router-link>
   <div />
-  <a text-sm btn m="3 t8" href="/devices/">{{ t('button.back') }}</a>
+  <router-link text-sm btn m="3 t8" to="/devices">
+    {{ t('button.back') }}
+  </router-link>
 </template>
 
 <style scoped>
