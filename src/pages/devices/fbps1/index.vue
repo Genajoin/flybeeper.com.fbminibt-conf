@@ -24,7 +24,7 @@ const { t, locale } = useI18n()
     <a m-4 mt-3 btn href="https://market.flybeeper.com/device/ps1">{{ t('about.link-market') }}</a>
     <a m-4 mt-3 btn href="https://buy.stripe.com/dR6cPZ52vfxgdzifZ0">{{ t('button.buy-now') }}</a>
     <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-pressure-sensor">{{ t('about.link-blog') }}</a>
-    <div />
+    <StlComponent stl="/fbps1-model.stl" :pos="{ x: 0, y: -60, z: 20 }" />
     <router-link text-sm btn m="3 t8" to="/devices">
       {{ t('button.back') }}
     </router-link>

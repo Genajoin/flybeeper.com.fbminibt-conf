@@ -23,7 +23,7 @@ const { t, locale } = useI18n()
     <div />
     <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-tas">{{ t('about.link-blog') }}</a>
     <a m-4 mt-3 btn href="https://market.flybeeper.com/device/tas">{{ t('about.link-market') }}</a>
-    <div />
+    <StlComponent stl="/fbtas-model.stl" :pos="{ x: -160, y: -160, z: 100 }" />
     <router-link text-sm btn m="3 t8" to="/devices">
       {{ t('button.back') }}
     </router-link>

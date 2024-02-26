@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import StlComponent from '~/components/StlComponent.vue'
-
 defineOptions({
   name: 'IndexPage',
 })
@@ -9,7 +7,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <StlComponent />
+  <StlComponent stl="/fbminibt-model.stl" :pos="{ x: 0, y: -70, z: 40 }" />
   <router-link m-4 mt-3 btn to="/devices">
     {{ t('intro.device-list') }}
   </router-link>
