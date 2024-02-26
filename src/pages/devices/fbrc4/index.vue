@@ -7,14 +7,10 @@ const { t, locale } = useI18n()
     <div py-4 text-xl>
       FlyBeeper Remote Control 4
     </div>
-    <div>4 external buttons are always available for connecting via Bluetooth.</div>
+    <div>{{ t('about.fbrc4-p1') }}</div>
     <p mt-3 text-left>
       {{ t('about.p4') }}
     </p>
-    <a m-4 mt-3 btn href="https://market.flybeeper.com/device/rc4">{{ t('about.link-market') }}</a>
-    <a m-4 mt-3 btn href="https://buy.stripe.com/aEUeY7dz1etcan628b">{{ t('button.buy-now') }}</a>
-    <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-remote-control-4">{{ t('about.link-blog') }}</a>
-    <div />
     <router-link m-4 mt-3 btn to="/devices/fbrc4/changelog">
       {{ t('update.changelog') }}
     </router-link>
@@ -24,6 +20,10 @@ const { t, locale } = useI18n()
     <router-link v-if="locale === 'ru'" m-4 mt-3 btn to="/devices/fbrc4/manual-ru">
       {{ t('button.manual') }} RU
     </router-link>
+    <div />
+    <a m-4 mt-3 btn href="https://market.flybeeper.com/device/rc4">{{ t('about.link-market') }}</a>
+    <a m-4 mt-3 btn href="https://buy.stripe.com/aEUeY7dz1etcan628b">{{ t('button.buy-now') }}</a>
+    <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-remote-control-4">{{ t('about.link-blog') }}</a>
     <div />
     <router-link text-sm btn m="3 t8" to="/devices">
       {{ t('button.back') }}

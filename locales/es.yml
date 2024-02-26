@@ -72,6 +72,10 @@ about:
   link-description: Página del proyecto
   link-blog: Página del Proyecto
   link-market: Tienda FlyBeeper
+  fbtas-p1: Sensor de velocidad aerodinámica verdadera autónomo con Bluetooth.
+  fbminibt-p1: Variómetro con Bluetooth y botones inalámbricos. Indicación audible de velocidad de ascenso basada en curvas definidas por el usuario. La batería es resistente al frío.
+  fbps1-p1: Siempre disponible para conexión Bluetooth de barómetro externo. Alta sensibilidad y estabilidad con mínimos retrasos. Convierta cualquier smartphone en un variómetro confiable.
+  fbrc4-p1: 4 botones externos siempre disponibles para conectar mediante Bluetooth.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silencioso en tierra
