@@ -49,7 +49,7 @@ async function toggleLocales() {
 
     <button v-if="bt.bleAvailable" icon-btn :title="t('button.bluetooth')" @click="bt.toggleConnectionBT()">
       <div v-if="!bt.isConnected && !bt.isConnecting" i-carbon-bluetooth-off />
-      <div v-else-if="bt.isConnected" i-carbon-bluetooth />
+      <div v-else-if="bt.isConnected" i-carbon-bluetooth color-blue />
       <div v-else-if="bt.isConnecting || bt.isDisconnecting" i-carbon-fade animate-spin />
     </button>
   </nav>

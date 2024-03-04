@@ -31,6 +31,8 @@ msg:
   fetching: Получение
   pause: Пауза
   resume: Продолжить
+  device-list: Список последних подключенных устройств
+
 param:
   pressure: Давление, Па
   altitude-p: Высота по барометру, м

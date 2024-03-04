@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
+
 const bt = useBluetoothStore()
 const { t } = useI18n()
+
+onMounted(async () => await bt.getDevices())
+
+onBeforeUnmount(async () => await bt.stopAdvertisement())
 </script>
 
 <template>
@@ -27,22 +33,27 @@ const { t } = useI18n()
       {{ t('msg.disconnected') }}
     </p>
 
-    <a
-      v-if="bt.isDisconnecting || !bt.isConnected" :disabled="bt.isConnecting || bt.isConnected"
-      m-3 btn
-      :class="{ disabled: bt.isConnecting || bt.isConnected }"
-      @click="bt.connectToDevice"
-    >
+    <div v-if="!(bt.isConnecting || bt.isConnected)" m-3 btn @click="bt.connectToRequestDevice">
       {{ t('msg.connect') }}
-    </a>
-    <a
-      v-if="bt.isConnecting || bt.isConnected" :disabled="bt.isDisconnecting || !bt.isConnected"
-      m-3 btn class="red"
-      :class="{ disabled: bt.isDisconnecting || !bt.isConnected }"
-      @click="bt.disconnectDevice"
-    >
+    </div>
+    <div v-if="bt.isConnected" m-3 btn @click="bt.disconnectDevice">
       {{ t('msg.disconnect') }}
-    </a>
+    </div>
+
+    <div text-red-600>
+      {{ bt.errorMessage }}
+    </div>
+
+    <template v-if="!(bt.isConnecting || bt.isConnected || bt.isFetching) && bt.devices.length">
+      <div text-xl>
+        {{ t('msg.device-list') }}
+      </div>
+      <div v-for="device in bt.devices" :id="device" :key="device" m-2 btn @click="bt.connectToDevice(device)">
+        <div> {{ device.name }} </div> <div text-xs>
+          ({{ bt.devicesRssi[device.id] }})
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 

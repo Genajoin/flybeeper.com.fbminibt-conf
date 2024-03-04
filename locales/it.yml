@@ -32,6 +32,7 @@ msg:
   fetching: Recupero
   pause: Pausa
   resume: Riprendere
+  device-list: Elenco degli ultimi dispositivi collegati
 
 param:
   pressure: Pressione, Pa

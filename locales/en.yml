@@ -32,6 +32,7 @@ msg:
   fetching: Fetching
   pause: Pause
   resume: Resume
+  device-list: List of last connected devices
 
 param:
   pressure: Pressure, Pa

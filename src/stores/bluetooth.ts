@@ -61,10 +61,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     isDisconnecting: false,
     isSubscribed: false,
     devName: '',
+    errorMessage: '',
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
     settings: {} as iFbMiniBtSettings,
+    devices: [],
+    devicesRssi: { },
 
     dis: {
       modelNumberString: { characteristic: null, value: null },
@@ -82,89 +85,98 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       if (this.isConnected && !this.isDisconnecting)
         await this.disconnectDevice()
       else if (!this.isConnected || this.isDisconnecting)
-        await this.connectToDevice()
+        await this.connectToRequestDevice()
     },
-    async connectToDevice() {
+
+    async connectToDevice(device) {
       if (!this.bleAvailable || this.isConnected || this.isConnecting)
         return
-      if (!('bluetooth' in navigator))
-        return
-      try {
-        this.isConnecting = true
 
-        this.device = await navigator.bluetooth.requestDevice({
-          filters: [{ namePrefix: 'FB' }],
-          optionalServices: [
-            'location_and_navigation',
-            'environmental_sensing',
-            'battery_service',
-            'device_information',
-            'automation_io',
-            '904baf04-5814-11ee-8c99-0242ac120000',
-          ],
-        })
-        this.devName = this.device.name
-        log.info('Connecting to', this.devName)
+      this.errorMessage = ''
+      this.isConnecting = true
+      this.device = device
+      this.devName = this.device.name
+      log.info('Connecting to', this.devName)
 
-        const server = await this.device.gatt.connect()
+      const server = await this.device.gatt.connect()
 
-        // Получение списка сервисов
-        const services = await server.getPrimaryServices()
-        this.isConnecting = false
-        this.isFetching = true
-        log.info('fetching')
-        // Проход по сервисам
-        for (const service of services) {
-          log.debug('SERVICE', service.uuid)
-          // Получение характеристик сервиса
-          const characteristics = await service.getCharacteristics()
-          // Проверка, есть ли подписка на изменение для каждой характеристики
-          for (const ch of characteristics) {
-            log.debug('characteristic', ch.uuid)
-            const bleCharacteristic = new BleCharacteristicImpl(ch)
-            // await bleCharacteristic.initialize()
-            // await bleCharacteristic.subscribeToNotifications()
-            this.bleCharacteristics.push(bleCharacteristic)
-          }
+      // Получение списка сервисов
+      const services = await server.getPrimaryServices()
+      this.isConnecting = false
+      this.isFetching = true
+      log.info('fetching')
+      // Проход по сервисам
+      for (const service of services) {
+        log.debug('SERVICE', service.uuid)
+        // Получение характеристик сервиса
+        const characteristics = await service.getCharacteristics()
+        // Проверка, есть ли подписка на изменение для каждой характеристики
+        for (const ch of characteristics) {
+          log.debug('characteristic', ch.uuid)
+          const bleCharacteristic = new BleCharacteristicImpl(ch)
+          // await bleCharacteristic.initialize()
+          // await bleCharacteristic.subscribeToNotifications()
+          this.bleCharacteristics.push(bleCharacteristic)
         }
-
-        // Чтение данных после успешного подключения
-        this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
-          .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
-
-        // Device Information Service
-        const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
-        if (fwRev)
-          this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
-
-        const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
-        if (modNum)
-          this.dis.modelNumberString.value = await modNum.getFormattedValue()
-
-        const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
-        if (manName)
-          this.dis.manufacturerNameString.value = await manName.getFormattedValue()
-
-        // FlyBeeper settings service
-        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
-        if (FSS && Number.parseFloat(this.dis.firmwareRevisionString.value as string) <= 0.15) {
-          const characteristics = await FSS.getCharacteristics()
-
-          this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
-          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-          await this.readSettings()
-        }
-
-        this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-        this.isConnected = true
       }
-      catch (error) {
-        log.error('Error connecting to the device:', error)
-        this.isConnected = true
-        await this.disconnectDevice()
-        this.isConnecting = false
+
+      // Чтение данных после успешного подключения
+      this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
+        .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
+
+      // Device Information Service
+      const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
+      if (fwRev)
+        this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
+
+      const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
+      if (modNum)
+        this.dis.modelNumberString.value = await modNum.getFormattedValue()
+
+      const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
+      if (manName)
+        this.dis.manufacturerNameString.value = await manName.getFormattedValue()
+
+      // FlyBeeper settings service
+      const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
+      if (FSS && Number.parseFloat(this.dis.firmwareRevisionString.value as string) <= 0.15) {
+        const characteristics = await FSS.getCharacteristics()
+
+        this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
+        this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+        await this.readSettings()
       }
+
+      this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
+      this.isConnected = true
       this.isFetching = false
+    },
+
+    async connectToRequestDevice() {
+      if (!this.bleAvailable || this.isConnected || this.isConnecting)
+        return
+      this.errorMessage = ''
+
+      navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'FB' }],
+        optionalServices: [
+          'location_and_navigation',
+          'environmental_sensing',
+          'battery_service',
+          'device_information',
+          'automation_io',
+          '904baf04-5814-11ee-8c99-0242ac120000',
+        ],
+      })
+        .then(device => this.connectToDevice(device))
+        .catch((error) => {
+          log.error('Error connecting to the device:', error)
+          this.errorMessage = error
+          this.isConnected = true
+          this.disconnectDevice()
+          this.isConnecting = false
+          this.isFetching = false
+        })
     },
     async disconnectDevice() {
       if (!this.isConnected || this.isDisconnecting)
@@ -319,7 +331,33 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       view.setInt16(0, value, true)
       this.fss.miniBtSimulation.characteristic.writeValue(buffer)
     },
+    async getDevices() {
+      log.debug('Getting existing permitted Bluetooth devices...')
+      try {
+        const devices = await navigator.bluetooth.getDevices()
+        log.debug(`> Got ${devices.length} Bluetooth devices.`)
+        this.devices = devices
 
+        for (const device of devices) {
+          log.debug(`  > ${device.name} (${device.id})`)
+          log.debug(`    > add event`)
+          device.addEventListener('advertisementreceived', this.onAdvertisementReceived)
+          log.debug(`    > add watch`)
+          await device.watchAdvertisements()
+        }
+      }
+      catch (error) {
+        log.error(`Argh! ${error}`)
+      }
+    },
+    async onAdvertisementReceived(event) {
+      log.debug(`Advertisement received. ${event.device.name}  RSSI: ${event.rssi}  Device ID: ${event.device.id}`)
+      this.devicesRssi[event.device.id] = event.rssi
+    },
+
+    async stopAdvertisement() {
+
+    },
   },
 })
 

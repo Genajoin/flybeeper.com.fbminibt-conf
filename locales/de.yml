@@ -33,6 +33,7 @@ msg:
   fetching: Abrufen
   pause: Pause
   resume: Fortsetzen
+  device-list: Liste der zuletzt verbundenen Geräte
 
 param:
   pressure: Druck, Pa
