@@ -27,7 +27,7 @@ msg:
   connect: Подключить
   disconnect: Отключить
   no-bluetooth: Ваше устройство не поддерживает Bluetooth.
-  need-bluetooth: Для использования некоторых функций может потребоваться устройство с поддержкой Bluetooth.
+  need-bluetooth: Для использования некоторых функций может потребоваться устройство с поддержкой Bluetooth. Используйте Chrome или Edge браузер на Windows или Android.
   fetching: Получение
   pause: Пауза
   resume: Продолжить

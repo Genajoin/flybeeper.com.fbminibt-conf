@@ -29,7 +29,7 @@ msg:
   connect: Verbinden
   disconnect: Trennen
   no-bluetooth: Ihr Gerät unterstützt kein Bluetooth.
-  need-bluetooth: Um bestimmte Funktionen zu nutzen, benötigen Sie ein Bluetooth-fähiges Gerät.
+  need-bluetooth: Um bestimmte Funktionen zu nutzen, benötigen Sie ein Bluetooth-fähiges Gerät. Verwenden Sie den Chrome- oder Edge-Browser unter Windows oder Android.
   fetching: Abrufen
   pause: Pause
   resume: Fortsetzen

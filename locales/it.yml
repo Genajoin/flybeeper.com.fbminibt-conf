@@ -28,7 +28,7 @@ msg:
   connect: Connetti
   disconnect: Disconnetti
   no-bluetooth: Il tuo dispositivo non supporta il Bluetooth.
-  need-bluetooth: Per utilizzare alcune funzionalità, potrebbe essere necessario un dispositivo abilitato al Bluetooth.
+  need-bluetooth: Per utilizzare alcune funzionalità, potrebbe essere necessario un dispositivo abilitato al Bluetooth. Utilizza il browser Chrome o Edge su Windows o Android.
   fetching: Recupero
   pause: Pausa
   resume: Riprendere
