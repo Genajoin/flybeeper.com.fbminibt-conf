@@ -26,26 +26,28 @@ By default, an attempt to pair a variometer with a second device will fail. Ther
 
 All settings are made through the graphical interface on [the configurator's website](https://fbminibt-conf.flybeeper.com/). Go to the website with a device that has a Bluetooth module, such as a smartphone or laptop, or a PC with a Bluetooth module. Click Connect and select FBminiBT from the list. Keep the devices as close to each other as possible. Change any setting and click Apply.
 
-Silent on the ground - when activated, the device memorizes the current pressure. The vario sound is triggered based on the `Buzzer Volume` when the pressure changes by an amount roughly equivalent to a 1.5-meter change in altitude.
+`Silent on the ground` - when activated, the device memorizes the current pressure. The vario sound is triggered based on the `Buzzer Volume` when the pressure changes by an amount roughly equivalent to a 1.5-meter change in altitude.
 
-LED blink by vario - the LED starts blinking more frequently as the vertical speed increases, but not less than the `Climb Tone On Threshold`.
+`LED blink by vario` - the LED starts blinking more frequently as the vertical speed increases, but not less than the `Climb Tone On Threshold`.
 
-UART Protocol - text data transmission protocol for programs using the old UART emulation channel. POV and PRS are supported. It can be turned off if modern reading via the GATT ESS service is enabled.
+`UART Protocol` - text data transmission protocol for programs using the old UART emulation channel. POV and PRS are supported. It can be turned off if modern reading via the GATT ESS service is enabled.
 
-Buzzer Volume - ringing volume from 0 - off to 3 - maximum.
+`Duplication pressure data via UART emulation` - Pressure data is transmitted through two BLE characteristics. The main characteristic is the ESS service. Reserve - emulation UART. If an application subscribes to both characteristics, then no data is sent through the UART emulation to avoid data duplication. However, some applications subscribe to all possible data transfer characteristics, but only use data from the UART emulation characteristic. For such programs, you must activate this option. The default is disabled.
 
-Climb Tone On Threshold - speed at which the variometer sound is activated.
+`Buzzer Volume` - ringing volume from 0 - off to 3 - maximum.
 
-Climb Tone Off Threshold - speed at the boundary of transition from threshold mode to normal variometer mode. In threshold mode, from `Climb Tone On Threshold` to `Climb Tone Off Threshold`, a short low-frequency signal is added to the normal variometer sound.
+`Climb Tone On Threshold` - speed at which the variometer sound is activated.
 
-Sink Tone Off Threshold - speed at which the variometer is activated in sink mode.
+`Climb Tone Off Threshold` - speed at the boundary of transition from threshold mode to normal variometer mode. In threshold mode, from `Climb Tone On Threshold` to `Climb Tone Off Threshold`, a short low-frequency signal is added to the normal variometer sound.
 
-Sink Tone On Threshold - speed at the boundary of transition from threshold mode to normal variometer mode. In threshold mode, from `Sink Tone On Threshold` to `Sink Tone Off Threshold`, a short low-frequency signal is added to the normal variometer sound.
+`Sink Tone Off Threshold` - speed at which the variometer is activated in sink mode.
 
-Vario, Frequency, Cycle, Duty - a table describing curves of frequency (Hz), period (ms), and duty (%) dependence on vertical speed (cm/s).
+`Sink Tone On Threshold` - speed at the boundary of transition from threshold mode to normal variometer mode. In threshold mode, from `Sink Tone On Threshold` to `Sink Tone Off Threshold`, a short low-frequency signal is added to the normal variometer sound.
+
+`Vario, Frequency, Cycle, Duty` - a table describing curves of frequency (Hz), period (ms), and duty (%) dependence on vertical speed (cm/s).
 
 ![Image](https://market.flybeeper.com//img/device/mini-bt/i2diagr.png)
 
-In the lower part of the configurator, in the "Simulate Vario" field, you can enter any variometer value and hear how the device will sound at a given vertical speed. All values are entered in cm/s.
+In the lower part of the configurator, in the `Simulate Vario` field, you can enter any variometer value and hear how the device will sound at a given vertical speed. All values are entered in cm/s.
 
 <router-link to="/devices/fbminibt">BACK</router-link>

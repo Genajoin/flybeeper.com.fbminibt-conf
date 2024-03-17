@@ -98,6 +98,8 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120202: Diffirencial Pressure offset, Pa
   7e035080-7417-4393-959a-58505ef9cf4a: Vario averaging time (sec)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Power off timeout (hour)
+  113bb48c-7e3f-4580-a561-acf6c9eb42a5: Data duplication in UART emulator
+
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
   led-vario: LED blink by vario

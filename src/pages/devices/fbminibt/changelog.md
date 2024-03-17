@@ -11,6 +11,11 @@
 - _Automatically reduce the buzzer volume:_ When the ambient temperature drops to zero to reduce current consumption and prevent shutdown.
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
 
+**Version:** 0.17 | **Date:** 18.03.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.17.bin)
+
+- _Optimization of the buzzer volume setting mode:_ Reducing battery consumption by 20% during pauses between beeps.
+- _Duplication pressure data via UART emulation:_ New config option. Pressure data is transmitted through two BLE characteristics. The main characteristic is the ESS service. Reserve - emulation UART. If an application subscribes to both characteristics, then no data is sent through the UART emulation to avoid data duplication. However, some applications subscribe to all possible data transfer characteristics, but only use data from the UART emulation characteristic. For such programs, you must activate this option. The default is disabled.
+
 **Version:** 0.16 | **Date:** 19.02.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.16.bin)
 
 - _Battery voltage by bluetooth:_ New battery characteristic available to notify.

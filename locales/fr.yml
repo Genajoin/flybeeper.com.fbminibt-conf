@@ -98,6 +98,8 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120202: Décalage de pression différentielle, Pa
   7e035080-7417-4393-959a-58505ef9cf4a: Temps moyen de vario (sec)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Temps de retard pour la mise hors tension automatique de l'alimentation (heures)
+  113bb48c-7e3f-4580-a561-acf6c9eb42a5: La duplication des données dans l'émulateur UART
+
   silent: Silencieux au sol
   bt-never-sleep: Bluetooth ne dort jamais
   led-vario: Clignotement LED par vario

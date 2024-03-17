@@ -98,6 +98,8 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120202: Desplazamiento de presión diferencial, Pa
   7e035080-7417-4393-959a-58505ef9cf4a: Tiempo promedio de vario (seg)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Tiempo de retardo para apagado automático de energía (horas)
+  113bb48c-7e3f-4580-a561-acf6c9eb42a5: La duplicación de datos en el emulador UART
+
   silent: Silencioso en tierra
   bt-never-sleep: Bluetooth nunca duerme
   led-vario: Parpadeo del LED por vario
