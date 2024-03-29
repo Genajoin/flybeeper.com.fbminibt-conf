@@ -28,7 +28,7 @@ msg:
   connect: Connecter
   disconnect: Déconnecter
   no-bluetooth: Votre appareil ne prend pas en charge le Bluetooth.
-  need-bluetooth: Pour utiliser certaines fonctionnalités, vous aurez peut-être besoin d'un appareil compatible Bluetooth. Utilisez le navigateur Chrome ou Edge sur Windows ou Android.
+  need-bluetooth: Pour que l'application fonctionne, la prise en charge de la technologie Web Bluetooth est nécessaire. Utilisez le navigateur Chrome ou Edge sur Windows, macOS ou Android.
   fetching: Récupération
   pause: Pause
   resume: Reprendre

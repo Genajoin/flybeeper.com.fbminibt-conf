@@ -28,7 +28,7 @@ msg:
   connect: Connect
   disconnect: Disconnect
   no-bluetooth: Your device not support Bluetooth.
-  need-bluetooth: To use certain features, you may need a Bluetooth enabled device. Use Chrome or Edge browser on Windows or Android.
+  need-bluetooth: To use certain features, you may need a Bluetooth enabled device. Use Chrome or Edge browser on Windows, macOS or Android.
   fetching: Fetching
   pause: Pause
   resume: Resume
