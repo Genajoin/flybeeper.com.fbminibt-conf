@@ -1,6 +1,6 @@
 # FlyBeeper mini BT
 
-<a btn href="https://flybeeper.com/minibt/app_update.0.17.bin" download>Download last firmware</a>
+<a btn href="https://flybeeper.com/minibt/app_update.0.18.bin" download>Download last firmware</a>
 
 ## Changelog
 
@@ -10,6 +10,13 @@
 - _Decrease pressure sensor polling frequency:_ In silent mode to increase battery life.
 - _Automatically reduce the buzzer volume:_ When the ambient temperature drops to zero to reduce current consumption and prevent shutdown.
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
+- _Multi-connection:_ Allow 2 and more BLE connections.
+
+**Version:** 0.18 | **Date:** 02.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.18.bin)
+
+- _BLE connect mode:_ Faster Bluetooth connection immediately after turning on the power or after disconnecting the connection. The mode is active for 5 minutes. Allows you to quickly find a device or reconnect.
+- _Bugfix led blinky:_ When turned on, both LED flashing modes are activated simultaneously. Fixed.
+- _Bugfix pressure sensor:_ The device turns on, but the pressure is read as 0. Added delay for sensor preparation.
 
 **Version:** 0.17 | **Date:** 23.03.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.17.bin)
 
