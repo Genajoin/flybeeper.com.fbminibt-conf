@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteCond %{THE_REQUEST} !\.(jpe?g|css|js|gif|png|woff|tff|bin|stl|svg|webmanifest)\s [NC]
+RewriteRule ^(.*)$ /
+
+ErrorDocument 404 /
+ErrorDocument 403 /

@@ -13,6 +13,7 @@
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
 - _Multi-connection:_ Allow 2 and more BLE connections.
 - _System update:_ The operating system update. Oh yes, a RTOS operates inside this small device.
+- _Vario hysteresis:_ The difference between the response set point at the beginning of the climb and the set point at the end of the climb. Allows to quickly turn off the sound when the climb ends.
 
 **Version:** 0.19 | **Date:** 29.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.19.bin)
 
