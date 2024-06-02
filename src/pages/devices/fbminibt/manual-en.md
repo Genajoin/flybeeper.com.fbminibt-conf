@@ -50,4 +50,17 @@ All settings are made through the graphical interface on [the configurator's web
 
 In the lower part of the configurator, in the `Simulate Vario` field, you can enter any variometer value and hear how the device will sound at a given vertical speed. All values are entered in cm/s.
 
+### List of Flight Programs with Direct Support
+
+- xcTrack v.0.9.11.10+
+- SeeYou Navigator v.3.0.6+
+- Flyskyhy v.8.2+
+- FlyMe
+- maps.flybeeper.com
+
+Soon:
+
+- LK8000
+- Flygaggle
+
 <router-link to="/devices/fbminibt">BACK</router-link>

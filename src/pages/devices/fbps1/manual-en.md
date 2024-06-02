@@ -16,4 +16,17 @@ You can test the device through the graphical interface. You need device with Bl
 
 At the current point, the device does not have accessible settings, but new firmware updates will include the ability to change the sensor polling frequency and data transmission frequency.
 
+### List of Flight Programs with Direct Support
+
+- xcTrack v.0.9.11.10+
+- SeeYou Navigator v.3.0.6+
+- Flyskyhy v.8.2+
+- FlyMe
+- maps.flybeeper.com
+
+Soon:
+
+- LK8000
+- Flygaggle
+
 <router-link to="/devices/fbps1">BACK</router-link>

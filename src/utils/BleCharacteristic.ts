@@ -382,6 +382,12 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         dataView.setUint8(0, _formattedValue ? 0x01 : 0x00)
         break
 
+      case 0x04: // uint8
+        // Преобразовать 8-битное целое значение
+        dataView = new DataView(new ArrayBuffer(1))
+        dataView.setUint8(0, _formattedValue / (10 ** exponent))
+        break
+
       case 0x0C: // sint8
         // Преобразовать 8-битное целое значение
         dataView = new DataView(new ArrayBuffer(1))
@@ -392,6 +398,12 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         // Преобразовать 16-битное целое значение
         dataView = new DataView(new ArrayBuffer(2))
         dataView.setInt16(0, _formattedValue / (10 ** exponent), true) // true для little-endian
+        break
+
+      case 0x08: // uint32
+        // Преобразовать 32-битное беззнаковое значение
+        dataView = new DataView(new ArrayBuffer(4))
+        dataView.setUint32(0, _formattedValue / (10 ** exponent), true) // true для little-endian
         break
 
       case 0x1B: // structure (array)

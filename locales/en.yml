@@ -69,7 +69,7 @@ about:
   geo-denied: Location access denied. Open browser settings to grant permission.
   p3: The application can be installed and used offline.
   install-app: Install Application
-  p4: Detailed project description can be found on the website.
+  p4: Detailed project description can be found on the project page.
   link-description: Project Page
   link-blog: Project Page
   link-market: FlyBeeper Shop
@@ -77,6 +77,7 @@ about:
   fbps1-p1: Always available for Bluetooth connection external barometer. High sensitivity and stability with minimal delays. Turn any smartphone into a reliable variometer.
   fbrc4-p1: 4 external buttons are always available for connecting via Bluetooth.
   fbtas-p1: Autonomous true airspeed sensor with Bluetooth.
+  fbfanet-p1: External Bluetooth-controlled radio transmitter with a customizable channel for receiving FANET, ADS-L or the like. Send and receive any data without an Internet connection.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silent on the ground
@@ -128,4 +129,6 @@ sett:
 update:
   how-to: How to update
   changelog: Changelog
+  firmware: Firmware
   descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.
+  update-first: Update firmware first, please.

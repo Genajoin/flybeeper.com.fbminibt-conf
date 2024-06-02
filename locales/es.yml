@@ -69,7 +69,7 @@ about:
   geo-denied: Permiso de ubicación denegado. Abra la configuración del navegador para conceder permisos.
   p3: La aplicación se puede instalar y utilizar sin conexión.
   install-app: Instalar aplicación
-  p4: Puede encontrar una descripción detallada del proyecto en el sitio web.
+  p4: Puede encontrar una descripción detallada del proyecto en el Página del Proyecto.
   link-description: Página del proyecto
   link-blog: Página del Proyecto
   link-market: Tienda FlyBeeper
@@ -77,6 +77,7 @@ about:
   fbminibt-p1: Variómetro con Bluetooth y botones inalámbricos. Indicación audible de velocidad de ascenso basada en curvas definidas por el usuario. La batería es resistente al frío.
   fbps1-p1: Siempre disponible para conexión Bluetooth de barómetro externo. Alta sensibilidad y estabilidad con mínimos retrasos. Convierta cualquier smartphone en un variómetro confiable.
   fbrc4-p1: 4 botones externos siempre disponibles para conectar mediante Bluetooth.
+  fbfanet-p1: Transmisor de radio externo con control por Bluetooth para la recepción de paquetes de radio FANET, ADS-L o similares. Envía y recibe cualquier dato sin conexión a Internet.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silencioso en tierra
@@ -127,4 +128,6 @@ sett:
 update:
   how-to: Cómo actualizar
   changelog: Registro de cambios
+  firmware: Firmware
   descr: es la mejor solución para actualizar el firmware. Instale y lance la aplicación. En la pestaña `Scan`, busque un dispositivo y haga clic en el botón `connect`. En la pestaña que se abre, cerca del botón `disconnect`, haga clic en el icono `DFU`. Seleccione el archivo de firmware previamente descargado `app_update.bin` en el sistema de archivos. Seleccione `Test and Confirm` y presione `Ok`. Después de 15 segundos, el archivo se transferirá, verificará y el dispositivo se reiniciará. La batería debe estar llena.
+  update-first: Actualice el firmware primero, por favor.

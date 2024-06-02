@@ -69,7 +69,7 @@ about:
   geo-denied: Permission d'emplacement refusée. Ouvrez les paramètres du navigateur pour accorder les permissions.
   p3: L'application peut être installée et utilisée hors ligne.
   install-app: Installer l'application
-  p4: Vous pouvez trouver une description détaillée du projet sur le site web.
+  p4: Vous pouvez trouver une description détaillée du projet sur le Page du Projet.
   link-description: Page du projet
   link-blog: Page du Projet
   link-market: Boutique FlyBeeper
@@ -77,6 +77,7 @@ about:
   fbminibt-p1: Variomètre avec Bluetooth et boutons sans fil. Indication audible du taux de montée basée sur des courbes définies par l'utilisateur. La batterie est résistante au froid.
   fbps1-p1: Toujours disponible pour une connexion Bluetooth avec baromètre externe. Sensibilité et stabilité élevées avec des retards minimes. Transformez n'importe quel smartphone en un variomètre fiable.
   fbrc4-p1: 4 boutons externes toujours disponibles pour la connexion via Bluetooth.
+  fbfanet-p1: Émetteur radio externe avec contrôle Bluetooth pour la réception de paquets radio FANET, ADS-L ou similaires. Envoyez et recevez des données sans connexion Internet.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silencieux au sol
@@ -127,4 +128,6 @@ sett:
 update:
   how-to: Comment mettre à jour
   changelog: Journal des modifications
+  firmware: Micrologiciel
   descr: est la meilleure solution pour mettre à jour le micrologiciel. Installez et lancez l'application. Sur l'onglet `Scan`, recherchez un appareil portant et cliquez sur le bouton `connect`. Sur l'onglet qui s'ouvre, près du bouton `disconnect`, cliquez sur l'icône `DFU`. Sélectionnez le fichier micrologiciel précédemment téléchargé `app_update.bin` dans le système de fichiers. Sélectionnez `Test and Confirm` et appuyez sur `Ok`. Après 15 secondes, le fichier sera transféré, vérifié et l'appareil redémarrera. La batterie doit être pleine.
+  update-first: Veuillez d'abord mettre à jour le micrologiciel.

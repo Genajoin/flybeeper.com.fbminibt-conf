@@ -87,7 +87,15 @@ async function saveProtocolToFile() {
       descriptor: ch.userFormatDescriptor || ch.characteristic.uuid,
     }))
   })
-  const sortedEntries = allEntries.sort((a, b) => a.timestamp - b.timestamp)
+  const allLocs = loc.locParams.flatMap((p) => {
+    return p.entryArray.map(entry => ({
+      timestamp: entry.timestamp,
+      value: entry.value,
+      descriptor: p.description,
+    }))
+  })
+  const merged = [...allEntries, ...allLocs]
+  const sortedEntries = merged.sort((a, b) => a.timestamp - b.timestamp)
   const stringEntries = sortedEntries.map((entry) => {
     const timestamp = getTimestampFromValue(entry.timestamp)
     return `${timestamp};${entry.descriptor};${entry.value}`
@@ -107,6 +115,7 @@ async function saveProtocolToFile() {
 function clearProtocol() {
   logArray.value = []
   chas.forEach(ch => ch.entryArray = [])
+  loc.locParams.forEach(p => p.entryArray = [])
 }
 
 function togglePause() {

@@ -12,7 +12,7 @@ const { t, locale } = useI18n()
       {{ t('about.p4') }}
     </p>
     <router-link m-4 mt-3 btn to="/devices/fbminibt/changelog">
-      {{ t('update.changelog') }}
+      {{ t('update.firmware') }}
     </router-link>
     <router-link m-4 mt-3 btn to="/devices/fbminibt/manual-en">
       {{ t('button.manual') }} EN
@@ -22,7 +22,7 @@ const { t, locale } = useI18n()
     </router-link>
     <div />
     <a m-4 mt-3 btn href="https://market.flybeeper.com/device/mini-bt">{{ t('about.link-market') }}</a>
-    <a m-4 mt-3 btn href="https://buy.stripe.com/5kA6rBamPdp866Q9AE">{{ t('button.buy-now') }}</a>
+    <!--    <a m-4 mt-3 btn href="https://buy.stripe.com/5kA6rBamPdp866Q9AE">{{ t('button.buy-now') }}</a> -->
     <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-mini-bt/">{{ t('about.link-blog') }}</a>
     <StlComponent stl="/fbminibt-model.stl" :pos="{ x: 0, y: -70, z: 40 }" />
     <router-link text-sm btn m="3 t8" to="/devices">

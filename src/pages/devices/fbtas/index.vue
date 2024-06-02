@@ -12,7 +12,7 @@ const { t, locale } = useI18n()
       {{ t('about.p4') }}
     </p>
     <router-link m-4 mt-3 btn to="/devices/fbtas/changelog">
-      {{ t('update.changelog') }}
+      {{ t('update.firmware') }}
     </router-link>
     <router-link m-4 mt-3 btn to="/devices/fbtas/manual-en">
       {{ t('button.manual') }} EN

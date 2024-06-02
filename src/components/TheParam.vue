@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import log from 'loglevel'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic.js'
 
 const props = defineProps(['cha'])
@@ -13,6 +13,9 @@ const isNotified = ref(false)
 const backgroundSVG = ref('')
 const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
 let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
+const valueClass = computed(() => {
+  return lastValue.value && lastValue.value.length > 10 ? 'value text-sm' : 'value text-4xl'
+})
 
 onMounted(async () => {
   ch.subscribe(subscriberFunction)
@@ -29,7 +32,7 @@ onBeforeUnmount(() => {
 
 // Определение функции-подписчика
 function subscriberFunction(newValue: any) {
-  lastValue.value = newValue
+  lastValue.value = newValue instanceof DataView ? `0x${Array.from(new Uint8Array(newValue.buffer)).map(b => b.toString(16).padStart(2, '0')).join('')}` : newValue
   isNotified.value = ch.isNotified && !ch.isBlockNotify
   if (newValue === null)
     return
@@ -91,7 +94,7 @@ async function notifyOff() {
       <div text-sm opacity-50>
         {{ getTranslation() }}
       </div>
-      <div v-if="isNotified" text-4xl class="value">
+      <div v-if="isNotified" :class="valueClass">
         {{ lastValue !== null ? lastValue : "--" }}
       </div>
       <div text="sm right" opacity-50>

@@ -23,3 +23,76 @@ html.dark .shiki span {
   color: var(--shiki-dark);
   background: var(--shiki-dark-bg);
 }
+
+/* Стили для таблиц */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5em;
+  color: var(--table-text-color, #333);
+}
+
+.prose table th,
+.prose table td {
+  border: 1px solid var(--table-border-color, #ccc);
+  padding: 0.5em;
+}
+
+.prose table th {
+  background-color: var(--table-header-bg, #f8f9fa);
+  text-align: left;
+}
+
+.prose table tr:nth-child(even) {
+  background-color: var(--table-row-bg, #f2f2f2);
+}
+
+html.dark .prose table {
+  color: var(--table-text-color-dark, #ccc);
+}
+
+html.dark .prose table th {
+  background-color: var(--table-header-bg-dark, #444);
+}
+
+html.dark .prose table td {
+  border-color: var(--table-border-color-dark, #555);
+}
+
+html.dark .prose table tr:nth-child(even) {
+  background-color: var(--table-row-bg-dark, #333);
+}
+
+/* Удаление обратных кавычек из блока pre code */
+.prose pre code::before,
+.prose pre code::after {
+  content: '';
+}
+
+/* Стили для элементов code */
+.prose code {
+  font-family: 'DM Mono', monospace;
+  background-color: var(--code-bg, #f5f5f5);
+  color: var(--code-color, #e83e8c);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+html.dark .prose code {
+  background-color: var(--code-bg-dark, #333);
+  color: var(--code-color-dark, #ff79c6);
+}
+
+/* Стили для блоков pre */
+.prose pre {
+  background-color: var(--pre-bg, #f5f5f5);
+  color: var(--pre-color, #333);
+  padding: 1em;
+  border-radius: 5px;
+  overflow: auto;
+}
+
+html.dark .prose pre {
+  background-color: var(--pre-bg-dark, #282a36);
+  color: var(--pre-color-dark, #f8f8f2);
+}

@@ -70,7 +70,7 @@ about:
   geo-denied: Standortzugriff verweigert. Öffnen Sie die Browsereinstellungen, um Berechtigungen zu erteilen.
   p3: Die Anwendung kann offline installiert und verwendet werden.
   install-app: Anwendung installieren
-  p4: Eine ausführliche Projektbeschreibung finden Sie auf der Website.
+  p4: Eine ausführliche Projektbeschreibung finden Sie auf der Projektseite.
   link-description: Projektseite
   link-blog: Projektseite
   link-market: FlyBeeper-Shop
@@ -78,6 +78,7 @@ about:
   fbminibt-p1: Variometer mit Bluetooth und drahtlosen Tasten. Hörbare Steigrate-Anzeige basierend auf benutzerdefinierten Kurven. Die Batterie ist kälteresistent.
   fbps1-p1: Immer verfügbar für Bluetooth-Verbindung externer Barometer. Hohe Empfindlichkeit und Stabilität mit minimalen Verzögerungen. Verwandeln Sie jedes Smartphone in einen zuverlässigen Variometer.
   fbrc4-p1: 4 externe Tasten sind immer für die Verbindung über Bluetooth verfügbar.
+  fbfanet-p1: Externer Funksender mit Bluetooth-Steuerung zum Empfang von FANET-, ADS-L- oder ähnlichen Funkpaketen. Senden und empfangen Sie beliebige Daten ohne Internetverbindung.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Lautlos am Boden
@@ -128,4 +129,6 @@ sett:
 update:
   how-to: Wie man aktualisiert
   changelog: Änderungsprotokoll
+  firmware: Firmware
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.
+  update-first: Bitte zuerst die Firmware aktualisieren.

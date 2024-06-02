@@ -1,6 +1,7 @@
 # FlyBeeper mini BT
 
-<a btn href="https://flybeeper.com/minibt/app_update.0.18.bin" download>Download last firmware</a>
+<a btn href="https://flybeeper.com/minibt/app_update.0.19.bin" download>Download last firmware</a>
+<TheUpdate />
 
 ## Changelog
 
@@ -11,6 +12,12 @@
 - _Automatically reduce the buzzer volume:_ When the ambient temperature drops to zero to reduce current consumption and prevent shutdown.
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
 - _Multi-connection:_ Allow 2 and more BLE connections.
+- _System update:_ The operating system update. Oh yes, a RTOS operates inside this small device.
+
+**Version:** 0.19 | **Date:** 29.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.19.bin)
+
+- _Dynamic Tx power control:_ The application implements a peripheral advertising with varying Tx power. It is a repeatedly descending staircase pattern ranging from -4 dBm to -20 dBm where the Tx power levels decrease every 5s. Upon successful connection, the connection RSSI strength is being monitored and the Tx power of the peripheral device is modulated per connection accordingly such that energy is being saved depending on how powerful the RSSI of the connection is.
+- _Increased battery life:_ Reduced the number of Bluetooth advertising packets sent. The total battery life according to the real test is more than 200 hours at maximum volume and without BLE connection.
 
 **Version:** 0.18 | **Date:** 02.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.18.bin)
 
