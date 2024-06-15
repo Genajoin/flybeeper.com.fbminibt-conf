@@ -13,7 +13,12 @@
 - _Set correction factor for ambient temperature:_ For correct calculation of residual battery capacity.
 - _Multi-connection:_ Allow 2 and more BLE connections.
 - _System update:_ The operating system update. Oh yes, a RTOS operates inside this small device.
-- _Vario hysteresis:_ The difference between the response set point at the beginning of the climb and the set point at the end of the climb. Allows to quickly turn off the sound when the climb ends.
+
+**Version:** 0.193 beta | **Date:** 03.06.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.193.bin)
+
+- _Vario hysteresis:_ Config option. The difference between the response set point at the beginning of the climb and the set point at the end of the climb. Allows to quickly turn off the sound when the climb ends. 0.25 m/s by default. 0.01 m/s minimum.
+- _Adaptation of the internal vario frequency:_ Config option. The frequency of the sound adapted within the vario cycle instead of being fixed at the start of the cycle. Just makes the sound similar to other variometers. For greater similarity, increase the duty.
+- _Adaptation of the internal vario cycle:_ The duration of the sound and pauses are adapted within the vario cycle instead of being fixed at the start of the cycle. This reduces delays in completing the climb.
 
 **Version:** 0.19 | **Date:** 29.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.19.bin)
 
