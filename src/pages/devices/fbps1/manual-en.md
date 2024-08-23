@@ -20,13 +20,14 @@ At the current point, the device does not have accessible settings, but new firm
 
 - xcTrack v.0.9.11.10+
 - SeeYou Navigator v.3.0.6+
+- LK8000 v.7.4.19+
 - Flyskyhy v.8.2+
 - FlyMe
+- TheFlightVario XC 2.38+
 - maps.flybeeper.com
 
 Soon:
 
-- LK8000
 - Flygaggle
 
 ### Communication Protocol Description

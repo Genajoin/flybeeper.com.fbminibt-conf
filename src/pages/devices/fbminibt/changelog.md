@@ -1,6 +1,6 @@
 # FlyBeeper mini BT
 
-<a btn href="https://flybeeper.com/minibt/app_update.0.19.bin" download>Download last firmware</a>
+<a btn href="https://flybeeper.com/minibt/app_update.0.21.bin" download>Download last firmware</a>
 <TheUpdate />
 
 ## Changelog
@@ -14,11 +14,19 @@
 - _Multi-connection:_ Allow 2 and more BLE connections.
 - _System update:_ The operating system update. Oh yes, a RTOS operates inside this small device.
 
-**Version:** 0.193 beta | **Date:** 03.06.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.193.bin)
+**Version:** 0.21 | **Date:** 13.08.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.21.bin)
 
+- _Power off bug fw version 0.20:_ fixed
+- _Default curve change:_ Added weak climb mode. This is a replacement for the climb_tone_off_threshold setting. Fast short tones from 0 to 0.4 m/s. Only applies to new devices. Does not change existing curves in the device's memory.
+
+**Version:** 0.20 | **Date:** 09.08.2024 | has **bug**
+
+- _Unique device name:_ for device search when scanning Bluetooth. Added serial number and hardware revision to DIS service.
+- _OTA DFU upgrade:_ Improved compatibility with the OTA SMP protocol. Now you can use a simpler and more intuitive application - [nRF Connect Device Manager](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-Device-Manager) - to update the firmware.
+- _Remove unused settings:_ serial_duplication_on, climb_tone_off_threshold, sink_tone_off_threshold was removed. You can set up a similar near-zero vario mode by adjusting the curves. Simply reduce the Cycle and Duty values below the desired threshold for the short signals at the very beginning of the climb.
 - _Vario hysteresis:_ Config option. The difference between the response set point at the beginning of the climb and the set point at the end of the climb. Allows to quickly turn off the sound when the climb ends. 0.25 m/s by default. 0.01 m/s minimum.
 - _Adaptation of the internal vario frequency:_ Config option. The frequency of the sound adapted within the vario cycle instead of being fixed at the start of the cycle. Just makes the sound similar to other variometers. For greater similarity, increase the duty.
-- _Adaptation of the internal vario cycle:_ The duration of the sound and pauses are adapted within the vario cycle instead of being fixed at the start of the cycle. This reduces delays in completing the climb.
+- _Adaptation of the internal vario cycle:_ The duration of the pauses are adapted within the vario cycle instead of being fixed at the start of the cycle. This reduces delays in completing the climb.
 
 **Version:** 0.19 | **Date:** 29.05.2024 | [**Download**](https://flybeeper.com/minibt/app_update.0.19.bin)
 

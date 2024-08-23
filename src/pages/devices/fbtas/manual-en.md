@@ -52,10 +52,7 @@ You can test and configure the device through the graphical interface of the [co
 
 - xcTrack v.0.9.11.10+
 - SeeYou Navigator v.3.0.6+
-
-Soon:
-
-- LK8000
+- LK8000 v.7.4.19+
 
 ### Communication Protocol Description
 

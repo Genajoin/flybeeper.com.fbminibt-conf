@@ -10,4 +10,7 @@ const { t } = useI18n()
     <a href="https://www.nordicsemi.com/Products/Development-tools/nrf-connect-for-mobile" class="link-primary">nRF
       Connect for Mobile application</a> - {{ t('update.descr') }}
   </p>
+  <p m-auto text-left prose>
+    {{ t('update.descr2') }} - <a href="https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-Device-Manager" class="link-primary">nRF Connect Device Manager</a>
+  </p>
 </template>

@@ -78,6 +78,8 @@ about:
   fbps1-p1: Sempre disponibile per la connessione Bluetooth del barometro esterno. Elevata sensibilità e stabilità con minimi ritardi. Trasforma qualsiasi smartphone in un variometro affidabile.
   fbrc4-p1: 4 pulsanti esterni sempre disponibili per la connessione tramite Bluetooth.
   fbfanet-p1: Trasmettitore radio esterno con controllo Bluetooth per la ricezione di pacchetti radio FANET, ADS-L o simili. Invia e ricevi qualsiasi dato senza connessione Internet.
+  fbfanetvario-p1: Modulo FANET esterno con Bluetooth e variometro in un unico dispositivo con pannello solare. Invia e ricevi pacchetti FANET senza connessione internet. Usalo come variometro sensibile e fonte di altitudine barometrica per le applicazioni sullo smartphone.
+  fbsv-p1: Un piccolo variometro con Bluetooth, pannello solare e supercondensatore. Funziona da -25 a +65 °C. 500k cicli di carica/scarica. 60 secondi di ricarica tramite USB Type C per una carica completa o 15 minuti di sole per l'accensione. Sempre pronto con una batteria "eterna".
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silenzioso a terra
@@ -132,4 +134,5 @@ update:
   changelog: Registro modifiche
   firmware: Firmware
   descr: è la migliore soluzione da utilizzare per aggiornare il firmware. Installa e avvia l'applicazione. Nella scheda `Scan`, cerca un dispositivo e fai clic sul pulsante `connect`. Sulla scheda che si apre, vicino al pulsante `disconnect`, fai clic sull'icona `DFU`. Seleziona il file firmware precedentemente scaricato `app_update.bin` nel file system. Seleziona `Test and Confirm` e premi `Ok`. Dopo 15 secondi, il file verrà trasferito, verificato e il dispositivo si riavvierà. La batteria deve essere carica.
+  descr2: A partire dalla fw versione 0.21 puoi utilizzare un'applicazione più semplice e intuitiva per aggiornare il firmware
   update-first: Aggiorna prima il firmware, per favore.

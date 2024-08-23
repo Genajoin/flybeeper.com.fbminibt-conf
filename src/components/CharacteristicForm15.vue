@@ -8,10 +8,10 @@ const bt = useBluetoothStore()
 const { t } = useI18n()
 
 const defaultConf = {
-  buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
+  buzzer_vario_dots: [-1400, -800, -100, 0, 29, 30, 100, 200, 300, 450, 1200, 2000],
   buzzer_frequency_dots: [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
-  buzzer_cycle_dots: [850, 790, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
-  buzzer_duty_dots: [100, 98, 95, 10, 40, 41, 43, 46, 49, 54, 78, 90],
+  buzzer_cycle_dots: [850, 790, 725, 350, 150, 595, 430, 325, 265, 210, 120, 100],
+  buzzer_duty_dots: [100, 98, 95, 20, 80, 41, 43, 46, 49, 54, 78, 90],
 }
 
 const log2Conf = {

@@ -30,9 +30,9 @@ The device will automatically disconnect when exiting the application and switch
 
 ### List of flight apps
 
+- LK8000 v.7.4.19+: Read and send FANET packets. Location, weather stations.
 - xcTrack v.0.9.11.10+: supports reading texts via the FNNGB protocol. Implementation of direct reading and sending data in progress.
 - SeeYou Navigator v.3.0.6+: supports reading texts via the FBFAN protocol. Implementation of direct reading and writing is possible only through users contacting Naviter technical support.
-- LK8000: Direct read and send data transfer in development.
 
 Explanation: If the program supports read by text protocol FNNGB, FBFAN or FNF, you will be able to see all FANET traffic without Internet connections on the map. But others pilots will not see you. To send your location, it is necessary for the developers of this application to implement this function using the information below.
 
@@ -47,10 +47,6 @@ Service UUID: `0x1819`
 | Name        | UUID                                 | Size        |
 | ----------- | ------------------------------------ | ----------- |
 | RADIO_TX_RX | fec81438-cb89-4c37-93d0-badfced4376e | UINT8 array |
-| RSSI        | 1d242a85-6e0a-4d10-9d6a-a3e76dfa75c6 | INT16       |
-| SNR         | 6d1a7208-10b5-4244-8f45-c1d0d4ebe5c9 | INT8        |
-
-Parameters of the last received radio packet rssi and snr can be read from the characteristics, but can't be subscribed.
 
 The device has a single-channel radio transmitter. This means it can either send or receive on one selected frequency at a time with current settings. However, an external application can change the frequency and provide alternating listening and transmission on different frequencies. This way, a multi-protocol mode can be implemented.
 

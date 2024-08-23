@@ -46,6 +46,8 @@ All settings are made through the graphical interface on [the configurator's web
 
 `Sink Tone On Threshold` - speed at the boundary of transition from threshold mode to normal variometer mode. In threshold mode, from `Sink Tone On Threshold` to `Sink Tone Off Threshold`, a short low-frequency signal is added to the normal variometer sound.
 
+`Vario averaging time` - smoothing time constant in seconds. The higher, the smoother the vario change, but the higher the reaction delay to the rise. 0.1 sec by default is reactive. 1 sec for smoothness. Affects only the sound and vario readings. Does not affect the pressure readings.
+
 `End of climb hysteresis` - the difference between the response set point at the beginning of the climb and the set point at the end of the climb. Allows to quickly turn off the sound when the climb ends. 0.2 m/s by default.
 
 `Adaptation of the internal vario frequency` - the frequency of the sound adapted within the vario cycle instead of being fixed at the start of the cycle. Just makes the sound similar to other variometers. Off by default.
@@ -60,13 +62,14 @@ In the lower part of the configurator, in the `Simulate Vario` field, you can en
 
 - xcTrack v.0.9.11.10+
 - SeeYou Navigator v.3.0.6+
+- LK8000 v.7.4.19+
 - Flyskyhy v.8.2+
+- TheFlightVario XC 2.38+
 - FlyMe
 - maps.flybeeper.com
 
 Soon:
 
-- LK8000
 - Flygaggle
 
 ### Communication Protocol Description
@@ -81,6 +84,12 @@ Characteristics UUID for service `0x181A` ESS
 | ----------- | ------ | ------ | -------- | ------- |
 | Temperature | 0x2a6e | INT16  | -2       | Celcius |
 | Pressure    | 0x2a6d | UINT32 | -1       | Pascal  |
+
+Characteristics UUID for service `0x1819` LNS
+
+| Name              | UUID                                 | Size  | Exponent | Unit |
+| ----------------- | ------------------------------------ | ----- | -------- | ---- |
+| Vario by pressure | b4df8385-d9d6-4037-b2ed-2e14e1f4fa27 | INT16 | -2       | m/s  |
 
 Characteristics UUID of the service `0x1815` AIOS. The device has 4 buttons. This is defined in descriptor 0x2909 Number of Digitals. Each two bits represent the state of one button starting from the least significant bit. 0b00000001 means button 1 is pressed; if all buttons are pressed simultaneously, the value will be 0b01010101. This means the entire array fits in one byte. Only the states 0b00 (released) and 0b01 (pressed) are used. For more information about the states, see the Automation IO Service 1.0 Specification (section 3.1.1). Notifications are sent on change, meaning a separate notification for pressing and releasing a button. This allows for detecting long clicks, double clicks, and simultaneous holding of multiple buttons.
 

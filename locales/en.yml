@@ -78,6 +78,8 @@ about:
   fbrc4-p1: 4 external buttons are always available for connecting via Bluetooth.
   fbtas-p1: Autonomous true airspeed sensor with Bluetooth.
   fbfanet-p1: External Bluetooth-controlled radio transmitter with a customizable channel for receiving FANET, ADS-L or the like. Send and receive any data without an Internet connection.
+  fbfanetvario-p1: External FANET with Bluetooth and variometer in one device with a solar panel. Send and receive FANET packets without an internet connection. Use it as a sensitive variometer and source of barometric altitude for smartphone apps.
+  fbsv-p1: Super-light variometer with Bluetooth, solar panel, and supercapacitor. Operates from -25 to +65 °C. 500k charge/discharge cycles. 60 seconds of USB Type C charging to 100% or 15 minutes of sunlight for activation. Always ready with a "perpetual" battery.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silent on the ground
@@ -133,4 +135,5 @@ update:
   changelog: Changelog
   firmware: Firmware
   descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.
+  descr2: Starting from fw version 0.21 you can use a simpler and more intuitive application for updating firmware
   update-first: Update firmware first, please.

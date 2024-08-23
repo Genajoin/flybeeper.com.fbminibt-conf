@@ -22,6 +22,12 @@ const { t } = useI18n()
     <router-link m-4 mt-3 btn to="/devices/fbfanet">
       FlyBeeper FANET
     </router-link>
+    <router-link m-4 mt-3 btn to="/devices/fbfanetvario">
+      FlyBeeper FANET Vario
+    </router-link>
+    <router-link m-4 mt-3 btn to="/devices/fbsv">
+      FlyBeeper Sun Vario
+    </router-link>
   </dev>
 </template>
 
