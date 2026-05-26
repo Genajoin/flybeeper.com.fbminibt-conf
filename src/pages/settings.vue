@@ -2,7 +2,6 @@
 import { SETTINGS_GROUP_NAV } from '~/composables/useSettingsGroups'
 
 const bt = useBluetoothStore()
-const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
@@ -12,20 +11,19 @@ const fwRev = computed(() =>
 )
 const model = computed(() => bt.dis.modelNumberString.value)
 
+// FBminiBT ≤0.11 cannot expose any of the settings characteristics — kick the
+// user to the firmware update flow.
 const needsFirmwareUpdate = computed(() =>
   model.value === 'FBminiBT' && fwRev.value > 0 && fwRev.value <= 0.11,
 )
 
-// Grouped settings IA (the new /settings/{audio,curves,…} children) only knows
-// the legacy ≤0.15 monolithic FBminiBT struct. Every other device — fw ≥0.16
-// FBminiBT with CPF descriptors, or other SKUs (fbps1/fbrc4/fbsv/fbtas/
-// fbfanet/fbfanetvario) — falls back to the CPF-generic CharacteristicForm15.
-const hasGroupedSettings = computed(() =>
-  model.value === 'FBminiBT' && fwRev.value >= 0.12 && fwRev.value <= 0.15,
-)
-
+// All other connected devices land on the grouped IA. The group pages now
+// render legacy struct controls (when settings.local is hydrated for FBminiBT
+// 0.12–0.15) AND CPF characteristics from bluetoothStore.bleCharacteristics
+// (for fw ≥0.15 FBminiBT and every non-FBminiBT SKU). See useCpfGroup +
+// CPF_UUID_TO_GROUP for the per-characteristic routing.
 watchEffect(() => {
-  if (!bt.isConnected || !hasGroupedSettings.value)
+  if (!bt.isConnected || needsFirmwareUpdate.value)
     return
   if (route.path === '/settings')
     router.replace('/settings/audio')
@@ -46,7 +44,7 @@ watchEffect(() => {
       </router-link>
     </div>
 
-    <template v-else-if="hasGroupedSettings">
+    <template v-else>
       <nav class="settings-nav" aria-label="Settings groups">
         <router-link
           v-for="item in SETTINGS_GROUP_NAV"
@@ -58,19 +56,8 @@ watchEffect(() => {
           {{ t(`sett.group-${item.key}`) }}
         </router-link>
       </nav>
-      <RouterView v-if="settings.local" />
-      <div v-else class="settings-syncing">
-        <div i-carbon-fade m-auto animate-spin text-4xl />
-        <p>{{ t('msg.fetching') }}…</p>
-      </div>
+      <RouterView />
     </template>
-
-    <Suspense v-else>
-      <CharacteristicForm15 />
-      <template #fallback>
-        <div i-carbon-fade m-auto animate-spin text-4xl />
-      </template>
-    </Suspense>
   </template>
 </template>
 

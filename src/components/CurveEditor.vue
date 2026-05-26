@@ -1,11 +1,25 @@
 <script setup lang="ts">
 import type { iVarioCurves } from '~/stores/bluetooth'
 
+const props = defineProps<{
+  /**
+   * Optional explicit curves source. When supplied (and non-null) the editor
+   * mutates this object directly — used by the CPF firmware path where we
+   * adapt four 12-element BleCharacteristic arrays into one iVarioCurves shape.
+   * When omitted, the editor falls back to settingsStore.local.curves.
+   */
+  curvesOverride?: iVarioCurves | null
+  /** Thresholds for the magenta/orange verticals. */
+  climbOn?: number
+  climbOff?: number
+  sinkOn?: number
+  sinkOff?: number
+}>()
+
 /**
- * Editing happens directly against settingsStore.local (curves + threshold
- * fields are part of one struct). Reading thresholds from the store keeps
- * the orange/magenta verticals in sync with the /settings/audio page without
- * threading them through props.
+ * Editing happens against either settingsStore.local.curves (legacy ≤0.15) or
+ * an adapter object backed by CPF BleCharacteristics (fw ≥0.15). Threshold
+ * lines come from the store on legacy and from props on CPF.
  */
 const settings = useSettingsStore()
 
@@ -33,7 +47,9 @@ const curveDefs: Record<CurveKey, CurveDef> = {
 const activeCurve = ref<CurveKey>('frequency')
 const def = computed(() => curveDefs[activeCurve.value])
 
-const curves = computed<iVarioCurves | null>(() => settings.local?.curves ?? null)
+const curves = computed<iVarioCurves | null>(() =>
+  props.curvesOverride ?? settings.local?.curves ?? null,
+)
 
 // Viewport — SVG userspace coordinates, separate from the actual rendered size.
 // We size the SVG to its container with `width: 100%` and let viewBox handle
@@ -157,20 +173,22 @@ function onPointerUp(evt: PointerEvent) {
   dragIndex.value = null
 }
 
-// Vertical threshold markers (audit §7 — give the user visual context where
-// the device decides to make a sound at all). Sourced live from
-// settingsStore.local so edits on /settings/audio reflect here immediately.
+// Vertical threshold markers (audit §7). Prefer explicit props (CPF firmware
+// adapts m/s values to cm/s before passing), fall back to settingsStore.local
+// for the legacy ≤0.15 path.
 const thresholdLines = computed(() => {
-  if (!settings.local)
-    return []
+  const climbOn = props.climbOn ?? settings.local?.climb_tone_on_threshold_cm
+  const climbOff = props.climbOff ?? settings.local?.climb_tone_off_threshold_cm
+  const sinkOn = props.sinkOn ?? settings.local?.sink_tone_on_threshold_cm
+  const sinkOff = props.sinkOff ?? settings.local?.sink_tone_off_threshold_cm
   const t = [
-    { v: settings.local.climb_tone_on_threshold_cm, label: 'climb-on', color: 'var(--ck-signal)' },
-    { v: settings.local.climb_tone_off_threshold_cm, label: 'climb-off', color: 'var(--ck-dim)' },
-    { v: settings.local.sink_tone_on_threshold_cm, label: 'sink-on', color: 'var(--ck-signal)' },
-    { v: settings.local.sink_tone_off_threshold_cm, label: 'sink-off', color: 'var(--ck-dim)' },
+    { v: climbOn, label: 'climb-on', color: 'var(--ck-signal)' },
+    { v: climbOff, label: 'climb-off', color: 'var(--ck-dim)' },
+    { v: sinkOn, label: 'sink-on', color: 'var(--ck-signal)' },
+    { v: sinkOff, label: 'sink-off', color: 'var(--ck-dim)' },
   ]
   return t.filter(item => typeof item.v === 'number').map(item => ({
-    x: xForVario(item.v),
+    x: xForVario(item.v as number),
     label: item.label,
     color: item.color,
   }))

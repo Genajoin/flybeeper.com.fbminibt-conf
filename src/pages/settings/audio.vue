@@ -4,73 +4,88 @@ import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
 const settings = useSettingsStore()
 const { t } = useI18n()
 const fields = SETTINGS_GROUPS.audio
+const cpfChars = useCpfGroup('audio')
 
-// `settings.local` is the source of truth; v-model binds directly so the
-// debounced auto-persist in modules/pinia.ts picks the change up.
 const local = computed(() => settings.local)
+const showLegacy = computed(() => local.value !== null)
+const showCpf = computed(() => cpfChars.value.length > 0)
 </script>
 
 <template>
-  <SettingsPanel v-if="local" group="audio" :fields="fields">
-    <div class="row">
-      <label for="buzzer_volume">{{ t('sett.buzz-vol') }}</label>
-      <input
-        id="buzzer_volume"
-        v-model.number="local.buzzer_volume"
-        type="number"
-        min="0"
-        max="3"
-        class="input input--narrow"
-      >
-    </div>
-    <div class="row">
-      <label for="climb_on">{{ t('sett.climb-on') }}</label>
-      <input
-        id="climb_on"
-        v-model.number="local.climb_tone_on_threshold_cm"
-        type="number"
-        min="-2000"
-        max="2000"
-        step="5"
-        class="input"
-      >
-    </div>
-    <div class="row">
-      <label for="climb_off">{{ t('sett.climb-off') }}</label>
-      <input
-        id="climb_off"
-        v-model.number="local.climb_tone_off_threshold_cm"
-        type="number"
-        min="-2000"
-        max="2000"
-        step="5"
-        class="input"
-      >
-    </div>
-    <div class="row">
-      <label for="sink_on">{{ t('sett.sink-on') }}</label>
-      <input
-        id="sink_on"
-        v-model.number="local.sink_tone_on_threshold_cm"
-        type="number"
-        min="-2000"
-        max="2000"
-        step="5"
-        class="input"
-      >
-    </div>
-    <div class="row">
-      <label for="sink_off">{{ t('sett.sink-off') }}</label>
-      <input
-        id="sink_off"
-        v-model.number="local.sink_tone_off_threshold_cm"
-        type="number"
-        min="-2000"
-        max="2000"
-        step="5"
-        class="input"
-      >
-    </div>
+  <SettingsPanel group="audio" :fields="fields" :cpf-chars="cpfChars">
+    <template v-if="showLegacy && local">
+      <div class="row">
+        <label for="buzzer_volume">{{ t('sett.buzz-vol') }}</label>
+        <input
+          id="buzzer_volume"
+          v-model.number="local.buzzer_volume"
+          type="number"
+          min="0"
+          max="3"
+          class="input input--narrow"
+        >
+      </div>
+      <div class="row">
+        <label for="climb_on">{{ t('sett.climb-on') }}</label>
+        <input
+          id="climb_on"
+          v-model.number="local.climb_tone_on_threshold_cm"
+          type="number"
+          min="-2000"
+          max="2000"
+          step="5"
+          class="input"
+        >
+      </div>
+      <div class="row">
+        <label for="climb_off">{{ t('sett.climb-off') }}</label>
+        <input
+          id="climb_off"
+          v-model.number="local.climb_tone_off_threshold_cm"
+          type="number"
+          min="-2000"
+          max="2000"
+          step="5"
+          class="input"
+        >
+      </div>
+      <div class="row">
+        <label for="sink_on">{{ t('sett.sink-on') }}</label>
+        <input
+          id="sink_on"
+          v-model.number="local.sink_tone_on_threshold_cm"
+          type="number"
+          min="-2000"
+          max="2000"
+          step="5"
+          class="input"
+        >
+      </div>
+      <div class="row">
+        <label for="sink_off">{{ t('sett.sink-off') }}</label>
+        <input
+          id="sink_off"
+          v-model.number="local.sink_tone_off_threshold_cm"
+          type="number"
+          min="-2000"
+          max="2000"
+          step="5"
+          class="input"
+        >
+      </div>
+    </template>
+
+    <template v-if="showCpf">
+      <TheSetting
+        v-for="ch in cpfChars"
+        :key="ch.characteristic.uuid"
+        :cha="ch"
+      />
+    </template>
+
+    <p v-if="!showLegacy && !showCpf" class="empty">
+      {{ t('msg.fetching') }}…
+    </p>
   </SettingsPanel>
 </template>
 
@@ -112,5 +127,12 @@ meta:
 .input:focus {
   outline: none;
   border-color: var(--ck-signal);
+}
+
+.empty {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-meta);
+  color: var(--ck-dim);
+  margin: 0;
 }
 </style>

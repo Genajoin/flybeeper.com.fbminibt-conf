@@ -1,29 +1,85 @@
 <script setup lang="ts">
+import cloneDeep from 'lodash/cloneDeep'
 import type { iFbMiniBtSettings } from '~/stores/bluetooth'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
+import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
 const props = defineProps<{
   group: SettingsGroupKey
+  /** Legacy ≤0.15 fields owned by this group (drives diffGroup / revertGroup). */
   fields: (keyof iFbMiniBtSettings)[]
+  /** CPF ≥0.15 characteristics in this group (drives per-characteristic dirty tracking). */
+  cpfChars?: BleCharacteristic[]
 }>()
 
 const settings = useSettingsStore()
 const bt = useBluetoothStore()
 const { t } = useI18n()
 
-const dirty = computed(() => settings.diffGroup(props.fields))
-const isDirty = computed(() => dirty.value.length > 0)
+// CPF dirty tracking: snapshot the initial formattedValue per characteristic
+// once it's read, then compare on every render. We can't rely on the store
+// because CPF characteristics are stateful instances owned by bluetoothStore.
+const cpfInitial = ref<Record<string, unknown>>({})
+
+watch(
+  () => props.cpfChars,
+  (chars) => {
+    if (!chars)
+      return
+    for (const ch of chars) {
+      const uuid = ch.characteristic.uuid
+      if (cpfInitial.value[uuid] === undefined && ch.formattedValue !== null && ch.formattedValue !== undefined)
+        cpfInitial.value[uuid] = cloneDeep(ch.formattedValue)
+    }
+  },
+  { immediate: true, deep: true },
+)
+
+function cpfIsCharDirty(ch: BleCharacteristic): boolean {
+  const init = cpfInitial.value[ch.characteristic.uuid]
+  if (init === undefined)
+    return false
+  return JSON.stringify(ch.formattedValue) !== JSON.stringify(init)
+}
+
+const cpfDirtyChars = computed(() =>
+  (props.cpfChars ?? []).filter(cpfIsCharDirty),
+)
+
+const legacyDirty = computed(() =>
+  settings.local ? settings.diffGroup(props.fields) : [],
+)
+
+const dirtyCount = computed(() => legacyDirty.value.length + cpfDirtyChars.value.length)
+const isDirty = computed(() => dirtyCount.value > 0)
 const isBusy = ref(false)
 
 async function apply() {
-  if (!settings.local || !isDirty.value)
+  if (!isDirty.value)
     return
   isBusy.value = true
   try {
-    if (bt.isConnected)
-      await bt.writeMiniBtSettings(settings.local)
-    else
-      settings.markSynced()
+    // Legacy struct: one batched writeMiniBtSettings covers every field this
+    // group owns. Only invoked when the legacy fields actually moved.
+    if (legacyDirty.value.length > 0 && settings.local) {
+      if (bt.isConnected)
+        await bt.writeMiniBtSettings(settings.local)
+      else
+        settings.markSynced()
+    }
+    // CPF: each dirty characteristic writes individually. Capture restart-
+    // required transitions here since the legacy path no longer drives them
+    // for fw ≥0.15.
+    let restartNeeded = false
+    for (const ch of cpfDirtyChars.value) {
+      if (CPF_RESTART_REQUIRED_UUIDS.includes(ch.characteristic.uuid))
+        restartNeeded = true
+      await ch.setFormattedValue()
+      cpfInitial.value[ch.characteristic.uuid] = cloneDeep(ch.formattedValue)
+    }
+    if (restartNeeded)
+      settings.restartPending = true
   }
   finally {
     isBusy.value = false
@@ -31,7 +87,10 @@ async function apply() {
 }
 
 function revert() {
-  settings.revertGroup(props.fields)
+  if (legacyDirty.value.length > 0)
+    settings.revertGroup(props.fields)
+  for (const ch of cpfDirtyChars.value)
+    ch.formattedValue = cloneDeep(cpfInitial.value[ch.characteristic.uuid])
 }
 </script>
 
@@ -52,7 +111,7 @@ function revert() {
 
     <footer class="panel__footer">
       <p class="panel__dirty" :class="{ 'panel__dirty--active': isDirty }">
-        {{ isDirty ? t('sett.unsynced', { count: dirty.length }) : t('sett.no-changes') }}
+        {{ isDirty ? t('sett.unsynced', { count: dirtyCount }) : t('sett.no-changes') }}
       </p>
       <div class="panel__actions">
         <button

@@ -1,16 +1,93 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
+import type { iVarioCurves } from '~/stores/bluetooth'
 import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
 
 const settings = useSettingsStore()
 const { t } = useI18n()
 const fields = SETTINGS_GROUPS.curves
+const cpfChars = useCpfGroup('curves')
 
 const local = computed(() => settings.local)
 
-// Snap presets — sourced from the legacy CharacteristicForm and CharacteristicForm15
-// preset constants (which target the same struct layout). The draggable SVG
-// editor (Phase 4.2) will keep using these presets.
+// CPF firmware exposes each of the four curves as its own 12-element
+// characteristic. Adapt them into one iVarioCurves view so the editor can
+// stay format-agnostic. Mutations write back to ch.formattedValue in place;
+// SettingsPanel picks up the diff via its initial-value snapshot.
+const CPF_VARIO_UUID = '512d6d89-7a6f-461c-983e-902b68d40f56'
+const CPF_FREQ_UUID = '8c090502-81c4-4d29-8d10-6db20607ace9'
+const CPF_CYCLE_UUID = '9c3b62c0-e227-4f1a-8342-7e647015555d'
+const CPF_DUTY_UUID = '98c16914-00ad-47ba-b625-148f0baaec47'
+
+const cpfByUuid = computed(() => Object.fromEntries(
+  cpfChars.value.map(ch => [ch.characteristic.uuid, ch]),
+))
+
+const cpfReady = computed(() => {
+  const m = cpfByUuid.value
+  return Boolean(m[CPF_VARIO_UUID]?.formattedValue
+    && m[CPF_FREQ_UUID]?.formattedValue
+    && m[CPF_CYCLE_UUID]?.formattedValue
+    && m[CPF_DUTY_UUID]?.formattedValue)
+})
+
+const cpfCurves = computed<iVarioCurves | null>(() => {
+  if (!cpfReady.value)
+    return null
+  const m = cpfByUuid.value
+  // CPF stores vario as m/s (Float32 typically); the legacy struct is cm/s.
+  // Convert to cm/s here so the editor and threshold lines speak one unit.
+  const varioCmS = (m[CPF_VARIO_UUID].formattedValue as number[]).map(v => Math.round(v * 100))
+  return {
+    buzzer_vario_dots: varioCmS,
+    buzzer_frequency_dots: m[CPF_FREQ_UUID].formattedValue as number[],
+    buzzer_cycle_dots: m[CPF_CYCLE_UUID].formattedValue as number[],
+    buzzer_duty_dots: m[CPF_DUTY_UUID].formattedValue as number[],
+  }
+})
+
+// Watch the CPF curves view for in-place edits and mirror them back into the
+// underlying characteristic arrays (converting vario cm/s → m/s on the way).
+watch(cpfCurves, (next) => {
+  if (!next || !cpfReady.value)
+    return
+  const m = cpfByUuid.value
+  const varioMs = next.buzzer_vario_dots.map(v => v / 100)
+  // Only overwrite if changed — avoids a feedback loop.
+  if (JSON.stringify(m[CPF_VARIO_UUID].formattedValue) !== JSON.stringify(varioMs))
+    m[CPF_VARIO_UUID].formattedValue = varioMs
+  if (JSON.stringify(m[CPF_FREQ_UUID].formattedValue) !== JSON.stringify(next.buzzer_frequency_dots))
+    m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
+  if (JSON.stringify(m[CPF_CYCLE_UUID].formattedValue) !== JSON.stringify(next.buzzer_cycle_dots))
+    m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
+  if (JSON.stringify(m[CPF_DUTY_UUID].formattedValue) !== JSON.stringify(next.buzzer_duty_dots))
+    m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
+}, { deep: true })
+
+const showLegacy = computed(() => local.value !== null)
+const showCpf = computed(() => cpfReady.value)
+
+// Thresholds for the editor — legacy fields (cm/s) directly, or look them up
+// from the CPF audio-group characteristics (m/s) and convert.
+const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
+const CPF_CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
+const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
+const CPF_SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
+
+const bt = useBluetoothStore()
+function cpfThreshold(uuid: string): number | undefined {
+  const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
+  const v = ch?.formattedValue
+  return typeof v === 'number' ? v * 100 : undefined
+}
+
+const climbOn = computed(() => local.value?.climb_tone_on_threshold_cm ?? cpfThreshold(CPF_CLIMB_ON_UUID))
+const climbOff = computed(() => local.value?.climb_tone_off_threshold_cm ?? cpfThreshold(CPF_CLIMB_OFF_UUID))
+const sinkOn = computed(() => local.value?.sink_tone_on_threshold_cm ?? cpfThreshold(CPF_SINK_ON_UUID))
+const sinkOff = computed(() => local.value?.sink_tone_off_threshold_cm ?? cpfThreshold(CPF_SINK_OFF_UUID))
+
+// Snap presets — sourced from the legacy presets (same shape works for both
+// firmware paths since we normalize to cm/s internally).
 const presets = {
   default: {
     buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
@@ -30,30 +107,58 @@ const presets = {
     buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
     buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   },
-}
+} satisfies Record<string, iVarioCurves>
 
 function applyPreset(name: keyof typeof presets) {
-  if (!local.value)
+  const next = cloneDeep(presets[name])
+  if (showLegacy.value && local.value) {
+    local.value.curves = next
     return
-  local.value.curves = cloneDeep(presets[name])
+  }
+  if (showCpf.value) {
+    const m = cpfByUuid.value
+    m[CPF_VARIO_UUID].formattedValue = next.buzzer_vario_dots.map(v => v / 100)
+    m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
+    m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
+    m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
+  }
 }
 </script>
 
 <template>
-  <SettingsPanel v-if="local && local.curves" group="curves" :fields="fields">
-    <div class="presets">
+  <SettingsPanel group="curves" :fields="fields" :cpf-chars="cpfChars">
+    <div v-if="showLegacy || showCpf" class="presets">
       <button class="preset-btn" @click="applyPreset('default')">
         {{ t('sett.def') }}
       </button>
       <button class="preset-btn" @click="applyPreset('log')">
         {{ t('sett.log') }}
       </button>
-      <button class="preset-btn" @click="applyPreset('lin') ">
+      <button class="preset-btn" @click="applyPreset('lin')">
         {{ t('sett.lin') }}
       </button>
     </div>
 
-    <CurveEditor />
+    <CurveEditor
+      v-if="showLegacy && local && local.curves"
+      :climb-on="climbOn"
+      :climb-off="climbOff"
+      :sink-on="sinkOn"
+      :sink-off="sinkOff"
+    />
+
+    <CurveEditor
+      v-else-if="showCpf"
+      :curves-override="cpfCurves"
+      :climb-on="climbOn"
+      :climb-off="climbOff"
+      :sink-on="sinkOn"
+      :sink-off="sinkOff"
+    />
+
+    <p v-else class="empty">
+      {{ t('msg.fetching') }}…
+    </p>
   </SettingsPanel>
 </template>
 
@@ -84,5 +189,13 @@ meta:
 
 .preset-btn:hover {
   border-color: var(--ck-ink);
+}
+
+.empty {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-meta);
+  color: var(--ck-dim);
+  margin: 0;
+  text-align: center;
 }
 </style>

@@ -4,30 +4,47 @@ import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
 const settings = useSettingsStore()
 const { t } = useI18n()
 const fields = SETTINGS_GROUPS.uart
+const cpfChars = useCpfGroup('uart')
 
 const local = computed(() => settings.local)
+const showLegacy = computed(() => local.value !== null)
+const showCpf = computed(() => cpfChars.value.length > 0)
 </script>
 
 <template>
-  <SettingsPanel v-if="local" group="uart" :fields="fields">
-    <div class="row">
-      <label for="uart_protocols">{{ t('sett.uart') }}</label>
-      <select
-        id="uart_protocols"
-        v-model.number="local.uart_protocols"
-        class="select"
-      >
-        <option :value="0">
-          Nothing
-        </option>
-        <option :value="1">
-          PRS
-        </option>
-        <option :value="2">
-          POV
-        </option>
-      </select>
-    </div>
+  <SettingsPanel group="uart" :fields="fields" :cpf-chars="cpfChars">
+    <template v-if="showLegacy && local">
+      <div class="row">
+        <label for="uart_protocols">{{ t('sett.uart') }}</label>
+        <select
+          id="uart_protocols"
+          v-model.number="local.uart_protocols"
+          class="select"
+        >
+          <option :value="0">
+            Nothing
+          </option>
+          <option :value="1">
+            PRS
+          </option>
+          <option :value="2">
+            POV
+          </option>
+        </select>
+      </div>
+    </template>
+
+    <template v-if="showCpf">
+      <TheSetting
+        v-for="ch in cpfChars"
+        :key="ch.characteristic.uuid"
+        :cha="ch"
+      />
+    </template>
+
+    <p v-if="!showLegacy && !showCpf" class="empty">
+      {{ t('msg.fetching') }}…
+    </p>
   </SettingsPanel>
 </template>
 
@@ -63,5 +80,12 @@ meta:
 .select:focus {
   outline: none;
   border-color: var(--ck-signal);
+}
+
+.empty {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-meta);
+  color: var(--ck-dim);
+  margin: 0;
 }
 </style>
