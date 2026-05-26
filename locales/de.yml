@@ -177,6 +177,18 @@ sett:
   no-changes: Keine lokalen Änderungen
   unsynced: '{count} lokale Änderung(en) ausstehend'
 
+audio:
+  source-label: Tonquelle
+  source-device: Gerät
+  source-browser: Browser
+  source-off: Aus
+  demo: ▶ Demo
+  demo-stop: ■ Stopp
+  preset-strong-sink: −3 m/s
+  preset-zero: 0
+  preset-weak-climb: +1 m/s
+  preset-strong-climb: +5 m/s
+
 update:
   how-to: Wie man aktualisiert
   changelog: Änderungsprotokoll

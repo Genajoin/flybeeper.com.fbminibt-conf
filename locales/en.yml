@@ -176,6 +176,18 @@ sett:
   no-changes: No local changes
   unsynced: '{count} local change(s) pending'
 
+audio:
+  source-label: Live tone source
+  source-device: Device
+  source-browser: Browser
+  source-off: Off
+  demo: ▶ Demo
+  demo-stop: ■ Stop
+  preset-strong-sink: -3 m/s
+  preset-zero: 0
+  preset-weak-climb: +1 m/s
+  preset-strong-climb: +5 m/s
+
 update:
   how-to: How to update
   changelog: Changelog

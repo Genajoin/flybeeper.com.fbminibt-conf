@@ -173,6 +173,18 @@ sett:
   revert: Откатить
   no-changes: Локальных изменений нет
   unsynced: 'Локальных изменений: {count}'
+
+audio:
+  source-label: Источник звука
+  source-device: Устройство
+  source-browser: Браузер
+  source-off: Выкл
+  demo: ▶ Демо
+  demo-stop: ■ Стоп
+  preset-strong-sink: −3 м/с
+  preset-zero: 0
+  preset-weak-climb: +1 м/с
+  preset-strong-climb: +5 м/с
 update:
   how-to: Как обновить
   changelog: Протокол изменений
