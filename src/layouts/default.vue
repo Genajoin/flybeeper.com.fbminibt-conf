@@ -1,6 +1,7 @@
 <template>
   <BluefyBanner />
   <DisconnectBanner />
+  <RestartDeviceBanner />
   <main
     px-4 py-4
     text="center gray-700 dark:gray-200"

@@ -3,6 +3,7 @@ import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
+import { RESTART_REQUIRED_FIELDS } from '~/composables/useSettingsGroups'
 
 interface BtCh {
   characteristic: object | null
@@ -251,6 +252,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.subscribedCharacteristics = []
       this.characteristicsData = {}
       this.bleCharacteristics = []
+
+      // Restart banner: a disconnect is our proxy for "the user power-cycled
+      // the device", so clear the pending flag. If they actually just lost
+      // signal and reconnect with the change still un-applied, the next write
+      // will set the flag again.
+      useSettingsStore().restartPending = false
     },
 
     async readSettings() {
@@ -376,11 +383,23 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         view.setUint8(indexes.feature_bits, feature_bits)
       }
 
+      // Detect restart-required diff BEFORE markSynced wipes the diff signal
+      // (audit §7). If hid_keyboard_off (or any other RESTART_REQUIRED field)
+      // changed during this write, the user must power-cycle the device for
+      // the change to take effect — RestartDeviceBanner watches this flag.
+      const restartNeeded = RESTART_REQUIRED_FIELDS.some((k) => {
+        const prev = settingsStore.lastDeviceSnapshot?.[k]
+        const next = settings[k]
+        return prev !== undefined && prev !== next
+      })
+
       //  буфер в характеристику
       this.fss.miniBtSettings.characteristic.writeValue(buffer)
         .then(() => {
           settingsStore.replaceLocal(settings)
           settingsStore.markSynced()
+          if (restartNeeded)
+            settingsStore.restartPending = true
         })
     },
 

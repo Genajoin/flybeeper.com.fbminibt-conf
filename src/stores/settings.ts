@@ -40,6 +40,13 @@ export const useSettingsStore = defineStore('settingsStore', {
     lastSyncedAt: null as number | null,
     history: [] as SettingsHistoryEntry[],
     hydrated: false,
+    /**
+     * Set to true after a writeMiniBtSettings() that mutated a field listed in
+     * RESTART_REQUIRED_FIELDS (audit §7). Drives the RestartDeviceBanner.
+     * Cleared on disconnect (we assume the user did the power-cycle). Not
+     * persisted — a fresh page load with no device connection has no banner.
+     */
+    restartPending: false,
   }),
   getters: {
     hasLocal: state => state.local !== null,
