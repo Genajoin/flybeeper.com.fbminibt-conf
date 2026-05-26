@@ -46,7 +46,11 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
     },
 
     async persist(): Promise<void> {
-      await idbSet(IDB_KEY, this.devices)
+      // IndexedDB calls structuredClone under the hood and that chokes on
+      // Pinia's reactive Proxy wrapper (DataCloneError on the Array). Round-
+      // tripping through JSON peels every Proxy/Symbol off — our data is
+      // plain JSON-safe primitives so we don't lose anything.
+      await idbSet(IDB_KEY, JSON.parse(JSON.stringify(this.devices)))
     },
 
     /**

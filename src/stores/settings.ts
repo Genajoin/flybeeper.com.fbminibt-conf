@@ -78,10 +78,14 @@ export const useSettingsStore = defineStore('settingsStore', {
 
     /** Write current state to IndexedDB. Called automatically on mutation (debounced). */
     async persist(): Promise<void> {
+      // structuredClone (IDB's internal serializer) can't handle Pinia's
+      // reactive Proxy on nested arrays/objects. JSON round-trip strips the
+      // wrappers — our state is JSON-safe.
+      const stripProxy = <T>(v: T): T => v === null || v === undefined ? v : JSON.parse(JSON.stringify(v))
       await Promise.all([
-        idbSet(IDB_KEY_SETTINGS, this.local),
-        idbSet(IDB_KEY_SNAPSHOT, this.lastDeviceSnapshot),
-        idbSet(IDB_KEY_HISTORY, this.history),
+        idbSet(IDB_KEY_SETTINGS, stripProxy(this.local)),
+        idbSet(IDB_KEY_SNAPSHOT, stripProxy(this.lastDeviceSnapshot)),
+        idbSet(IDB_KEY_HISTORY, stripProxy(this.history)),
       ])
     },
 
