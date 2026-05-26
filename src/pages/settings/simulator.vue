@@ -70,8 +70,10 @@ const synthCurves = computed(() => {
   const duty = find(CPF_DUTY_UUID)?.formattedValue as number[] | undefined
   if (!vario || !freq || !cycle || !duty)
     return null
+  // 12-element CPF arrays (format 0x1B) bypass the descriptor exponent —
+  // vario is already cm/s, matching useToneSynth.playForVario(varioCmS, …).
   return {
-    buzzer_vario_dots: vario.map(v => Math.round(v * 100)),
+    buzzer_vario_dots: vario,
     buzzer_frequency_dots: freq,
     buzzer_cycle_dots: cycle,
     buzzer_duty_dots: duty,

@@ -167,6 +167,11 @@ const xTicks = computed(() => {
 })
 
 const yTicks = computed(() => {
+  // No Y axis on the vario tab — its handles sit on the horizontal midline
+  // so a Y scale would be misleading (a -2000…2000 cm/s scale dressed as
+  // a Y-axis was what testers correctly flagged as confusing).
+  if (activeCurve.value === 'vario')
+    return []
   const d = def.value
   const out: { y: number, label: string }[] = []
   for (let i = 0; i <= d.ticks - 1; i++) {
@@ -289,19 +294,6 @@ function onPointerUp(evt: PointerEvent) {
   interaction.value = { mode: 'idle', handleIndex: -1, panStartX: 0, panStartCenter: 0 }
 }
 
-function onWheel(evt: WheelEvent) {
-  if (!evt.deltaY)
-    return
-  evt.preventDefault()
-  const i = ZOOM_PRESETS.indexOf(zoomLevel.value)
-  if (evt.deltaY < 0 && i < ZOOM_PRESETS.length - 1) {
-    setZoom(ZOOM_PRESETS[i + 1])
-  }
-  else if (evt.deltaY > 0 && i > 0) {
-    setZoom(ZOOM_PRESETS[i - 1])
-  }
-}
-
 /* ---------------------------------------------------------------- grid */
 const gridXLines = computed(() => xTicks.value.map(t => t.x))
 const gridYLines = computed(() => yTicks.value.map(t => t.y))
@@ -348,7 +340,6 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
-      @wheel="onWheel"
     >
       <!-- Plot frame -->
       <rect
@@ -427,7 +418,7 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
       </g>
 
       <!-- Y-axis labels (units of the active curve) -->
-      <g class="editor__axis editor__axis--y">
+      <g v-if="activeCurve !== 'vario'" class="editor__axis editor__axis--y">
         <text
           v-for="(tick, i) in yTicks"
           :key="`yt-${i}`"

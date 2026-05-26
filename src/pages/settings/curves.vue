@@ -35,34 +35,18 @@ const cpfCurves = computed<iVarioCurves | null>(() => {
   if (!cpfReady.value)
     return null
   const m = cpfByUuid.value
-  // CPF stores vario as m/s (Float32 typically); the legacy struct is cm/s.
-  // Convert to cm/s here so the editor and threshold lines speak one unit.
-  const varioCmS = (m[CPF_VARIO_UUID].formattedValue as number[]).map(v => Math.round(v * 100))
+  // 12-element array characteristics (format 0x1B) bypass the CPF exponent
+  // and surface raw Int16 — i.e. vario stays in cm/s, freq/cycle/duty stay
+  // as device-native units (see BleCharacteristic.formatValueByFormat).
+  // We pass them through unchanged; only the scalar threshold/simulator
+  // characteristics apply the exponent (and arrive in m/s).
   return {
-    buzzer_vario_dots: varioCmS,
+    buzzer_vario_dots: m[CPF_VARIO_UUID].formattedValue as number[],
     buzzer_frequency_dots: m[CPF_FREQ_UUID].formattedValue as number[],
     buzzer_cycle_dots: m[CPF_CYCLE_UUID].formattedValue as number[],
     buzzer_duty_dots: m[CPF_DUTY_UUID].formattedValue as number[],
   }
 })
-
-// Watch the CPF curves view for in-place edits and mirror them back into the
-// underlying characteristic arrays (converting vario cm/s → m/s on the way).
-watch(cpfCurves, (next) => {
-  if (!next || !cpfReady.value)
-    return
-  const m = cpfByUuid.value
-  const varioMs = next.buzzer_vario_dots.map(v => v / 100)
-  // Only overwrite if changed — avoids a feedback loop.
-  if (JSON.stringify(m[CPF_VARIO_UUID].formattedValue) !== JSON.stringify(varioMs))
-    m[CPF_VARIO_UUID].formattedValue = varioMs
-  if (JSON.stringify(m[CPF_FREQ_UUID].formattedValue) !== JSON.stringify(next.buzzer_frequency_dots))
-    m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
-  if (JSON.stringify(m[CPF_CYCLE_UUID].formattedValue) !== JSON.stringify(next.buzzer_cycle_dots))
-    m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
-  if (JSON.stringify(m[CPF_DUTY_UUID].formattedValue) !== JSON.stringify(next.buzzer_duty_dots))
-    m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
-}, { deep: true })
 
 const showLegacy = computed(() => local.value !== null)
 const showCpf = computed(() => cpfReady.value)
@@ -117,7 +101,9 @@ function applyPreset(name: keyof typeof presets) {
   }
   if (showCpf.value) {
     const m = cpfByUuid.value
-    m[CPF_VARIO_UUID].formattedValue = next.buzzer_vario_dots.map(v => v / 100)
+    // Preset arrays are already cm/s — CPF 0x1B arrays don't apply exponent,
+    // so write them through as-is. See note in cpfCurves above.
+    m[CPF_VARIO_UUID].formattedValue = next.buzzer_vario_dots
     m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
     m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
     m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
