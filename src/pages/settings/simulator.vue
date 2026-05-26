@@ -26,41 +26,9 @@ watch(() => sim.valueMs.value, (v) => {
     sliderMs.value = v
 })
 
-// Throttle device writes (audit feedback: 150ms debounce was way too slow for
-// the demo and for drag — every intermediate step got dropped). 30ms ≈ 33Hz
-// is comfortably under typical Web Bluetooth write throughput.
-const THROTTLE_MS = 30
-let lastWriteAt = 0
-let pendingValue: number | null = null
-let pendingTimer: ReturnType<typeof setTimeout> | null = null
-
-function flushPending() {
-  if (pendingValue === null)
-    return
-  sim.setValueCmS(pendingValue)
-  lastWriteAt = Date.now()
-  pendingValue = null
-}
-
-function pushToDevice(cmS: number) {
-  const now = Date.now()
-  const elapsed = now - lastWriteAt
-  if (elapsed >= THROTTLE_MS) {
-    sim.setValueCmS(cmS)
-    lastWriteAt = now
-    return
-  }
-  // Coalesce intermediate values into one trailing write so we never skip the
-  // final position of a drag (which is what the user actually wants the
-  // device to play).
-  pendingValue = cmS
-  if (!pendingTimer) {
-    pendingTimer = setTimeout(() => {
-      pendingTimer = null
-      flushPending()
-    }, THROTTLE_MS - elapsed)
-  }
-}
+// No throttling here — useSimulation.setValueCmS serialises BLE writes and
+// drops intermediate values when a write is in flight, so the slider can fire
+// as often as it wants without producing "GATT operation already in progress".
 
 const CPF_VARIO_UUID = '512d6d89-7a6f-461c-983e-902b68d40f56'
 const CPF_FREQ_UUID = '8c090502-81c4-4d29-8d10-6db20607ace9'
@@ -119,19 +87,32 @@ function previewBrowser(cmS: number) {
 watch(sliderMs, (v) => {
   const cmS = Math.round(v * 100)
   if (source.value === 'device')
-    pushToDevice(cmS)
+    sim.setValueCmS(cmS)
   else if (source.value === 'browser')
     previewBrowser(cmS)
 })
 
-watch(source, (s) => {
-  if (s !== 'browser') {
+// Source switch: stop the OLD channel (silence the device or the synth) and
+// pick up the slider's current value on the NEW channel — otherwise the user
+// gets "device keeps beeping after flipping to Browser", "device stays silent
+// after flipping from Browser back to Device with the slider mid-air", etc.
+watch(source, (next, prev) => {
+  // Tear down the channel we're leaving.
+  if (prev === 'device' && sim.isActive.value)
+    sim.stop()
+  if (prev === 'browser')
     synth.stop()
-    return
+
+  // Bring up the channel we're entering. Slider may be sitting at non-zero.
+  const cmS = Math.round(sliderMs.value * 100)
+  if (next === 'browser') {
+    void synth.ensureContext()
+    previewBrowser(cmS)
   }
-  // Need a user gesture to construct AudioContext; the source toggle click is
-  // that gesture, so spin it up here instead of waiting for slider drag.
-  void synth.ensureContext()
+  else if (next === 'device') {
+    sim.setValueCmS(cmS)
+  }
+  // 'off' — both channels already torn down above.
 })
 
 const isDemoRunning = ref(false)
@@ -185,10 +166,6 @@ const showSlider = computed(() => true)
 // Leaving the simulator page MUST take the device out of simulation mode —
 // otherwise it stays stuck (audit feedback). Same on unmount for any reason.
 onBeforeRouteLeave(() => {
-  if (pendingTimer) {
-    clearTimeout(pendingTimer)
-    pendingTimer = null
-  }
   if (demoTimer) {
     clearInterval(demoTimer)
     demoTimer = null
@@ -199,8 +176,6 @@ onBeforeRouteLeave(() => {
 })
 
 onUnmounted(() => {
-  if (pendingTimer)
-    clearTimeout(pendingTimer)
   if (demoTimer)
     clearInterval(demoTimer)
   synth.stop()
