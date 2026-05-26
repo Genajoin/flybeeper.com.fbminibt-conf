@@ -42,12 +42,39 @@ local:
   changes-count: '{count} field(s) changed'
 
 pair:
+  step1-eyebrow: Pair · pre-flight
+  step1-title-line1: Four
+  step1-title-line2: checks.
+  step1-title-line3: Then go.
+  step2-eyebrow: Connect
+  step2-title-line1: Power on.
+  step2-title-line2: Then connect.
+  step2-sub: Chromium opens the system chooser. Pick anything starting with FB-.
+  step2-cta: ⚡ Connect via Bluetooth
+  step2-meta-left: navigator.bluetooth · prefix FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Devices · paired
+  saved-count: '{count} in your kit'
+  saved-scanning: Scanning · {count} in range
+  in-range: ● IN RANGE
+  pair-new: +  PAIR NEW DEVICE
+  retry: Retry
+  auto: AUTO
+  last-ago: 'LAST · {when}'
+  explainer-bullet-1-title: Browser-native
+  explainer-bullet-1-desc: Web Bluetooth speaks straight to your FlyBeeper device.
+  explainer-bullet-2-title: Power on the device
+  explainer-bullet-2-desc: Long-press until LED breathes orange.
+  explainer-bullet-3-title: Pick from the chooser
+  explainer-bullet-3-desc: Native picker. Your device shows as FB-…
+  explainer-bullet-4-title: One-tap reconnect
+  explainer-bullet-4-desc: Stored locally. No cloud, no account.
   explainer-title: Connect a FlyBeeper device
   explainer-body: We talk to your variometer over Web Bluetooth. When you tap Connect, the browser will ask which FB-prefixed device to pair with. Settings you change here are saved on this phone first and pushed to the device on Apply.
   explainer-supported: Works in Chrome / Edge on Android, Windows, macOS, Linux. On iPhone use the Bluefy browser.
-  continue: Continue
-  connect: Connect a device
-  connect-another: Connect another device
+  continue: Continue →
+  connect: Connect →
+  connect-another: Connect another →
   saved-title: Your devices
   saved-empty: No paired devices yet — tap Connect to add one.
   reconnect: Reconnect
@@ -60,7 +87,83 @@ pair:
   unsupported-title: Web Bluetooth not available
   unsupported-body: This browser can't talk to BLE devices. Use Chrome or Edge on Android / Windows / macOS / Linux.
   ios-banner-body: iPhone / iPad? Web Bluetooth isn't in Safari. Open this site in Bluefy to connect.
-  open-bluefy: Open in Bluefy
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth not supported
+  ios-sub: Open in Bluefy — adds Web BLE on iOS. Free.
+  open-bluefy: OPEN BLUEFY ↗
+  disc-eyebrow: Disconnected
+  disc-title: Settings saved locally
+  disc-sub: Audio preview routed to Browser. Reconnect anytime.
+  disc-reconnect: RECONNECT
+  disc-work-offline: WORK OFFLINE
+  restart-eyebrow: Restart required
+  restart-title: Cycle device power
+  restart-sub: Some settings only take effect after a power-cycle.
+  restart-ack: ACKNOWLEDGE
+  sim-eyebrow: Simulator
+  sim-title: Vario simulation active
+  sim-sub: 'Injecting {value} m/s. Stop to resume real readings.'
+  sim-stop: STOP
+
+preset:
+  import-eyebrow: Preset import
+  import-default-name: Untitled preset
+  bytes: BYTES
+  via-url: via URL fragment
+  apply: APPLY
+  discard: DISCARD
+  share-title: Share your settings
+  share-eyebrow: Export preset · URL fragment
+  share-sub: Encoded in URL hash · never sent to server · static-hosting safe
+  scan-eyebrow: Scan with phone
+  url-eyebrow: URL
+  copy-url: 📋 Copy URL
+  download-json: ↓ JSON
+  preset-name: Preset name
+  preset-by: By
+  privacy-note: Privacy · URL fragment is client-only · never sent to server
+  share-cta: SHARE ↗
+
+install:
+  eyebrow: Install · offline
+  title: For offline use in the mountains
+  cta: INSTALL
+  hub-row: INSTALL APP
+
+dashboard:
+  eyebrow: Dashboard · live
+  share: SHARE
+  disconnect: ● DISCONNECT
+  button-map: Button-map
+  live: ● LIVE
+  hover-jump-hint: HOVER → JUMP
+  vario: Vario
+  alt: ALT
+  press: PRESS
+  temp: TEMP
+  bat: BAT
+  settings-title: Settings
+  synced: ● SYNCED
+  dirty: ● UNSYNCED
+  hub-sound: SOUND
+  hub-sound-sub: 12-pt curve · vol {v}/3
+  hub-curves: CURVES
+  hub-curves-sub: response · 12 points
+  hub-behaviour: BEHAVIOUR
+  hub-behaviour-sub: silent · LED · HID
+  hub-power: POWER
+  hub-power-sub: sleep · timeout
+  hub-uart: UART
+  hub-uart-sub: protocol
+  hub-simulator: SIMULATOR
+  hub-simulator-sub: inject value
+  hub-firmware: FIRMWARE
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: TERMINAL
+  hub-terminal-sub: live BLE log
+  back-dashboard: ← DASHBOARD
+  offline-eyebrow: OFFLINE
+  offline-body: no device · changes saved locally · connect to sync
 
 msg:
   disconnected: Device Disconnected
@@ -205,6 +308,27 @@ audio:
 
 update:
   how-to: How to update
+  eyebrow: Firmware update
+  title-line1: Use nRF Connect.
+  title-line2: It just works.
+  intro: 'We don''t ship in-browser OTA. Nordic''s free nRF Connect for Mobile is the industry-standard tool for nRF52 firmware updates — battle-tested, recoverable, supported on both platforms. Use it.'
+  callout-eyebrow: Why not in-browser?
+  callout-body: 'A failed OTA on a vario can brick it. Native MCUmgr clients handle retry, error recovery and signature validation. A web app over flaky BLE can''t match that safely. Until SMP-over-WebBLE has a recovery path — use the native tool.'
+  step-1-title: Install nRF Connect Mobile
+  step-1-desc: Free, Nordic-official. iOS App Store + Google Play. Works without an account.
+  step-2-title: Power on your mini BT
+  step-2-desc: Long-press until the LED breathes signal-orange.
+  step-3-title: Open Device Manager tab
+  step-3-desc: Select your mini BT from the scan list. The Device Manager card pops up.
+  step-4-title: Tap Firmware Upgrade
+  step-4-desc: Choose the .bin file you downloaded from flybeeper.com/firmware. Tap Start.
+  step-5-title: Wait 60–90 seconds
+  step-5-desc: Progress bar runs to 100%. The device reboots once. nRF Connect shows "complete".
+  step-6-title: Reopen this configurator
+  step-6-desc: Reconnect to verify the firmware version in the status bar matches.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Get firmware ↓
   changelog: Changelog
   firmware: Firmware
   descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.

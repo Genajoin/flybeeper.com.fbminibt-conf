@@ -4,72 +4,56 @@ const { t } = useI18n()
 
 <template>
   <section class="update">
-    <header class="update__head">
-      <p class="update__eyebrow">
-        {{ t('button.update') }}
-      </p>
-      <h1 class="update__title">
-        {{ t('update.how-to') }}
-      </h1>
-    </header>
+    <PageHeader
+      breadcrumb-to="/"
+      breadcrumb-label="← BACK"
+      right="/UPDATE"
+    >
+      <template #body>
+        <CkEyebrow color="var(--ck-signal)" block>
+          {{ t('update.eyebrow') }}
+        </CkEyebrow>
+        <h1 class="update__display">
+          {{ t('update.title-line1') }}<br>{{ t('update.title-line2') }}
+        </h1>
+        <p class="update__intro">
+          {{ t('update.intro') }}
+        </p>
+      </template>
+    </PageHeader>
 
     <TheUpdate />
-
-    <RouterLink class="update__back" to="/devices">
-      <span class="i-carbon-arrow-left" aria-hidden="true" />
-      {{ t('intro.device-list') }}
-    </RouterLink>
   </section>
 </template>
 
 <style scoped>
 .update {
-  max-width: 44rem;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ck-s-lg);
+  background: var(--ck-bg);
+  color: var(--ck-ink);
+  font-family: var(--ck-font-body);
 }
 
-.update__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ck-s-xs);
-  text-align: left;
-}
-
-.update__eyebrow {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-signal);
-  margin: 0;
-}
-
-.update__title {
+.update__display {
   font-family: var(--ck-font-display);
-  font-size: var(--ck-fs-display);
-  font-weight: 700;
-  line-height: var(--ck-line-tight);
-  color: var(--ck-ink);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -1.5px;
+  line-height: 0.95;
+  margin: 8px 0;
+  text-transform: uppercase;
+}
+
+.update__intro {
+  font-size: 13px;
+  color: var(--ck-dim);
+  line-height: 1.5;
+  max-width: 540px;
   margin: 0;
 }
 
-.update__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ck-s-xs);
-  align-self: flex-start;
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-  text-decoration: none;
-}
-
-.update__back:hover {
-  color: var(--ck-ink);
+@media (min-width: 960px) {
+  .update__display {
+    font-size: 64px;
+  }
 }
 </style>

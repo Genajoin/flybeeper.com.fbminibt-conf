@@ -113,15 +113,15 @@ function togglePause() {
   <section class="terminal">
     <div class="terminal__bar">
       <button class="terminal__btn terminal__btn--primary" type="button" @click="saveProtocolToFile">
-        <span class="i-carbon-download" aria-hidden="true" />
+        <Icon name="download" :size="14" />
         {{ t('msg.save-protocol') }}
       </button>
       <button class="terminal__btn" type="button" @click="clearProtocol">
-        <span class="i-carbon-trash-can" aria-hidden="true" />
+        <Icon name="close" :size="14" />
         {{ t('msg.clear-protocol') }}
       </button>
       <button class="terminal__btn" type="button" @click="togglePause">
-        <span class="i-carbon-pause" :class="{ 'i-carbon-play': pause }" aria-hidden="true" />
+        <Icon name="refresh" :size="14" />
         {{ pause ? t('msg.resume') : t('msg.pause') }}
       </button>
     </div>

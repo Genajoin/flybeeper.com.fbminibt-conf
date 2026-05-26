@@ -8,63 +8,43 @@ const show = computed(() =>
   bt.hasConnectedThisSession && !bt.isConnected && !dismissed.value,
 )
 
-// Reset the dismissal whenever the user reconnects so the next disconnect
-// surfaces the banner again.
 watch(() => bt.isConnected, (now) => {
   if (now)
     dismissed.value = false
 })
+
+function reconnect() {
+  bt.connectToRequestDevice()
+}
 </script>
 
 <template>
   <Transition name="banner">
-    <div v-if="show" class="banner" role="status" aria-live="polite">
-      <span class="banner__msg">{{ t('local.disconnected-banner') }}</span>
-      <button
-        class="banner__close"
-        :aria-label="t('local.dismiss')"
-        @click="dismissed = true"
-      >
-        ×
-      </button>
-    </div>
+    <CkBannerRow
+      v-if="show"
+      class="disc"
+      accent="var(--ck-ink)"
+      :eyebrow="t('pair.disc-eyebrow')"
+      :title="t('pair.disc-title')"
+      :sub="t('pair.disc-sub')"
+    >
+      <template #actions>
+        <button class="btn-primary--ink" type="button" @click="reconnect">
+          {{ t('pair.disc-reconnect') }}
+        </button>
+        <button type="button" @click="dismissed = true">
+          {{ t('pair.disc-work-offline') }}
+        </button>
+      </template>
+    </CkBannerRow>
   </Transition>
 </template>
 
 <style scoped>
-.banner {
+.disc {
   position: sticky;
   top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ck-s-md);
-  padding: var(--ck-s-sm) var(--ck-s-md);
-  background: var(--ck-signal);
-  color: var(--ck-on-signal);
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-meta);
-  font-weight: 600;
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
-}
-
-.banner__msg {
-  text-align: left;
-}
-
-.banner__close {
-  background: transparent;
-  border: none;
-  color: var(--ck-on-signal);
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 0 var(--ck-s-xs);
-}
-
-.banner__close:hover {
-  opacity: 0.8;
+  z-index: 8;
 }
 
 .banner-enter-active,

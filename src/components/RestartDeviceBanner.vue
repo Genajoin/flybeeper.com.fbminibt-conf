@@ -5,10 +5,6 @@ const { t } = useI18n()
 
 const dismissed = ref(false)
 
-// Visible while a write that mutated a RESTART_REQUIRED field hasn't been
-// followed by a disconnect. The flag is cleared in bluetoothStore.onDisconnected
-// (treated as proxy for power-cycle). Local dismiss is a per-session escape
-// hatch — it resets the next time the flag toggles back to false→true.
 const show = computed(() => settings.restartPending && !dismissed.value)
 
 watch(() => settings.restartPending, (now) => {
@@ -16,8 +12,6 @@ watch(() => settings.restartPending, (now) => {
     dismissed.value = false
 })
 
-// Also reset dismissal on reconnect — fresh connection, fresh banner if the
-// device reports the unchanged value (user didn't actually reboot).
 watch(() => bt.isConnected, (now) => {
   if (now)
     dismissed.value = false
@@ -26,16 +20,20 @@ watch(() => bt.isConnected, (now) => {
 
 <template>
   <Transition name="restart">
-    <div v-if="show" class="restart" role="status" aria-live="polite">
-      <span class="restart__msg">{{ t('sett.restart-device') }}</span>
-      <button
-        class="restart__close"
-        :aria-label="t('local.dismiss')"
-        @click="dismissed = true"
-      >
-        ×
-      </button>
-    </div>
+    <CkBannerRow
+      v-if="show"
+      class="restart"
+      accent="var(--ck-signal)"
+      :eyebrow="t('pair.restart-eyebrow')"
+      :title="t('pair.restart-title')"
+      :sub="t('sett.restart-device')"
+    >
+      <template #actions>
+        <button class="btn-primary" type="button" @click="dismissed = true">
+          {{ t('pair.restart-ack') }}
+        </button>
+      </template>
+    </CkBannerRow>
   </Transition>
 </template>
 
@@ -43,36 +41,7 @@ watch(() => bt.isConnected, (now) => {
 .restart {
   position: sticky;
   top: 0;
-  z-index: 8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ck-s-md);
-  padding: var(--ck-s-sm) var(--ck-s-md);
-  background: var(--ck-bg-deep);
-  color: var(--ck-ink);
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-meta);
-  font-weight: 600;
-  border-bottom: var(--ck-stroke-rule) dashed var(--ck-signal);
-}
-
-.restart__msg {
-  text-align: left;
-}
-
-.restart__close {
-  background: transparent;
-  border: none;
-  color: var(--ck-ink);
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 0 var(--ck-s-xs);
-}
-
-.restart__close:hover {
-  opacity: 0.7;
+  z-index: 7;
 }
 
 .restart-enter-active,

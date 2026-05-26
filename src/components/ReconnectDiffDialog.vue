@@ -4,9 +4,6 @@ const settings = useSettingsStore()
 const { t } = useI18n()
 
 const open = ref(false)
-// Prevent re-popping on every device notification within one connection
-// session — only the first divergent read triggers; user dismissal sticks
-// until disconnect.
 const seenForConnection = ref(false)
 
 watch(() => bt.isConnected, (now) => {
@@ -66,16 +63,27 @@ function dismiss() {
         aria-labelledby="reconnect-diff-title"
         @click.self="dismiss"
       >
-        <div class="modal-card">
-          <h2 id="reconnect-diff-title" class="modal-title">
-            {{ t('local.reconnect-diff-title') }}
-          </h2>
-          <p class="modal-body">
-            {{ t('local.reconnect-diff-body') }}
-          </p>
-          <p class="modal-meta">
-            {{ t('local.changes-count', { count: diffEntries.length }) }}
-          </p>
+        <div class="modal-sheet">
+          <div class="modal-strip">
+            <button class="modal-crumb" type="button" @click="dismiss">
+              ← BACK
+            </button>
+            <span class="modal-strip__spacer" />
+            <span class="modal-title-eyebrow">UNSAVED CHANGES</span>
+            <span class="modal-strip__count">
+              {{ String(diffEntries.length).padStart(2, '0') }} {{ t('local.changes-count', { count: diffEntries.length }).split(' ').slice(1).join(' ').toUpperCase() }}
+            </span>
+          </div>
+
+          <div class="modal-head">
+            <CkEyebrow color="var(--ck-signal)" block>
+              {{ t('local.reconnect-diff-title') }}
+            </CkEyebrow>
+            <h2 id="reconnect-diff-title" class="modal-display">
+              {{ t('local.reconnect-diff-body') }}
+            </h2>
+          </div>
+
           <ul class="modal-diff">
             <li v-for="entry in diffEntries" :key="entry.key" class="modal-diff__row">
               <code class="modal-diff__key">{{ entry.key }}</code>
@@ -86,14 +94,15 @@ function dismiss() {
               </span>
             </li>
           </ul>
+
           <div class="modal-actions">
-            <button class="modal-btn modal-btn--primary" @click="applyLocal">
+            <button class="modal-btn modal-btn--signal" type="button" @click="applyLocal">
               {{ t('local.apply-local') }}
             </button>
-            <button class="modal-btn" @click="discardLocal">
+            <button class="modal-btn" type="button" @click="discardLocal">
               {{ t('local.discard-local') }}
             </button>
-            <button class="modal-btn modal-btn--ghost" @click="dismiss">
+            <button class="modal-btn" type="button" @click="dismiss">
               {{ t('local.decide-later') }}
             </button>
           </div>
@@ -112,86 +121,121 @@ function dismiss() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--ck-s-md);
+  padding: 0;
+  font-family: var(--ck-font-body);
 }
 
-.modal-card {
+.modal-sheet {
   background: var(--ck-paper);
   color: var(--ck-ink);
   border: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-radius: var(--ck-radius-soft);
-  max-width: 560px;
   width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: var(--ck-s-lg);
-  font-family: var(--ck-font-body);
-  text-align: left;
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.modal-title {
-  font-family: var(--ck-font-display);
-  font-size: var(--ck-fs-h2);
-  font-weight: 700;
-  margin: 0 0 var(--ck-s-sm) 0;
-  line-height: var(--ck-line-tight);
+.modal-strip {
+  display: flex;
+  align-items: stretch;
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
-.modal-body {
-  font-size: var(--ck-fs-body);
-  line-height: var(--ck-line-body);
-  margin: 0 0 var(--ck-s-sm) 0;
-}
-
-.modal-meta {
+.modal-crumb {
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  border-right: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  cursor: pointer;
+}
+
+.modal-strip__spacer {
+  flex: 1;
+}
+
+.modal-title-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
-  color: var(--ck-dim);
-  margin: 0 0 var(--ck-s-sm) 0;
+}
+
+.modal-strip__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+  color: var(--ck-signal);
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+}
+
+.modal-head {
+  padding: 20px 22px 14px;
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.modal-display {
+  font-family: var(--ck-font-display);
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -1px;
+  line-height: 0.95;
+  margin: 6px 0 0;
+  text-transform: uppercase;
 }
 
 .modal-diff {
   list-style: none;
-  margin: 0 0 var(--ck-s-lg) 0;
+  margin: 0;
   padding: 0;
-  border: var(--ck-stroke-hair) dashed var(--ck-grid);
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-diff__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--ck-s-md);
-  padding: var(--ck-s-xs) var(--ck-s-sm);
-  border-bottom: var(--ck-stroke-hair) dashed var(--ck-grid);
+  gap: 14px;
+  padding: 12px 22px;
+  border-bottom: var(--ck-stroke-hair) dashed var(--ck-ink);
   font-size: var(--ck-fs-meta);
-}
-
-.modal-diff__row:last-child {
-  border-bottom: none;
 }
 
 .modal-diff__key {
   font-family: var(--ck-font-mono);
-  color: var(--ck-ink-dim);
+  font-size: 11px;
+  color: var(--ck-dim);
 }
 
 .modal-diff__values {
   display: flex;
   align-items: center;
-  gap: var(--ck-s-xs);
+  gap: 8px;
   font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
-  white-space: nowrap;
-  overflow-x: auto;
-  max-width: 60%;
+  font-size: 12px;
+  text-align: right;
 }
 
 .modal-diff__local {
-  color: var(--ck-signal);
+  font-family: var(--ck-font-display);
   font-weight: 700;
+  font-size: 14px;
+  color: var(--ck-ink);
 }
 
 .modal-diff__arrow {
@@ -199,50 +243,47 @@ function dismiss() {
 }
 
 .modal-diff__device {
-  color: var(--ck-ink-dim);
+  color: var(--ck-dim);
 }
 
 .modal-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--ck-s-sm);
-  justify-content: flex-end;
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
 .modal-btn {
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  font-weight: 600;
-  padding: var(--ck-s-sm) var(--ck-s-md);
+  flex: 1;
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  padding: 16px;
   background: var(--ck-paper);
   color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-radius: var(--ck-radius-soft);
+  border: none;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
   cursor: pointer;
-  transition: background var(--ck-dur-toggle) var(--ck-ease);
+  border-radius: 0;
+}
+
+.modal-btn:first-child {
+  border-left: none;
 }
 
 .modal-btn:hover {
   background: var(--ck-bg-deep);
 }
 
-.modal-btn--primary {
+.modal-btn--signal {
   background: var(--ck-signal);
   color: var(--ck-on-signal);
-  border-color: var(--ck-signal);
 }
 
-.modal-btn--primary:hover {
-  background: var(--ck-ink);
-  border-color: var(--ck-ink);
-}
-
-.modal-btn--ghost {
-  border-color: transparent;
-}
-
-.modal-btn--ghost:hover {
-  border-color: var(--ck-grid);
+.modal-btn--signal:hover {
+  filter: brightness(1.05);
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
 }
 
 .modal-enter-active,
@@ -250,8 +291,8 @@ function dismiss() {
   transition: opacity var(--ck-dur-panel) var(--ck-ease);
 }
 
-.modal-enter-active .modal-card,
-.modal-leave-active .modal-card {
+.modal-enter-active .modal-sheet,
+.modal-leave-active .modal-sheet {
   transition: transform var(--ck-dur-panel) var(--ck-ease);
 }
 
@@ -260,8 +301,20 @@ function dismiss() {
   opacity: 0;
 }
 
-.modal-enter-from .modal-card,
-.modal-leave-to .modal-card {
-  transform: scale(0.95) translateY(-10px);
+.modal-enter-from .modal-sheet,
+.modal-leave-to .modal-sheet {
+  transform: translateY(20px);
+}
+
+@media (min-width: 720px) {
+  .modal-overlay {
+    padding: var(--ck-s-md);
+  }
+  .modal-sheet {
+    max-width: 640px;
+    max-height: 80vh;
+    width: 100%;
+    height: auto;
+  }
 }
 </style>

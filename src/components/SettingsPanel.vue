@@ -1,25 +1,24 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
-import type { iFbMiniBtSettings } from '~/stores/bluetooth'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
 const props = defineProps<{
   group: SettingsGroupKey
-  /** Legacy ≤0.15 fields owned by this group (drives diffGroup / revertGroup). */
-  fields: (keyof iFbMiniBtSettings)[]
-  /** CPF ≥0.15 characteristics in this group (drives per-characteristic dirty tracking). */
-  cpfChars?: BleCharacteristic[]
+  cpfChars: BleCharacteristic[]
+  /** Optional title override for the page header. Falls back to `sett.group-<group>`. */
+  title?: string
+  /** Optional subtitle override. */
+  sub?: string
 }>()
 
 const settings = useSettingsStore()
 const bt = useBluetoothStore()
 const { t } = useI18n()
 
-// CPF dirty tracking: snapshot the initial formattedValue per characteristic
-// once it's read, then compare on every render. We can't rely on the store
-// because CPF characteristics are stateful instances owned by bluetoothStore.
+// Snapshot each CPF characteristic's initial value once it's read, so we can
+// compute a per-characteristic dirty state independent of the parent store.
 const cpfInitial = ref<Record<string, unknown>>({})
 
 watch(
@@ -47,39 +46,27 @@ const cpfDirtyChars = computed(() =>
   (props.cpfChars ?? []).filter(cpfIsCharDirty),
 )
 
-const legacyDirty = computed(() =>
-  settings.local ? settings.diffGroup(props.fields) : [],
-)
-
-const dirtyCount = computed(() => legacyDirty.value.length + cpfDirtyChars.value.length)
+const dirtyCount = computed(() => cpfDirtyChars.value.length)
 const isDirty = computed(() => dirtyCount.value > 0)
 const isBusy = ref(false)
+const isOffline = computed(() => !bt.isConnected)
 
 async function apply() {
   if (!isDirty.value)
     return
   isBusy.value = true
   try {
-    // Legacy struct: one batched writeMiniBtSettings covers every field this
-    // group owns. Only invoked when the legacy fields actually moved.
-    if (legacyDirty.value.length > 0 && settings.local) {
-      if (bt.isConnected)
-        await bt.writeMiniBtSettings(settings.local)
-      else
-        settings.markSynced()
-    }
-    // CPF: each dirty characteristic writes individually. Capture restart-
-    // required transitions here since the legacy path no longer drives them
-    // for fw ≥0.15.
     let restartNeeded = false
     for (const ch of cpfDirtyChars.value) {
       if (CPF_RESTART_REQUIRED_UUIDS.includes(ch.characteristic.uuid))
         restartNeeded = true
-      await ch.setFormattedValue()
+      if (bt.isConnected)
+        await ch.setFormattedValue()
       cpfInitial.value[ch.characteristic.uuid] = cloneDeep(ch.formattedValue)
     }
     if (restartNeeded)
       settings.restartPending = true
+    settings.markSynced()
   }
   finally {
     isBusy.value = false
@@ -87,199 +74,134 @@ async function apply() {
 }
 
 function revert() {
-  if (legacyDirty.value.length > 0)
-    settings.revertGroup(props.fields)
   for (const ch of cpfDirtyChars.value)
     ch.formattedValue = cloneDeep(cpfInitial.value[ch.characteristic.uuid])
 }
+
+const resolvedTitle = computed(() => props.title ?? t(`sett.group-${props.group}`))
+const resolvedSub = computed(() => props.sub ?? t(`sett.group-${props.group}-desc`))
 </script>
 
 <template>
-  <section class="panel" :class="{ 'panel--dirty': isDirty }">
-    <header class="panel__head">
-      <p class="panel__eyebrow">
-        {{ t(`sett.group-${group}`) }}
-      </p>
-      <p class="panel__desc">
-        {{ t(`sett.group-${group}-desc`) }}
-      </p>
-    </header>
+  <section class="panel">
+    <PageHeader
+      breadcrumb-to="/settings"
+      :breadcrumb-label="t('dashboard.back-dashboard')"
+      :eyebrow="resolvedTitle"
+      :title="resolvedSub"
+    />
+
+    <div v-if="isOffline" class="panel__offline">
+      <StateCell label="OFFLINE">
+        <span class="panel__offline-text">{{ t('dashboard.offline-body') }}</span>
+      </StateCell>
+    </div>
 
     <div class="panel__body">
       <slot />
     </div>
 
-    <!-- Footer becomes sticky + signal-coloured when dirty so the user can't
-         miss that they have unsaved changes (audit feedback). Pure state badge
-         when clean. -->
-    <footer class="panel__footer">
-      <p class="panel__dirty" :class="{ 'panel__dirty--active': isDirty }">
-        {{ isDirty ? t('sett.unsynced', { count: dirtyCount }) : t('sett.no-changes') }}
-      </p>
-      <div class="panel__actions">
-        <button
-          class="panel__btn"
-          :disabled="!isDirty || isBusy"
-          @click="revert"
-        >
-          {{ t('sett.revert') }}
-        </button>
-        <button
-          class="panel__btn panel__btn--primary"
-          :disabled="!isDirty || isBusy"
-          @click="apply"
-        >
-          {{ t('sett.apply') }}
-        </button>
-      </div>
+    <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
+      <button
+        class="panel__btn"
+        :disabled="!isDirty || isBusy"
+        type="button"
+        @click="revert"
+      >
+        {{ t('sett.revert') }}
+      </button>
+      <button
+        class="panel__btn panel__btn--signal"
+        :disabled="!isDirty || isBusy"
+        type="button"
+        @click="apply"
+      >
+        {{ t('sett.apply') }}
+      </button>
     </footer>
   </section>
 </template>
 
 <style scoped>
 .panel {
-  background: var(--ck-paper);
+  background: var(--ck-bg);
   color: var(--ck-ink);
   font-family: var(--ck-font-body);
-  border: var(--ck-stroke-rule) solid var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
-  padding: var(--ck-s-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--ck-s-md);
-  text-align: left;
-  transition: border-color var(--ck-dur-panel) var(--ck-ease);
 }
 
-.panel--dirty {
-  border-color: var(--ck-signal);
+.panel__offline {
+  padding: 14px 22px;
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
-.panel__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ck-s-xs);
-}
-
-.panel__eyebrow {
-  font-family: var(--ck-font-display);
-  font-size: var(--ck-fs-h1);
-  font-weight: 700;
-  margin: 0;
-  line-height: var(--ck-line-tight);
+.panel__offline-text {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  color: var(--ck-dim);
+  letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
-}
-
-.panel__desc {
-  font-size: var(--ck-fs-body);
-  color: var(--ck-ink-dim);
-  margin: 0;
-  line-height: var(--ck-line-body);
 }
 
 .panel__body {
   display: flex;
   flex-direction: column;
-  gap: var(--ck-s-md);
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
 .panel__footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ck-s-md);
-  flex-wrap: wrap;
-  margin-top: var(--ck-s-sm);
-  padding: var(--ck-s-sm) var(--ck-s-md);
-  border-top: var(--ck-stroke-hair) dashed var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
-  transition:
-    background var(--ck-dur-panel) var(--ck-ease),
-    box-shadow var(--ck-dur-panel) var(--ck-ease);
-}
-
-/* When dirty: stick the footer to the bottom of the viewport with a strong
- * signal-color background. Unsaved changes become impossible to miss whether
- * the panel is scrolled into view or not. */
-.panel--dirty .panel__footer {
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
   position: sticky;
-  bottom: var(--ck-s-sm);
+  bottom: 0;
   z-index: 5;
-  background: var(--ck-signal);
-  color: var(--ck-on-signal);
-  border-top-color: var(--ck-signal);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  margin-left: calc(var(--ck-s-md) * -1);
-  margin-right: calc(var(--ck-s-md) * -1);
-  margin-bottom: calc(var(--ck-s-md) * -1);
-}
-
-.panel__dirty {
-  margin: 0;
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-}
-
-.panel__dirty--active {
-  color: var(--ck-on-signal);
-  font-weight: 700;
-}
-
-.panel__actions {
-  display: flex;
-  gap: var(--ck-s-sm);
+  background: var(--ck-paper);
 }
 
 .panel__btn {
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  font-weight: 600;
-  padding: var(--ck-s-sm) var(--ck-s-md);
+  flex: 1;
+  font-family: var(--ck-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  padding: 16px;
   background: var(--ck-paper);
   color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-radius: var(--ck-radius-soft);
+  border: none;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
   cursor: pointer;
+  border-radius: 0;
+}
+
+.panel__btn:first-child {
+  border-left: none;
 }
 
 .panel__btn:disabled {
-  background: var(--ck-bg-deep);
-  border-color: var(--ck-grid);
-  color: var(--ck-dim);
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.panel__btn--primary {
+.panel__btn:hover:not(:disabled) {
+  background: var(--ck-bg-deep);
+}
+
+.panel__btn--signal {
   background: var(--ck-signal);
   color: var(--ck-on-signal);
-  border-color: var(--ck-signal);
 }
 
-.panel__btn--primary:not(:disabled):hover {
-  background: var(--ck-ink);
-  border-color: var(--ck-ink);
+.panel__btn--signal:hover:not(:disabled) {
+  background: var(--ck-signal);
+  filter: brightness(1.05);
 }
 
-/* Inside the signal-coloured dirty footer the primary button needs the
- * inverse colour scheme to read as the dominant action. */
-.panel--dirty .panel__btn {
-  border-color: var(--ck-on-signal);
-  background: transparent;
-  color: var(--ck-on-signal);
-}
-
-.panel--dirty .panel__btn--primary {
-  background: var(--ck-on-signal);
-  color: var(--ck-signal);
-  border-color: var(--ck-on-signal);
-}
-
-.panel--dirty .panel__btn--primary:not(:disabled):hover {
-  background: var(--ck-ink);
-  color: var(--ck-paper);
-  border-color: var(--ck-ink);
+.panel__btn--signal:disabled {
+  background: var(--ck-paper);
+  color: var(--ck-dim);
 }
 </style>

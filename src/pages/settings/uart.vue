@@ -1,80 +1,70 @@
 <script setup lang="ts">
-import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
+import { computed } from 'vue'
 
-const settings = useSettingsStore()
 const { t } = useI18n()
-const fields = SETTINGS_GROUPS.uart
 const cpfChars = useCpfGroup('uart')
 
-const local = computed(() => settings.local)
-const showLegacy = computed(() => local.value !== null)
-const showCpf = computed(() => cpfChars.value.length > 0)
+const PROTOCOL_UUID = '84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b'
+const protocolChar = computed(() => cpfChars.value.find(c => c.characteristic.uuid === PROTOCOL_UUID))
+const otherChars = computed(() => cpfChars.value.filter(c => c.characteristic.uuid !== PROTOCOL_UUID))
+
+const protocolValue = computed<number>(() => {
+  const v = protocolChar.value?.formattedValue
+  return typeof v === 'number' ? v : 0
+})
+
+function setProtocol(v: number) {
+  if (!protocolChar.value)
+    return
+  protocolChar.value.formattedValue = v
+}
+
+const protocolOptions = [
+  { label: 'NOTHING', value: 0 },
+  { label: 'PRS', value: 1 },
+  { label: 'POV', value: 2 },
+]
 </script>
 
 <template>
-  <SettingsPanel group="uart" :fields="fields" :cpf-chars="cpfChars">
-    <template v-if="showLegacy && local">
-      <div class="row">
-        <label for="uart_protocols">{{ t('sett.uart') }}</label>
-        <select
-          id="uart_protocols"
-          v-model.number="local.uart_protocols"
-          class="select"
-        >
-          <option :value="0">
-            Nothing
-          </option>
-          <option :value="1">
-            PRS
-          </option>
-          <option :value="2">
-            POV
-          </option>
-        </select>
-      </div>
-    </template>
+  <SettingsPanel group="uart" :cpf-chars="cpfChars">
+    <div v-if="protocolChar" class="uart-row">
+      <CkEyebrow block>
+        {{ t('sett.uart') }}
+      </CkEyebrow>
+      <CkSegmentedControl
+        class="uart-row__seg"
+        :model-value="protocolValue"
+        :options="protocolOptions"
+        :aria-label="t('sett.uart')"
+        @update:model-value="setProtocol"
+      />
+    </div>
 
-    <template v-if="showCpf">
+    <div v-if="otherChars.length" class="uart-extras">
       <TheSetting
-        v-for="ch in cpfChars"
+        v-for="ch in otherChars"
         :key="ch.characteristic.uuid"
         :cha="ch"
       />
-    </template>
+    </div>
 
-    <p v-if="!showLegacy && !showCpf" class="empty">
+    <p v-if="cpfChars.length === 0" class="empty">
       {{ t('msg.fetching') }}…
     </p>
   </SettingsPanel>
 </template>
 
 <style scoped>
-.row {
+.uart-row,
+.uart-extras {
+  padding: 18px 22px;
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.uart-row__seg {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ck-s-md);
-}
-
-.row label {
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  color: var(--ck-ink);
-}
-
-.select {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-body);
-  padding: var(--ck-s-xs) var(--ck-s-sm);
-  border: var(--ck-stroke-rule) solid var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
-  background: var(--ck-paper);
-  color: var(--ck-ink);
-}
-
-.select:focus {
-  outline: none;
-  border-color: var(--ck-signal);
+  margin-top: 10px;
 }
 
 .empty {
@@ -82,5 +72,7 @@ const showCpf = computed(() => cpfChars.value.length > 0)
   font-size: var(--ck-fs-meta);
   color: var(--ck-dim);
   margin: 0;
+  padding: 22px;
+  text-align: center;
 }
 </style>

@@ -42,12 +42,39 @@ local:
   changes-count: 'Изменено полей: {count}'
 
 pair:
+  step1-eyebrow: Сопряжение · проверки
+  step1-title-line1: Четыре
+  step1-title-line2: шага.
+  step1-title-line3: Готово.
+  step2-eyebrow: Подключение
+  step2-title-line1: Включите.
+  step2-title-line2: Подключайтесь.
+  step2-sub: Chromium откроет системный селектор. Выберите устройство, имя которого начинается с FB-.
+  step2-cta: ⚡ Подключиться по Bluetooth
+  step2-meta-left: navigator.bluetooth · префикс FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Устройства · в памяти
+  saved-count: 'В вашем наборе: {count}'
+  saved-scanning: 'Поиск · в зоне: {count}'
+  in-range: ● В ЗОНЕ
+  pair-new: +  ДОБАВИТЬ УСТРОЙСТВО
+  retry: Повторить
+  auto: AUTO
+  last-ago: 'БЫЛО · {when}'
+  explainer-bullet-1-title: Браузер «из коробки»
+  explainer-bullet-1-desc: Web Bluetooth напрямую общается с вашим FlyBeeper.
+  explainer-bullet-2-title: Включите устройство
+  explainer-bullet-2-desc: Удерживайте кнопку, пока LED не задышит оранжевым.
+  explainer-bullet-3-title: Выберите в селекторе
+  explainer-bullet-3-desc: Системный селектор. Устройство называется FB-…
+  explainer-bullet-4-title: Подключение одним касанием
+  explainer-bullet-4-desc: Хранится локально. Без облака и аккаунта.
   explainer-title: Подключение FlyBeeper-устройства
   explainer-body: Связь с вариометром идёт по Web Bluetooth. Когда вы нажмёте Подключить, браузер покажет список устройств с префиксом FB. Изменения настроек сохраняются на этом телефоне сразу, а на устройство уходят по кнопке Применить.
   explainer-supported: Работает в Chrome и Edge на Android, Windows, macOS, Linux. На iPhone используйте браузер Bluefy.
-  continue: Продолжить
-  connect: Подключить устройство
-  connect-another: Подключить ещё одно
+  continue: Продолжить →
+  connect: Подключить →
+  connect-another: Подключить ещё →
   saved-title: Ваши устройства
   saved-empty: Сохранённых устройств пока нет — нажмите Подключить, чтобы добавить.
   reconnect: Переподключить
@@ -60,7 +87,83 @@ pair:
   unsupported-title: Web Bluetooth недоступен
   unsupported-body: Этот браузер не умеет работать с BLE. Используйте Chrome или Edge на Android / Windows / macOS / Linux.
   ios-banner-body: iPhone или iPad? В Safari нет Web Bluetooth. Откройте сайт в Bluefy, чтобы подключаться.
-  open-bluefy: Открыть в Bluefy
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth не поддерживается
+  ios-sub: Откройте в Bluefy — это даёт Web BLE на iOS. Бесплатно.
+  open-bluefy: ОТКРЫТЬ В BLUEFY ↗
+  disc-eyebrow: Отключено
+  disc-title: Настройки сохранены локально
+  disc-sub: Звук переключён на браузер. Подключитесь, когда будете готовы.
+  disc-reconnect: ПЕРЕПОДКЛЮЧИТЬ
+  disc-work-offline: РАБОТАТЬ ОФФЛАЙН
+  restart-eyebrow: Нужен перезапуск
+  restart-title: Перезагрузите устройство
+  restart-sub: Часть настроек применяется только после полной перезагрузки.
+  restart-ack: ПОНЯТНО
+  sim-eyebrow: Симулятор
+  sim-title: Симуляция вариометра активна
+  sim-sub: 'Подаётся {value} м/с. Остановите, чтобы вернуть реальные показания.'
+  sim-stop: ОСТАНОВИТЬ
+
+preset:
+  import-eyebrow: Импорт пресета
+  import-default-name: Безымянный пресет
+  bytes: БАЙТ
+  via-url: через URL фрагмент
+  apply: ПРИМЕНИТЬ
+  discard: ОТМЕНИТЬ
+  share-title: Поделиться настройками
+  share-eyebrow: Экспорт пресета · фрагмент URL
+  share-sub: Кодируется в хеш URL · не уходит на сервер · работает на статическом хостинге
+  scan-eyebrow: Сканируйте телефоном
+  url-eyebrow: URL
+  copy-url: 📋 Скопировать URL
+  download-json: ↓ JSON
+  preset-name: Название пресета
+  preset-by: Автор
+  privacy-note: Приватность · фрагмент URL остаётся в клиенте · никогда не отправляется
+  share-cta: ПОДЕЛИТЬСЯ ↗
+
+install:
+  eyebrow: Установка · оффлайн
+  title: Для использования без интернета в горах
+  cta: УСТАНОВИТЬ
+  hub-row: УСТАНОВИТЬ ПРИЛОЖЕНИЕ
+
+dashboard:
+  eyebrow: Дашборд · live
+  share: ПОДЕЛИТЬСЯ
+  disconnect: ● ОТКЛЮЧИТЬ
+  button-map: Карта кнопок
+  live: ● LIVE
+  hover-jump-hint: НАВЕДИ → ПЕРЕЙТИ
+  vario: Варио
+  alt: ВЫС
+  press: ДАВЛ
+  temp: ТЕМП
+  bat: БАТ
+  settings-title: Настройки
+  synced: ● СИНХР
+  dirty: ● НЕ СИНХР
+  hub-sound: ЗВУК
+  hub-sound-sub: 12-точечная кривая · громк {v}/3
+  hub-curves: КРИВЫЕ
+  hub-curves-sub: отклик · 12 точек
+  hub-behaviour: ПОВЕДЕНИЕ
+  hub-behaviour-sub: тишина · LED · HID
+  hub-power: ПИТАНИЕ
+  hub-power-sub: сон · таймаут
+  hub-uart: UART
+  hub-uart-sub: протокол
+  hub-simulator: СИМУЛЯТОР
+  hub-simulator-sub: задать значение
+  hub-firmware: ПРОШИВКА
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: ТЕРМИНАЛ
+  hub-terminal-sub: лог BLE
+  back-dashboard: ← ДАШБОРД
+  offline-eyebrow: ОФФЛАЙН
+  offline-body: нет устройства · изменения сохраняются локально · подключитесь для синхронизации
 
 msg:
   disconnected: Устройство отключено
@@ -202,6 +305,27 @@ audio:
   stop-simulation: Выйти из симуляции
 update:
   how-to: Как обновить
+  eyebrow: Обновление прошивки
+  title-line1: Используйте nRF Connect.
+  title-line2: Это работает.
+  intro: 'Мы не делаем in-browser OTA. Бесплатное Nordic nRF Connect для мобильных — индустриальный стандарт для прошивки nRF52 — обкатан, поддерживает восстановление и работает на обеих платформах. Пользуйтесь им.'
+  callout-eyebrow: Почему не в браузере?
+  callout-body: 'Неудачная OTA на вариометре может его «окирпичить». Нативные MCUmgr-клиенты умеют retry, восстановление и проверку подписи. Веб-приложение через нестабильный BLE так не может. Пока SMP-over-WebBLE не получит путь восстановления — пользуйтесь нативным инструментом.'
+  step-1-title: Установите nRF Connect Mobile
+  step-1-desc: Бесплатно, от Nordic. iOS App Store + Google Play. Работает без аккаунта.
+  step-2-title: Включите ваш mini BT
+  step-2-desc: Долгое нажатие, пока LED не задышит оранжевым.
+  step-3-title: Откройте Device Manager
+  step-3-desc: Выберите ваш mini BT из списка. Откроется карточка Device Manager.
+  step-4-title: Нажмите Firmware Upgrade
+  step-4-desc: Выберите .bin-файл, скачанный с flybeeper.com/firmware. Нажмите Start.
+  step-5-title: Подождите 60–90 секунд
+  step-5-desc: Прогресс-бар дойдёт до 100%. Устройство перезагрузится. nRF Connect покажет «complete».
+  step-6-title: Откройте этот конфигуратор
+  step-6-desc: Подключитесь и проверьте, что версия прошивки в статус-баре совпадает.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Скачать прошивку ↓
   changelog: Протокол изменений
   firmware: Прошивка
   descr: лучшее решение для обновления прошивки. Установите и запустите приложение. На вкладке `Scan` найдите устройство и нажмите кнопку `connect`. На открывшейся вкладке, рядом с кнопкой `disconnect`, нажмите на значок `DFU`. Выберите ранее загруженный файл прошивки `app_update.bin` в файловой системе. Выберите `Test and Confirm` и нажмите `Ok`. Через 15 секунд файл будет передан, проверен, и устройство перезагрузится. Батарея должна быть новой.

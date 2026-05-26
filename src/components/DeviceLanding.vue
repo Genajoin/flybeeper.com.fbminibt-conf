@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
 import type { DeviceEntry } from '~/composables/useDeviceCatalog'
 
 const props = defineProps<{
@@ -11,165 +12,137 @@ const { bySku } = useDeviceCatalog()
 const device = computed<DeviceEntry | undefined>(() => bySku(props.sku))
 const manualPath = computed(() => `/devices/${props.sku}/manual-${locale.value === 'ru' ? 'ru' : 'en'}`)
 const changelogPath = computed(() => `/devices/${props.sku}/changelog`)
+
+// Lazy-load the STL viewer (~600 KB gz) so the device landing chunk stays
+// small. Static decorative role only.
+const StlViewer = defineAsyncComponent(() => import('~/components/StlComponent.vue'))
 </script>
 
 <template>
   <article v-if="device" class="device">
-    <header class="device__head">
-      <p class="device__eyebrow">
-        {{ t('home.eyebrow') }}
-      </p>
-      <h1 class="device__title">
-        {{ device.displayName }}
-      </h1>
-      <p class="device__body">
-        {{ t(device.aboutKey) }}
-      </p>
-      <p class="device__meta">
-        {{ t('about.p4') }}
-      </p>
-    </header>
-
-    <div class="device__actions">
-      <RouterLink class="device__btn device__btn--primary" :to="changelogPath">
-        {{ t('update.firmware') }}
-      </RouterLink>
-      <RouterLink class="device__btn" :to="manualPath">
-        {{ t('button.manual') }} {{ locale === 'ru' ? 'RU' : 'EN' }}
-      </RouterLink>
-      <a v-if="device.marketUrl" class="device__btn" :href="device.marketUrl">
-        {{ t('about.link-market') }}
-      </a>
-      <a v-if="device.buyUrl" class="device__btn device__btn--primary" :href="device.buyUrl">
-        {{ t('button.buy-now') }}
-      </a>
-      <a v-if="device.blogUrl" class="device__btn" :href="device.blogUrl">
-        {{ t('about.link-blog') }}
-      </a>
-    </div>
+    <PageHeader
+      breadcrumb-to="/devices"
+      breadcrumb-label="← DEVICES"
+    >
+      <template #body>
+        <CkEyebrow color="var(--ck-signal)" block>
+          {{ t('home.eyebrow') }}
+        </CkEyebrow>
+        <h1 class="device__display">
+          {{ device.displayName }}
+        </h1>
+        <p class="device__body">
+          {{ t(device.aboutKey) }}
+        </p>
+      </template>
+    </PageHeader>
 
     <div class="device__viewer">
-      <StlComponent :stl="device.stlPath" :pos="device.stlPos" />
+      <Suspense>
+        <StlViewer :stl="device.stlPath" :pos="device.stlPos" />
+        <template #fallback>
+          <div class="device__loading">
+            ...
+          </div>
+        </template>
+      </Suspense>
     </div>
 
-    <RouterLink class="device__back" to="/devices">
-      <span class="i-carbon-arrow-left" aria-hidden="true" />
-      {{ t('button.back') }}
-    </RouterLink>
+    <div class="device__actions">
+      <RouterLink class="device__btn device__btn--signal" :to="changelogPath">
+        {{ t('update.firmware') }} ↓
+      </RouterLink>
+      <RouterLink class="device__btn" :to="manualPath">
+        {{ t('button.manual') }} · {{ locale === 'ru' ? 'RU' : 'EN' }}
+      </RouterLink>
+      <a v-if="device.marketUrl" class="device__btn" :href="device.marketUrl" target="_blank" rel="noopener">
+        {{ t('about.link-market') }} ↗
+      </a>
+      <a v-if="device.buyUrl" class="device__btn device__btn--signal" :href="device.buyUrl" target="_blank" rel="noopener">
+        {{ t('button.buy-now') }} ↗
+      </a>
+      <a v-if="device.blogUrl" class="device__btn" :href="device.blogUrl" target="_blank" rel="noopener">
+        {{ t('about.link-blog') }} ↗
+      </a>
+    </div>
   </article>
 </template>
 
 <style scoped>
 .device {
-  max-width: 44rem;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ck-s-lg);
-  text-align: left;
-}
-
-.device__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ck-s-sm);
-}
-
-.device__eyebrow {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-signal);
-  margin: 0;
-}
-
-.device__title {
-  font-family: var(--ck-font-display);
-  font-size: var(--ck-fs-display);
-  font-weight: 700;
-  line-height: var(--ck-line-tight);
+  background: var(--ck-bg);
   color: var(--ck-ink);
-  margin: 0;
+  font-family: var(--ck-font-body);
+}
+
+.device__display {
+  font-family: var(--ck-font-display);
+  font-weight: 800;
+  font-size: 36px;
+  letter-spacing: -1.3px;
+  line-height: 0.95;
+  margin: 8px 0;
+  text-transform: uppercase;
 }
 
 .device__body {
-  font-size: var(--ck-fs-body);
-  line-height: var(--ck-line-body);
-  color: var(--ck-ink);
+  font-size: 13px;
+  color: var(--ck-dim);
+  line-height: 1.5;
   margin: 0;
+  max-width: 540px;
 }
 
-.device__meta {
+.device__viewer {
+  padding: 14px;
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  display: flex;
+  justify-content: center;
+}
+
+.device__loading {
+  padding: 80px;
   font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
+  font-size: 10px;
   color: var(--ck-dim);
-  margin: 0;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
 }
 
 .device__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ck-s-sm);
 }
 
 .device__btn {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  font-weight: 600;
-  padding: var(--ck-s-sm) var(--ck-s-md);
+  flex: 1;
+  min-width: 50%;
+  padding: 14px;
+  text-align: center;
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
   background: var(--ck-paper);
   color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-radius: var(--ck-radius-soft);
-  cursor: pointer;
   text-decoration: none;
+  border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
-.device__btn:hover {
-  background: var(--ck-ink);
-  color: var(--ck-paper);
-}
-
-.device__btn--primary {
+.device__btn--signal {
   background: var(--ck-signal);
-  border-color: var(--ck-signal);
   color: var(--ck-on-signal);
 }
 
-.device__btn--primary:hover {
-  background: var(--ck-ink);
-  border-color: var(--ck-ink);
-}
-
-.device__viewer {
-  padding: var(--ck-s-md);
-  background: var(--ck-paper);
-  border: var(--ck-stroke-hair) solid var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
-  /* StlComponent draws onto a fixed-size canvas; cap it so it doesn't blow
-   * the page on wide viewports. */
-  max-width: 32rem;
-  align-self: center;
-  width: 100%;
-}
-
-.device__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ck-s-xs);
-  align-self: flex-start;
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-  text-decoration: none;
-}
-
-.device__back:hover {
-  color: var(--ck-ink);
+@media (min-width: 720px) {
+  .device__display {
+    font-size: 52px;
+  }
+  .device__btn {
+    min-width: 0;
+  }
 }
 </style>

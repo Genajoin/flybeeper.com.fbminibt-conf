@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { iVarioCurves } from '~/stores/bluetooth'
+export interface iVarioCurves {
+  buzzer_vario_dots: number[]
+  buzzer_frequency_dots: number[]
+  buzzer_cycle_dots: number[]
+  buzzer_duty_dots: number[]
+}
 
 const props = defineProps<{
   /**
@@ -19,7 +24,6 @@ const props = defineProps<{
   sinkOff?: number
 }>()
 
-const settings = useSettingsStore()
 const sim = useSimulation()
 
 type CurveKey = 'vario' | 'frequency' | 'cycle' | 'duty'
@@ -49,9 +53,7 @@ const curveDefs: Record<CurveKey, CurveDef> = {
 const activeCurve = ref<CurveKey>('frequency')
 const def = computed(() => curveDefs[activeCurve.value])
 
-const curves = computed<iVarioCurves | null>(() =>
-  props.curvesOverride ?? settings.local?.curves ?? null,
-)
+const curves = computed<iVarioCurves | null>(() => props.curvesOverride ?? null)
 
 const VB_W = 720
 const VB_H = 400
@@ -194,10 +196,10 @@ const cursorX = computed(() => {
 })
 
 const thresholdLines = computed(() => {
-  const climbOn = props.climbOn ?? settings.local?.climb_tone_on_threshold_cm
-  const climbOff = props.climbOff ?? settings.local?.climb_tone_off_threshold_cm
-  const sinkOn = props.sinkOn ?? settings.local?.sink_tone_on_threshold_cm
-  const sinkOff = props.sinkOff ?? settings.local?.sink_tone_off_threshold_cm
+  const climbOn = props.climbOn
+  const climbOff = props.climbOff
+  const sinkOn = props.sinkOn
+  const sinkOff = props.sinkOff
   const t = [
     { v: climbOn, label: 'climb-on', color: 'var(--ck-signal)' },
     { v: climbOff, label: 'climb-off', color: 'var(--ck-dim)' },

@@ -1,12 +1,10 @@
-import type { iFbMiniBtSettings } from '~/stores/bluetooth'
-
 /**
- * Settings IA per audit §8 — flat characteristics map to grouped panels so the
- * UI can ship a per-group Apply / Revert and a logical sidebar instead of one
- * long dump.
+ * Settings IA — each CPF characteristic UUID is routed to one of these
+ * groups. The grouped settings pages filter `bleCharacteristics` by their
+ * group and render only the relevant characteristics.
  *
- * `curves` is a single object on the settings — its sub-arrays
- * (vario / freq / cycle / duty) live or die together. Treat it as one field.
+ * Groups also drive the dashboard hub IA (D2): SOUND, CURVES, BEHAVIOUR,
+ * POWER, UART, SIMULATOR, FIRMWARE, TERMINAL.
  */
 
 export type SettingsGroupKey =
@@ -16,33 +14,6 @@ export type SettingsGroupKey =
   | 'uart'
   | 'power'
   | 'simulator'
-
-export const SETTINGS_GROUPS: Record<SettingsGroupKey, (keyof iFbMiniBtSettings)[]> = {
-  audio: [
-    'buzzer_volume',
-    'climb_tone_on_threshold_cm',
-    'climb_tone_off_threshold_cm',
-    'sink_tone_on_threshold_cm',
-    'sink_tone_off_threshold_cm',
-  ],
-  curves: ['curves'],
-  behaviour: [
-    'silent_on_ground',
-    'led_blinky_by_vario',
-    'hid_keyboard_off',
-  ],
-  uart: ['uart_protocols'],
-  power: ['ble_never_sleep'],
-  simulator: ['buzzer_simulate_vario_value'],
-}
-
-/**
- * Fields that need a power-cycle on the device for the change to take effect
- * (audit §7). Surfacing this state drives the restart-device banner.
- */
-export const RESTART_REQUIRED_FIELDS: ReadonlyArray<keyof iFbMiniBtSettings> = [
-  'hid_keyboard_off',
-]
 
 export interface SettingsGroupNav {
   key: SettingsGroupKey
@@ -60,11 +31,10 @@ export const SETTINGS_GROUP_NAV: SettingsGroupNav[] = [
 
 /**
  * CPF (fw ≥0.15) maps each FlyBeeper Settings Service characteristic UUID to a
- * settings group, mirroring SETTINGS_GROUPS but for the per-characteristic
- * codec. Characteristics not listed here fall through to a catch-all "other"
- * bucket; we surface those only on the closest panel that makes sense.
+ * settings group. Characteristics not listed fall through silently — the panel
+ * filters strictly by group membership.
  *
- * Keep in sync with locales/*.yml `sett.<uuid>` keys and the ≤0.15 grouping.
+ * Keep in sync with locales/*.yml `sett.<uuid>` keys.
  */
 export const CPF_UUID_TO_GROUP: Record<string, SettingsGroupKey> = {
   // audio

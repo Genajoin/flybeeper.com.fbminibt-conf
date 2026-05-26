@@ -12,13 +12,10 @@
  */
 
 const bt = useBluetoothStore()
-const settings = useSettingsStore()
 const { t } = useI18n()
 const { source } = useAudioSource()
 const synth = useToneSynth()
 const sim = useSimulation()
-
-const local = computed(() => settings.local)
 
 const SLIDER_MIN_MS = -5
 const SLIDER_MAX_MS = 10
@@ -44,8 +41,6 @@ const DEFAULT_CURVES = {
 }
 
 const synthCurves = computed(() => {
-  if (local.value)
-    return local.value.curves
   const find = (uuid: string) => bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
   const vario = find(CPF_VARIO_UUID)?.formattedValue as number[] | undefined
   const freq = find(CPF_FREQ_UUID)?.formattedValue as number[] | undefined
@@ -132,17 +127,6 @@ function stopDemo() {
   sliderMs.value = 0
 }
 
-function applyPreset(v: number) {
-  sliderMs.value = v
-}
-
-const presets: { labelKey: string, value: number }[] = [
-  { labelKey: 'audio.preset-strong-sink', value: -3 },
-  { labelKey: 'audio.preset-zero', value: 0 },
-  { labelKey: 'audio.preset-weak-climb', value: 1 },
-  { labelKey: 'audio.preset-strong-climb', value: 5 },
-]
-
 // Leaving the host page takes the device out of simulation. If two pages host
 // this component (curves + simulator), navigating between them tears down
 // the channel cleanly: onUnmounted on one mount-point, onMounted on the next.
@@ -164,41 +148,27 @@ onUnmounted(() => {
 
     <div class="ctrl__slider-block">
       <div class="ctrl__readout">
-        <span class="ctrl__readout-big">{{ sliderMs.toFixed(1) }}</span>
-        <span class="ctrl__readout-unit">m/s</span>
+        <span class="ctrl__readout-big" :class="{ 'ctrl__readout-big--signal': sliderMs > 0 }">{{ sliderMs >= 0 ? '+' : '' }}{{ sliderMs.toFixed(1) }}</span>
+        <span class="ctrl__readout-unit">M/S</span>
       </div>
-      <input
-        v-model.number="sliderMs"
-        type="range"
+      <ClimbrateSlider
+        v-model="sliderMs"
         :min="SLIDER_MIN_MS"
         :max="SLIDER_MAX_MS"
         :step="SLIDER_STEP_MS"
-        class="ctrl__slider"
         @pointerdown="source === 'browser' && synth.ensureContext()"
       >
-      <div class="ctrl__slider-ticks">
-        <span>−5</span>
-        <span>0</span>
-        <span>+5</span>
-        <span>+10</span>
-      </div>
-    </div>
-
-    <div class="ctrl__presets">
-      <button
-        v-for="p in presets"
-        :key="p.value"
-        class="ctrl__preset"
-        @click="applyPreset(p.value)"
-      >
-        {{ t(p.labelKey) }}
-      </button>
-      <button
-        class="ctrl__preset ctrl__preset--demo"
-        @click="isDemoRunning ? stopDemo() : startDemo()"
-      >
-        {{ isDemoRunning ? t('audio.demo-stop') : t('audio.demo') }}
-      </button>
+        <template #extra>
+          <span class="ctrl__spacer" />
+          <button
+            type="button"
+            class="ctrl__demo"
+            @click="isDemoRunning ? stopDemo() : startDemo()"
+          >
+            ▶ {{ isDemoRunning ? t('audio.demo-stop') : t('audio.demo') }}
+          </button>
+        </template>
+      </ClimbrateSlider>
     </div>
   </div>
 </template>
@@ -253,51 +223,25 @@ onUnmounted(() => {
   color: var(--ck-dim);
 }
 
-.ctrl__slider {
-  width: 100%;
-  accent-color: var(--ck-signal);
-  touch-action: none;
+.ctrl__readout-big--signal {
+  color: var(--ck-signal);
 }
 
-.ctrl__slider-ticks {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-micro);
-  color: var(--ck-dim);
+.ctrl__spacer {
+  flex: 1;
 }
 
-.ctrl__presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ck-s-xs);
-}
-
-.ctrl__preset {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  padding: var(--ck-s-xs) var(--ck-s-sm);
-  background: var(--ck-paper);
-  color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-grid);
-  border-radius: var(--ck-radius-pill);
-  cursor: pointer;
-}
-
-.ctrl__preset:hover {
-  border-color: var(--ck-ink);
-}
-
-.ctrl__preset--demo {
+.ctrl__demo {
+  padding: 5px 12px;
   background: var(--ck-signal);
   color: var(--ck-on-signal);
-  border-color: var(--ck-signal);
-}
-
-.ctrl__preset--demo:hover {
-  background: var(--ck-ink);
-  border-color: var(--ck-ink);
+  border: var(--ck-stroke-rule) solid var(--ck-signal);
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 0;
+  text-transform: uppercase;
 }
 </style>

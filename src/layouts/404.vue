@@ -6,7 +6,7 @@ const { t } = useI18n()
 <template>
   <main class="error">
     <div class="error__panel">
-      <span class="error__icon i-carbon-warning" aria-hidden="true" />
+      <Icon name="alert" :size="48" class="error__icon" stroke="var(--ck-signal)" />
       <RouterView />
       <button class="error__btn" @click="router.back()">
         {{ t('button.back') }}

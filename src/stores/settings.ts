@@ -1,50 +1,49 @@
 import { defineStore } from 'pinia'
 import { get as idbGet, set as idbSet } from 'idb-keyval'
-import type { iFbMiniBtSettings } from '~/stores/bluetooth'
 
 /**
- * Local-first settings store (DECISIONS.md §★ State model).
+ * Local-first settings store.
  *
- * - `local` is the source of truth — survives device disconnect, persists in IDB.
- * - `lastDeviceSnapshot` is the last known device state, used to compute diffs
- *   on reconnect ("apply local changes to device?").
- * - `history` keeps capped change snapshots so the user can revert to a previous
- *   state ("revert to N minutes ago").
+ * After the legacy ≤0.15 codec was removed, `local` is a loose
+ * `Record<string, unknown>` keyed by FlyBeeper Settings Service
+ * characteristic UUID. The CPF panel layer owns the source-of-truth
+ * (via `BleCharacteristic.formattedValue`); this store is the durable
+ * mirror for offline editing and URL-share preset import.
  *
- * The bluetoothStore reads from the device and calls `applyDeviceSnapshot()`;
- * the UI mutates via `updateLocal()`. The two are decoupled — disconnect does
- * NOT clear `local`.
+ * IDB key is bumped to `:v2` so stale legacy struct payloads don't get
+ * misread as UUID-keyed records.
  */
 
-const IDB_KEY_SETTINGS = 'fb:settings:v1'
-const IDB_KEY_HISTORY = 'fb:settings:history:v1'
-const IDB_KEY_SNAPSHOT = 'fb:settings:device-snapshot:v1'
+const IDB_KEY_SETTINGS = 'fb:settings:v2'
+const IDB_KEY_HISTORY = 'fb:settings:history:v2'
+const IDB_KEY_SNAPSHOT = 'fb:settings:device-snapshot:v2'
 const HISTORY_LIMIT = 50
+
+export type SettingsLocal = Record<string, unknown>
 
 export interface SettingsHistoryEntry {
   ts: number
   source: 'local' | 'device'
-  settings: iFbMiniBtSettings
+  settings: SettingsLocal
 }
 
 export interface SettingsDiffEntry {
-  key: keyof iFbMiniBtSettings
+  key: string
   local: unknown
   device: unknown
 }
 
 export const useSettingsStore = defineStore('settingsStore', {
   state: () => ({
-    local: null as iFbMiniBtSettings | null,
-    lastDeviceSnapshot: null as iFbMiniBtSettings | null,
+    local: null as SettingsLocal | null,
+    lastDeviceSnapshot: null as SettingsLocal | null,
     lastSyncedAt: null as number | null,
     history: [] as SettingsHistoryEntry[],
     hydrated: false,
     /**
-     * Set to true after a writeMiniBtSettings() that mutated a field listed in
-     * RESTART_REQUIRED_FIELDS (audit §7). Drives the RestartDeviceBanner.
-     * Cleared on disconnect (we assume the user did the power-cycle). Not
-     * persisted — a fresh page load with no device connection has no banner.
+     * Set true after writing a CPF characteristic listed in
+     * CPF_RESTART_REQUIRED_UUIDS. Drives RestartDeviceBanner. Cleared on
+     * disconnect (assumed power-cycle). Not persisted.
      */
     restartPending: false,
   }),
@@ -58,13 +57,12 @@ export const useSettingsStore = defineStore('settingsStore', {
     },
   },
   actions: {
-    /** Load persisted state from IndexedDB. Idempotent. */
     async hydrate(): Promise<void> {
       if (this.hydrated)
         return
       const [stored, snapshot, history] = await Promise.all([
-        idbGet<iFbMiniBtSettings | null>(IDB_KEY_SETTINGS),
-        idbGet<iFbMiniBtSettings | null>(IDB_KEY_SNAPSHOT),
+        idbGet<SettingsLocal | null>(IDB_KEY_SETTINGS),
+        idbGet<SettingsLocal | null>(IDB_KEY_SNAPSHOT),
         idbGet<SettingsHistoryEntry[]>(IDB_KEY_HISTORY),
       ])
       if (stored)
@@ -76,11 +74,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.hydrated = true
     },
 
-    /** Write current state to IndexedDB. Called automatically on mutation (debounced). */
     async persist(): Promise<void> {
-      // structuredClone (IDB's internal serializer) can't handle Pinia's
-      // reactive Proxy on nested arrays/objects. JSON round-trip strips the
-      // wrappers — our state is JSON-safe.
       const stripProxy = <T>(v: T): T => v === null || v === undefined ? v : JSON.parse(JSON.stringify(v))
       await Promise.all([
         idbSet(IDB_KEY_SETTINGS, stripProxy(this.local)),
@@ -89,8 +83,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       ])
     },
 
-    /** Push a snapshot onto history, evicting oldest beyond HISTORY_LIMIT. */
-    pushHistory(source: 'local' | 'device', settings?: iFbMiniBtSettings): void {
+    pushHistory(source: 'local' | 'device', settings?: SettingsLocal): void {
       const snap = settings ?? this.local
       if (!snap)
         return
@@ -103,11 +96,7 @@ export const useSettingsStore = defineStore('settingsStore', {
         this.history.length = HISTORY_LIMIT
     },
 
-    /**
-     * Called by bluetoothStore when the device's settings have been read.
-     * Updates the device snapshot and seeds `local` if it's the first read.
-     */
-    applyDeviceSnapshot(snap: iFbMiniBtSettings): void {
+    applyDeviceSnapshot(snap: SettingsLocal): void {
       this.lastDeviceSnapshot = structuredClone(snap)
       this.lastSyncedAt = Date.now()
       if (!this.local)
@@ -115,36 +104,31 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.pushHistory('device', snap)
     },
 
-    /** UI-driven update of one or more fields. Pushes a history entry. */
-    updateLocal(patch: Partial<iFbMiniBtSettings>): void {
+    updateLocal(patch: SettingsLocal): void {
       if (!this.local)
-        return
+        this.local = {}
       this.local = { ...this.local, ...patch }
       this.pushHistory('local')
     },
 
-    /** Replace local wholesale (e.g. importing a preset). */
-    replaceLocal(next: iFbMiniBtSettings): void {
+    replaceLocal(next: SettingsLocal): void {
       this.local = structuredClone(next)
       this.pushHistory('local')
     },
 
-    /** Compute diff between `local` and a device snapshot (or current snapshot). */
-    diff(other?: iFbMiniBtSettings): SettingsDiffEntry[] {
+    diff(other?: SettingsLocal): SettingsDiffEntry[] {
       const reference = other ?? this.lastDeviceSnapshot
       if (!this.local || !reference)
         return []
       const out: SettingsDiffEntry[] = []
       for (const key in this.local) {
-        const k = key as keyof iFbMiniBtSettings
-        if (JSON.stringify(this.local[k]) !== JSON.stringify(reference[k])) {
-          out.push({ key: k, local: this.local[k], device: reference[k] })
+        if (JSON.stringify(this.local[key]) !== JSON.stringify(reference[key])) {
+          out.push({ key, local: this.local[key], device: reference[key] })
         }
       }
       return out
     },
 
-    /** Restore `local` to a previous history snapshot by timestamp. */
     revertTo(ts: number): boolean {
       const entry = this.history.find(e => e.ts === ts)
       if (!entry)
@@ -154,7 +138,6 @@ export const useSettingsStore = defineStore('settingsStore', {
       return true
     },
 
-    /** Mark `local` as in sync with the device (call after successful write). */
     markSynced(): void {
       if (!this.local)
         return
@@ -162,23 +145,16 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.lastSyncedAt = Date.now()
     },
 
-    /**
-     * Per-group helpers (audit §8 IA).
-     *
-     * Each settings panel calls revertGroup() to undo just its fields without
-     * touching the others, and diffGroup() to render its own dirty count in
-     * the per-group footer. Fields outside the group are left as-is.
-     */
-    diffGroup(keys: (keyof iFbMiniBtSettings)[]): SettingsDiffEntry[] {
+    diffGroup(keys: string[]): SettingsDiffEntry[] {
       return this.diff().filter(d => keys.includes(d.key))
     },
 
-    revertGroup(keys: (keyof iFbMiniBtSettings)[]): void {
+    revertGroup(keys: string[]): void {
       if (!this.local || !this.lastDeviceSnapshot)
         return
-      const patch: Partial<iFbMiniBtSettings> = {}
+      const patch: SettingsLocal = {}
       for (const k of keys)
-        (patch as Record<string, unknown>)[k] = structuredClone(this.lastDeviceSnapshot[k])
+        patch[k] = structuredClone(this.lastDeviceSnapshot[k])
       this.local = { ...this.local, ...patch }
       this.pushHistory('local')
     },

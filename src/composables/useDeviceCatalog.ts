@@ -1,3 +1,5 @@
+import type { IconName } from '~/components/Icon.vue'
+
 /**
  * Single source of truth for the product catalog. /devices/index renders a
  * card grid by iterating this list; /devices/<sku>/index.vue files mount
@@ -13,11 +15,8 @@ export interface DeviceEntry {
   marketUrl?: string
   buyUrl?: string
   blogUrl?: string
-  /**
-   * Iconify "i-carbon-*" class for the catalog card thumbnail. STL preview
-   * would be more honest but blows the bundle — keep glyphs for now.
-   */
-  iconClass: string
+  /** Glyph name from the cockpit icon set (see src/components/Icon.vue). */
+  iconName: IconName
 }
 
 export const DEVICE_CATALOG: DeviceEntry[] = [
@@ -29,7 +28,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPos: { x: -20, y: -30, z: 60 },
     marketUrl: 'https://market.flybeeper.com/device/mini-bt',
     blogUrl: 'https://blog.regimov.net/flybeeper-mini-bt/',
-    iconClass: 'i-carbon-pressure',
+    iconName: 'pressure',
   },
   {
     sku: 'fbps1',
@@ -40,7 +39,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     marketUrl: 'https://market.flybeeper.com/device/ps1',
     buyUrl: 'https://buy.stripe.com/dR6cPZ52vfxgdzifZ0',
     blogUrl: 'https://blog.regimov.net/flybeeper-pressure-sensor',
-    iconClass: 'i-carbon-pressure-filled',
+    iconName: 'pressure-filled',
   },
   {
     sku: 'fbrc4',
@@ -51,7 +50,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     marketUrl: 'https://market.flybeeper.com/device/rc4',
     buyUrl: 'https://buy.stripe.com/aEUeY7dz1etcan628b',
     blogUrl: 'https://blog.regimov.net/flybeeper-remote-control-4',
-    iconClass: 'i-carbon-game-console',
+    iconName: 'game-console',
   },
   {
     sku: 'fbtas',
@@ -61,7 +60,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPos: { x: 100, y: 100, z: 100 },
     marketUrl: 'https://market.flybeeper.com/device/tas',
     blogUrl: 'https://blog.regimov.net/flybeeper-tas',
-    iconClass: 'i-carbon-wind-gusts',
+    iconName: 'wind',
   },
   {
     sku: 'fbsv',
@@ -70,7 +69,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPath: '/fbsv-model.stl',
     stlPos: { x: -30, y: -30, z: 60 },
     blogUrl: 'https://blog.regimov.net/flybeeper-sun-vario/',
-    iconClass: 'i-carbon-sun',
+    iconName: 'sun',
   },
   {
     sku: 'fbfanet',
@@ -80,7 +79,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPos: { x: -30, y: -50, z: 130 },
     marketUrl: 'https://market.flybeeper.com/device/fbfanet',
     blogUrl: 'https://blog.regimov.net/flybeeper-fanet',
-    iconClass: 'i-carbon-radio',
+    iconName: 'radio',
   },
   {
     sku: 'fbfanetvario',
@@ -88,7 +87,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     aboutKey: 'about.fbfanetvario-p1',
     stlPath: '/fbfanetvario-model.stl',
     stlPos: { x: 50, y: 20, z: 130 },
-    iconClass: 'i-carbon-satellite-radar',
+    iconName: 'satellite',
   },
 ]
 

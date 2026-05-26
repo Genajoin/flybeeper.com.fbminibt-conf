@@ -43,12 +43,56 @@ local:
   changes-count: '{count} Feld(er) geändert'
 
 pair:
+  step1-eyebrow: Pairing · Vorflug
+  step1-title-line1: Vier
+  step1-title-line2: Schritte.
+  step1-title-line3: Bereit.
+  step2-eyebrow: Verbinden
+  step2-title-line1: Einschalten.
+  step2-title-line2: Verbinden.
+  step2-sub: Chromium öffnet den System-Auswahldialog. Wähle ein Gerät mit dem Präfix FB-.
+  step2-cta: ⚡ Per Bluetooth verbinden
+  step2-meta-left: navigator.bluetooth · Präfix FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Geräte · gepaart
+  saved-count: '{count} in deinem Kit'
+  saved-scanning: 'Scannen · {count} in Reichweite'
+  in-range: ● IN REICHWEITE
+  pair-new: +  NEUES GERÄT PAAREN
+  retry: Wiederholen
+  auto: AUTO
+  last-ago: 'ZULETZT · {when}'
+  explainer-bullet-1-title: Browser-nativ
+  explainer-bullet-1-desc: Web Bluetooth spricht direkt mit deinem FlyBeeper.
+  explainer-bullet-2-title: Gerät einschalten
+  explainer-bullet-2-desc: Lange drücken, bis die LED orange atmet.
+  explainer-bullet-3-title: Aus dem Dialog wählen
+  explainer-bullet-3-desc: System-Picker. Dein Gerät wird als FB-… angezeigt.
+  explainer-bullet-4-title: Ein-Tipp-Reconnect
+  explainer-bullet-4-desc: Lokal gespeichert. Keine Cloud, kein Account.
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth nicht unterstützt
+  ios-sub: Mit Bluefy öffnen — fügt Web BLE unter iOS hinzu. Kostenlos.
+  open-bluefy: IN BLUEFY ÖFFNEN ↗
+  disc-eyebrow: Getrennt
+  disc-title: Einstellungen lokal gespeichert
+  disc-sub: Audio-Vorschau läuft im Browser. Jederzeit erneut verbinden.
+  disc-reconnect: NEU VERBINDEN
+  disc-work-offline: OFFLINE ARBEITEN
+  restart-eyebrow: Neustart nötig
+  restart-title: Gerät neu starten
+  restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
+  restart-ack: BESTÄTIGEN
+  sim-eyebrow: Simulator
+  sim-title: Vario-Simulation aktiv
+  sim-sub: '{value} m/s wird gesendet. Stoppen für echte Messwerte.'
+  sim-stop: STOPP
   explainer-title: FlyBeeper-Gerät verbinden
   explainer-body: Wir sprechen über Web Bluetooth mit deinem Variometer. Beim Tippen auf Verbinden fragt der Browser, welches FB-Gerät gekoppelt werden soll. Hier geänderte Einstellungen werden zuerst auf diesem Telefon gespeichert und beim Übernehmen an das Gerät gesendet.
   explainer-supported: Funktioniert in Chrome / Edge unter Android, Windows, macOS, Linux. Auf dem iPhone den Browser Bluefy nutzen.
-  continue: Weiter
-  connect: Gerät verbinden
-  connect-another: Weiteres Gerät verbinden
+  continue: Weiter →
+  connect: Verbinden →
+  connect-another: Weiteres verbinden →
   saved-title: Deine Geräte
   saved-empty: Noch keine gekoppelten Geräte — tippe auf Verbinden, um eines hinzuzufügen.
   reconnect: Neu verbinden
@@ -61,7 +105,6 @@ pair:
   unsupported-title: Web Bluetooth nicht verfügbar
   unsupported-body: Dieser Browser kann nicht mit BLE-Geräten sprechen. Verwende Chrome oder Edge unter Android / Windows / macOS / Linux.
   ios-banner-body: iPhone oder iPad? Web Bluetooth gibt es in Safari nicht. Öffne die Seite in Bluefy, um zu verbinden.
-  open-bluefy: In Bluefy öffnen
 
 msg:
   disconnected: Gerät getrennt
@@ -206,8 +249,89 @@ audio:
 
 update:
   how-to: Wie man aktualisiert
+  eyebrow: Firmware-Update
+  title-line1: Nutze nRF Connect.
+  title-line2: Es funktioniert einfach.
+  intro: 'Wir liefern kein In-Browser-OTA. Nordics kostenloses nRF Connect for Mobile ist das Standard-Tool für nRF52-Firmware-Updates — erprobt, mit Recovery, auf beiden Plattformen verfügbar. Nimm es.'
+  callout-eyebrow: Warum nicht im Browser?
+  callout-body: 'Ein fehlgeschlagenes OTA kann ein Vario unbrauchbar machen. Native MCUmgr-Clients beherrschen Retry, Recovery und Signaturprüfung. Eine Web-App über instabiles BLE kann das nicht sicher. Solange SMP-over-WebBLE keinen Recovery-Pfad hat — nimm das native Tool.'
+  step-1-title: nRF Connect Mobile installieren
+  step-1-desc: Kostenlos, offiziell von Nordic. iOS App Store + Google Play. Ohne Account.
+  step-2-title: mini BT einschalten
+  step-2-desc: Lange drücken, bis die LED orange atmet.
+  step-3-title: Device Manager öffnen
+  step-3-desc: Wähle dein mini BT aus der Scan-Liste. Die Device-Manager-Karte erscheint.
+  step-4-title: Firmware Upgrade tippen
+  step-4-desc: Wähle die .bin-Datei von flybeeper.com/firmware. Auf Start tippen.
+  step-5-title: 60–90 Sekunden warten
+  step-5-desc: Fortschrittsbalken läuft auf 100%. Gerät bootet einmal neu. nRF Connect zeigt „complete".
+  step-6-title: Konfigurator neu öffnen
+  step-6-desc: Erneut verbinden und prüfen, dass die Firmware-Version in der Statuszeile passt.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Firmware laden ↓
   changelog: Änderungsprotokoll
   firmware: Firmware
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.
   descr2: Ab fw Version 0.21 können Sie eine einfachere und intuitivere Anwendung zum Aktualisieren der Firmware verwenden
   update-first: Bitte zuerst die Firmware aktualisieren.
+
+preset:
+  import-eyebrow: Preset-Import
+  import-default-name: Unbenanntes Preset
+  bytes: BYTES
+  via-url: via URL-Fragment
+  apply: ANWENDEN
+  discard: VERWERFEN
+  share-title: Einstellungen teilen
+  share-eyebrow: Preset exportieren · URL-Fragment
+  share-sub: Im URL-Hash kodiert · geht nicht an Server · statisch hostbar
+  scan-eyebrow: Mit Handy scannen
+  url-eyebrow: URL
+  copy-url: 📋 URL kopieren
+  download-json: ↓ JSON
+  preset-name: Preset-Name
+  preset-by: Autor
+  privacy-note: Datenschutz · URL-Fragment ist client-seitig · wird nie gesendet
+  share-cta: TEILEN ↗
+
+install:
+  eyebrow: Installation · offline
+  title: Für offline-Nutzung in den Bergen
+  cta: INSTALLIEREN
+  hub-row: APP INSTALLIEREN
+
+dashboard:
+  eyebrow: Dashboard · live
+  share: TEILEN
+  disconnect: ● TRENNEN
+  button-map: Tastenkarte
+  live: ● LIVE
+  hover-jump-hint: HOVER → SPRINGEN
+  vario: Vario
+  alt: HÖHE
+  press: DRUCK
+  temp: TEMP
+  bat: AKKU
+  settings-title: Einstellungen
+  synced: ● SYNCED
+  dirty: ● UNSYNCED
+  hub-sound: KLANG
+  hub-sound-sub: 12-Punkt-Kurve · Lautst. {v}/3
+  hub-curves: KURVEN
+  hub-curves-sub: Antwort · 12 Punkte
+  hub-behaviour: VERHALTEN
+  hub-behaviour-sub: still · LED · HID
+  hub-power: ENERGIE
+  hub-power-sub: Schlaf · Timeout
+  hub-uart: UART
+  hub-uart-sub: Protokoll
+  hub-simulator: SIMULATOR
+  hub-simulator-sub: Wert senden
+  hub-firmware: FIRMWARE
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: TERMINAL
+  hub-terminal-sub: BLE-Log
+  back-dashboard: ← DASHBOARD
+  offline-eyebrow: OFFLINE
+  offline-body: kein Gerät · lokal gespeichert · zum Sync verbinden

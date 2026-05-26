@@ -1,68 +1,62 @@
 <script setup lang="ts">
-import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
+import { computed } from 'vue'
 
-const bt = useBluetoothStore()
-const settings = useSettingsStore()
 const { t } = useI18n()
-const fields = SETTINGS_GROUPS.behaviour
 const cpfChars = useCpfGroup('behaviour')
 
-const local = computed(() => settings.local)
-const fwRev = computed(() =>
-  Number.parseFloat((bt.dis.firmwareRevisionString.value as string) || '0'),
-)
-const showLegacy = computed(() => local.value !== null)
-const showCpf = computed(() => cpfChars.value.length > 0)
+// Per-UUID label, fallback to i18n sett.<uuid>.
+function labelFor(uuid: string): string {
+  const k = `sett.${uuid}`
+  const fb = t(k)
+  return fb === k ? uuid : fb
+}
+
+const list = computed(() => cpfChars.value)
 </script>
 
 <template>
-  <SettingsPanel group="behaviour" :fields="fields" :cpf-chars="cpfChars">
-    <template v-if="showLegacy && local">
-      <label v-if="fwRev >= 0.14" class="toggle">
-        <input
-          v-model="local.silent_on_ground"
-          type="checkbox"
-        >
-        <span>{{ t('sett.silent') }}</span>
-      </label>
-      <label v-if="fwRev >= 0.14" class="toggle">
-        <input
-          v-model="local.led_blinky_by_vario"
-          type="checkbox"
-        >
-        <span>{{ t('sett.led-vario') }}</span>
-      </label>
-      <label v-if="fwRev >= 0.15" class="toggle">
-        <input
-          v-model="local.hid_keyboard_off"
-          type="checkbox"
-        >
-        <span>{{ t('sett.hid-off') }}</span>
-      </label>
-    </template>
-
-    <template v-if="showCpf">
-      <TheSetting
-        v-for="ch in cpfChars"
-        :key="ch.characteristic.uuid"
-        :cha="ch"
-      />
-    </template>
-
-    <p v-if="!showLegacy && !showCpf" class="empty">
+  <SettingsPanel group="behaviour" :cpf-chars="cpfChars">
+    <ul v-if="list.length" class="b-list">
+      <li v-for="ch in list" :key="ch.characteristic.uuid" class="b-row">
+        <span class="b-row__label">{{ labelFor(ch.characteristic.uuid) }}</span>
+        <CkSquareToggle
+          :model-value="Boolean(ch.formattedValue)"
+          :aria-label="labelFor(ch.characteristic.uuid)"
+          @update:model-value="ch.formattedValue = $event"
+        />
+      </li>
+    </ul>
+    <p v-else class="empty">
       {{ t('msg.fetching') }}…
     </p>
   </SettingsPanel>
 </template>
 
 <style scoped>
-.toggle {
-  display: inline-flex;
+.b-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.b-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--ck-s-sm);
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  cursor: pointer;
+  padding: 14px 22px;
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.b-row:last-child {
+  border-bottom: none;
+}
+
+.b-row__label {
+  font-family: var(--ck-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
 }
 
 .empty {
@@ -70,5 +64,7 @@ const showCpf = computed(() => cpfChars.value.length > 0)
   font-size: var(--ck-fs-meta);
   color: var(--ck-dim);
   margin: 0;
+  padding: 22px;
+  text-align: center;
 }
 </style>

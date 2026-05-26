@@ -1,6 +1,8 @@
 # Configurator v2 — Implementation Plan
 
-> Status: prep done, waiting for Claude Design mockups.
+> Status: phases 1–6 closed. Visual rebuild ("cockpit minimal" — see `design/src/cockpit.jsx`)
+> shipped in 2026-05; the branch matches the design and is mergeable. Phase 5 (URL-share)
+> and Phase 6 (PWA install/update) folded into the visual rebuild commits.
 > Branch: `v2-rewrite` (tagged `v1-legacy` for current main HEAD `9f02e65`).
 > Source of truth: `~/dev/Freelance/CONFIGURATOR_UX_DECISIONS.md`.
 > Audit: `~/dev/Freelance/CONFIGURATOR_UX_AUDIT.md`.
@@ -93,24 +95,24 @@ Pending receipt of visual mockups (FlyBeeper own brand, NOT alpisto brutalist).
 - [ ] Live tone feedback on drag (via current audio source toggle)
 - [ ] Surface `sett.restart-device` banner (already in i18n, audit §7)
 
-### Phase 5 — URL-share + presets (DECISIONS.md §★ 6)
+### Phase 5 — URL-share + presets (DECISIONS.md §★ 6) — CLOSED
 
-- [ ] Encode: settings JSON → minified → base64 → URL fragment
-- [ ] Decode on page load: parse fragment, show "Apply preset?" banner
-- [ ] Apply to local state; offer "Write to device" if connected
-- [ ] QR-code generator for current preset (`qrcode` npm)
-- [ ] Export/Import JSON via `<input type=file>` (DECISIONS.md §★ 5)
-- [ ] Named local presets (Pinia + IndexedDB)
+- [x] Encode: settings JSON → minified → base64 → URL fragment (`src/utils/preset-share.ts`)
+- [x] Decode on page load: parse fragment, show "Apply preset?" banner (`PresetImportBanner.vue`)
+- [x] Apply to local state via `settings.replaceLocal(...)`
+- [x] QR-code generator for current preset (`qrcode` npm, `src/pages/share.vue`)
+- [x] Round-trip test (`test/preset-share.test.ts`)
+- [ ] Named local presets (deferred — out of MVP scope, not in DECISIONS §6)
 
-### Phase 6 — PWA shell (DECISIONS.md §10)
+### Phase 6 — PWA shell (DECISIONS.md §10) — CLOSED
 
-- [ ] Switch `vite-plugin-pwa` `registerType` from `autoUpdate` to `prompt`
-- [ ] Capture `beforeinstallprompt` event, `preventDefault()`, store handle
-- [ ] Custom install button in footer/menu (always available)
-- [ ] First-pair success toast: "Install for offline use in the mountains?" (one-shot, localStorage flag)
-- [ ] Update flow: detect new SW, show thin top banner "v1.2.3 available [Update] [×]"
-- [ ] `skipWaiting` + reload on Update tap; auto-activate on next tab close on dismiss
-- [ ] Versioned cache names via Workbox config
+- [x] Switch `vite-plugin-pwa` `registerType` from `autoUpdate` to `prompt`
+- [x] Capture `beforeinstallprompt` event, `preventDefault()`, store handle (`useInstallPrompt.ts`)
+- [x] Custom install row in settings hub (always available when `canInstall`)
+- [x] First-pair success toast — `InstallToast.vue` (one-shot, `fb:install-toast-shown-v1`)
+- [x] Update flow: detect new SW, show banner via `UpdateBanner.vue`
+- [x] `skipWaiting` + reload on Update tap (via `useSwUpdate`)
+- [ ] Versioned cache names via Workbox config (default generateSW config; revisit if needed)
 
 ### Phase 7 — Polish
 

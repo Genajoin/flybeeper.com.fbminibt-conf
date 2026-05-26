@@ -13,15 +13,9 @@ import {
  * Cockpit minimal design tokens are the runtime source of truth
  * (see src/styles/tokens.css). Utility classes below map onto those
  * CSS variables so dark mode flips both channels in lockstep.
- *
- * v1 shortcuts (btn / icon-btn — teal) are kept temporarily; the v2
- * rewrite (Phase 4) will replace them with cockpit-styled equivalents.
  */
 export default defineConfig({
-  shortcuts: [
-    ['btn', 'px-4 py-1 rounded inline-block bg-teal-700 text-white cursor-pointer !outline-none hover:bg-teal-800 disabled:cursor-default disabled:bg-gray-600 disabled:opacity-50'],
-    ['icon-btn', 'inline-block cursor-pointer select-none opacity-75 transition duration-200 ease-in-out hover:opacity-100 hover:text-teal-600'],
-  ],
+  shortcuts: [],
   presets: [
     presetUno(),
     presetAttributify(),

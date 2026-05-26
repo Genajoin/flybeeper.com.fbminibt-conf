@@ -62,8 +62,10 @@
   --ck-stroke-bold: 2px;
 
   /* ── Corners ───────────────────────────────────────────── */
+  /* Square-by-default cockpit look. `--ck-radius-soft` retained as an
+   * alias for legacy callsites — its value is now 0. */
   --ck-radius-flat: 0;
-  --ck-radius-soft: 4px;
+  --ck-radius-soft: 0;
   --ck-radius-pill: 9999px;
 
   /* ── Motion ────────────────────────────────────────────── */

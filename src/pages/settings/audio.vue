@@ -1,127 +1,110 @@
 <script setup lang="ts">
-import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
-
-const settings = useSettingsStore()
 const { t } = useI18n()
-const fields = SETTINGS_GROUPS.audio
 const cpfChars = useCpfGroup('audio')
 
-const local = computed(() => settings.local)
-const showLegacy = computed(() => local.value !== null)
-const showCpf = computed(() => cpfChars.value.length > 0)
+// Buzzer volume is the one scalar characteristic that should get a 4-way
+// segmented control (✕ / 1 / 2 / 3). Everything else is a numeric threshold
+// rendered inline by TheSetting.
+const VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
+
+const volumeChar = computed(() => cpfChars.value.find(c => c.characteristic.uuid === VOLUME_UUID))
+const otherChars = computed(() => cpfChars.value.filter(c => c.characteristic.uuid !== VOLUME_UUID))
+
+const volumeValue = computed<number>(() => {
+  const v = volumeChar.value?.formattedValue
+  return typeof v === 'number' ? v : 0
+})
+
+function setVolume(v: number) {
+  if (!volumeChar.value)
+    return
+  volumeChar.value.formattedValue = v
+}
 </script>
 
 <template>
-  <SettingsPanel group="audio" :fields="fields" :cpf-chars="cpfChars">
-    <template v-if="showLegacy && local">
-      <div class="row">
-        <label for="buzzer_volume">{{ t('sett.buzz-vol') }}</label>
-        <input
-          id="buzzer_volume"
-          v-model.number="local.buzzer_volume"
-          type="number"
-          min="0"
-          max="3"
-          class="input input--narrow"
-        >
-      </div>
-      <div class="row">
-        <label for="climb_on">{{ t('sett.climb-on') }}</label>
-        <input
-          id="climb_on"
-          v-model.number="local.climb_tone_on_threshold_cm"
-          type="number"
-          min="-2000"
-          max="2000"
-          step="5"
-          class="input"
-        >
-      </div>
-      <div class="row">
-        <label for="climb_off">{{ t('sett.climb-off') }}</label>
-        <input
-          id="climb_off"
-          v-model.number="local.climb_tone_off_threshold_cm"
-          type="number"
-          min="-2000"
-          max="2000"
-          step="5"
-          class="input"
-        >
-      </div>
-      <div class="row">
-        <label for="sink_on">{{ t('sett.sink-on') }}</label>
-        <input
-          id="sink_on"
-          v-model.number="local.sink_tone_on_threshold_cm"
-          type="number"
-          min="-2000"
-          max="2000"
-          step="5"
-          class="input"
-        >
-      </div>
-      <div class="row">
-        <label for="sink_off">{{ t('sett.sink-off') }}</label>
-        <input
-          id="sink_off"
-          v-model.number="local.sink_tone_off_threshold_cm"
-          type="number"
-          min="-2000"
-          max="2000"
-          step="5"
-          class="input"
-        >
-      </div>
-    </template>
+  <SettingsPanel group="audio" :cpf-chars="cpfChars">
+    <div class="audio-source">
+      <CkEyebrow block>
+        {{ t('audio.source-label') }}
+      </CkEyebrow>
+      <AudioSourceToggle class="audio-source__ctl" />
+    </div>
 
-    <template v-if="showCpf">
+    <div v-if="volumeChar" class="audio-volume">
+      <CkEyebrow block>
+        {{ t('sett.buzz-vol') }}
+      </CkEyebrow>
+      <div class="audio-volume__seg">
+        <button
+          v-for="v in 4"
+          :key="v"
+          type="button"
+          class="audio-volume__btn"
+          :class="{ 'audio-volume__btn--active': volumeValue === v - 1 }"
+          @click="setVolume(v - 1)"
+        >
+          {{ v - 1 === 0 ? '✕' : v - 1 }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="otherChars.length" class="audio-thresholds">
+      <CkEyebrow block>
+        {{ t('sett.group-audio') }}
+      </CkEyebrow>
       <TheSetting
-        v-for="ch in cpfChars"
+        v-for="ch in otherChars"
         :key="ch.characteristic.uuid"
         :cha="ch"
       />
-    </template>
+    </div>
 
-    <p v-if="!showLegacy && !showCpf" class="empty">
+    <p v-if="cpfChars.length === 0" class="empty">
       {{ t('msg.fetching') }}…
     </p>
   </SettingsPanel>
 </template>
 
 <style scoped>
-.row {
+.audio-source,
+.audio-volume,
+.audio-thresholds {
+  padding: 18px 22px;
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.audio-source__ctl {
+  margin-top: 8px;
+}
+
+.audio-volume__seg {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ck-s-md);
+  border: var(--ck-stroke-rule) solid var(--ck-ink);
+  margin-top: 10px;
 }
 
-.row label {
-  font-family: var(--ck-font-body);
-  font-size: var(--ck-fs-body);
-  color: var(--ck-ink);
-}
-
-.input {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-body);
-  padding: var(--ck-s-xs) var(--ck-s-sm);
-  border: var(--ck-stroke-rule) solid var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
+.audio-volume__btn {
+  flex: 1;
+  padding: 16px 0;
   background: var(--ck-paper);
   color: var(--ck-ink);
-  width: 10ch;
-  text-align: right;
+  border: none;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+  font-family: var(--ck-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 0;
 }
 
-.input--narrow {
-  width: 6ch;
+.audio-volume__btn:first-child {
+  border-left: none;
 }
 
-.input:focus {
-  outline: none;
-  border-color: var(--ck-signal);
+.audio-volume__btn--active {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
 }
 
 .empty {
@@ -129,5 +112,7 @@ const showCpf = computed(() => cpfChars.value.length > 0)
   font-size: var(--ck-fs-meta);
   color: var(--ck-dim);
   margin: 0;
+  padding: 22px;
+  text-align: center;
 }
 </style>
