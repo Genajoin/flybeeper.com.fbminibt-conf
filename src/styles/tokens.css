@@ -1,0 +1,105 @@
+/* FlyBeeper · Cockpit minimal · design tokens (runtime copy)
+ * ---------------------------------------------------------------
+ * Mirrors design/tokens.css. The only adaptation is the dark-mode
+ * selector: `.theme-dark` → `html.dark` to match the existing
+ * useDark() composable in src/composables/dark.ts (class strategy
+ * on <html>). Keep design/tokens.css as the canonical spec source.
+ *
+ * Use these CSS variables in components. Static utility classes
+ * (bg-ink, text-paper, ...) in uno.config.ts read the same vars,
+ * so dark mode flips both channels automatically.
+ */
+
+:root {
+  /* ── Color · ink (foreground) ──────────────────────────── */
+  --ck-ink: #0a0a08;
+  --ck-ink-dim: #3a3a36;
+  --ck-dim: #6b6b65;
+  --ck-dimmer: #9a9890;
+
+  /* ── Color · paper (background) ────────────────────────── */
+  --ck-paper: #ffffff;
+  --ck-bg: #f5f4ee;
+  --ck-bg-deep: #e8e6de;
+  --ck-grid: #d8d6ce;
+
+  /* ── Color · signal (the ONE accent) ───────────────────── */
+  --ck-signal: #ff6a00;
+  --ck-on-signal: #ffffff;
+
+  /* ── Border roles ──────────────────────────────────────── */
+  --ck-border: var(--ck-ink);
+  --ck-border-w: 1.5px;
+
+  /* ── Typography ────────────────────────────────────────── */
+  --ck-font-display: 'Archivo Narrow', 'Archivo', system-ui, sans-serif;
+  --ck-font-body: 'Archivo', 'Helvetica Neue', system-ui, sans-serif;
+  --ck-font-mono: 'Space Mono', ui-monospace, monospace;
+
+  --ck-fs-display: 34px;
+  --ck-fs-h1: 24px;
+  --ck-fs-h2: 18px;
+  --ck-fs-body: 14px;
+  --ck-fs-meta: 12px;
+  --ck-fs-eyebrow: 10px;
+  --ck-fs-micro: 9px;
+  --ck-line-tight: 0.95;
+  --ck-line-body: 1.5;
+  --ck-track-eyebrow: 2.5px;
+  --ck-track-data: 1.5px;
+
+  /* ── Spacing · 2px base ────────────────────────────────── */
+  --ck-s-xs: 4px;
+  --ck-s-sm: 8px;
+  --ck-s-md: 14px;
+  --ck-s-lg: 22px;
+  --ck-s-xl: 32px;
+  --ck-s-2xl: 48px;
+
+  /* ── Stroke widths ─────────────────────────────────────── */
+  --ck-stroke-hair: 1px;
+  --ck-stroke-rule: 1.5px;
+  --ck-stroke-bold: 2px;
+
+  /* ── Corners ───────────────────────────────────────────── */
+  --ck-radius-flat: 0;
+  --ck-radius-soft: 4px;
+  --ck-radius-pill: 9999px;
+
+  /* ── Motion ────────────────────────────────────────────── */
+  --ck-dur-tap: 80ms;
+  --ck-dur-toggle: 160ms;
+  --ck-dur-panel: 240ms;
+  --ck-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* ── Elevation ─────────────────────────────────────────── */
+  --ck-shadow: none;
+}
+
+/* Desktop breakpoint — scale type up modestly */
+@media (min-width: 960px) {
+  :root {
+    --ck-fs-display: 48px;
+    --ck-fs-h1: 32px;
+    --ck-fs-h2: 22px;
+    --ck-fs-body: 15px;
+    --ck-s-lg: 28px;
+    --ck-s-xl: 40px;
+  }
+}
+
+/* OLED dark mode — toggled by useDark() (class="dark" on <html>) */
+html.dark {
+  --ck-ink: #f5f4ee;
+  --ck-ink-dim: #c8c6be;
+  --ck-dim: #7a7a74;
+  --ck-dimmer: #4a4a46;
+
+  --ck-paper: #0a0a0a;
+  --ck-bg: #000000;
+  --ck-bg-deep: #0a0a0a;
+  --ck-grid: #2a2a28;
+
+  --ck-signal: #ff6a00;
+  --ck-on-signal: #000000;
+}

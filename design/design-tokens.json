@@ -1,0 +1,107 @@
+{
+  "$schema": "https://design-tokens.org/draft-1.json",
+  "$description": "FlyBeeper · Cockpit minimal design tokens — high-contrast B/W + single signal-orange. Tokens map 1:1 to CSS custom properties in tokens.css.",
+  "color": {
+    "ink": {
+      "default": { "$value": "#0A0A08", "$type": "color", "$description": "Primary type, borders, icon stroke" },
+      "dim":     { "$value": "#3A3A36", "$type": "color", "$description": "Secondary type" },
+      "muted":   { "$value": "#6B6B65", "$type": "color", "$description": "Labels, axis numbers, meta" },
+      "fade":    { "$value": "#9A9890", "$type": "color", "$description": "Watermark, disabled state" }
+    },
+    "paper": {
+      "default": { "$value": "#FFFFFF", "$type": "color", "$description": "Card surface" },
+      "bg":      { "$value": "#F5F4EE", "$type": "color", "$description": "Page background — instrument-paper warm" },
+      "deep":    { "$value": "#E8E6DE", "$type": "color", "$description": "Browser chrome / depressed surface" },
+      "grid":    { "$value": "#D8D6CE", "$type": "color", "$description": "Chart grid lines" }
+    },
+    "signal": {
+      "default": { "$value": "#FF6A00", "$type": "color", "$description": "The single accent — live/active states, primary CTA, vario marker" },
+      "on":      { "$value": "#FFFFFF", "$type": "color", "$description": "Type-on-signal" }
+    },
+    "dark": {
+      "ink":     { "$value": "#F5F4EE", "$type": "color", "$description": "OLED · ink inverts to paper" },
+      "inkDim":  { "$value": "#C8C6BE", "$type": "color" },
+      "muted":   { "$value": "#7A7A74", "$type": "color" },
+      "fade":    { "$value": "#4A4A46", "$type": "color" },
+      "paper":   { "$value": "#0A0A0A", "$type": "color", "$description": "OLED · card surface near-black" },
+      "bg":      { "$value": "#000000", "$type": "color", "$description": "OLED · true black, pixels stay off" },
+      "deep":    { "$value": "#0A0A0A", "$type": "color" },
+      "grid":    { "$value": "#2A2A28", "$type": "color" },
+      "onSignal":{ "$value": "#000000", "$type": "color" }
+    }
+  },
+  "type": {
+    "family": {
+      "display": { "$value": "Archivo Narrow, Archivo, system-ui, sans-serif", "$type": "fontFamily", "$description": "Hero numerics, headlines, nav labels — weights 500/600/700/800" },
+      "body":    { "$value": "Archivo, Helvetica Neue, system-ui, sans-serif", "$type": "fontFamily", "$description": "Body, buttons, form fields — weights 400/500/600/700" },
+      "mono":    { "$value": "Space Mono, ui-monospace, monospace",           "$type": "fontFamily", "$description": "Eyebrows, status pills, UUIDs, numeric units — weights 400/700" }
+    },
+    "size": {
+      "display": { "$value": "34px", "$type": "dimension", "$description": "Page hero, dashboard vario — mobile baseline (48px on desktop)" },
+      "h1":      { "$value": "24px", "$type": "dimension" },
+      "h2":      { "$value": "18px", "$type": "dimension" },
+      "body":    { "$value": "14px", "$type": "dimension" },
+      "meta":    { "$value": "12px", "$type": "dimension" },
+      "eyebrow": { "$value": "10px", "$type": "dimension" },
+      "micro":   { "$value": "9px",  "$type": "dimension" }
+    },
+    "line": {
+      "tight": { "$value": 0.95, "$type": "number" },
+      "body":  { "$value": 1.5,  "$type": "number" }
+    },
+    "tracking": {
+      "eyebrow": { "$value": "2.5px", "$type": "dimension" },
+      "data":    { "$value": "1.5px", "$type": "dimension" }
+    }
+  },
+  "space": {
+    "$description": "Base 2px scale. Avoid fractional values — they break ink-rule alignment.",
+    "xs":  { "$value": "4px",  "$type": "dimension" },
+    "sm":  { "$value": "8px",  "$type": "dimension" },
+    "md":  { "$value": "14px", "$type": "dimension" },
+    "lg":  { "$value": "22px", "$type": "dimension" },
+    "xl":  { "$value": "32px", "$type": "dimension" },
+    "2xl": { "$value": "48px", "$type": "dimension" }
+  },
+  "stroke": {
+    "$description": "Border weights — always solid ink, never gray. Use hair for dashed dividers inside cards.",
+    "hair": { "$value": "1px",   "$type": "dimension" },
+    "rule": { "$value": "1.5px", "$type": "dimension", "$description": "Default border / card frame" },
+    "bold": { "$value": "2px",   "$type": "dimension", "$description": "CTA outline, emphasis" }
+  },
+  "radius": {
+    "$description": "Cockpit is square. Pill is only for round status indicators.",
+    "flat": { "$value": "0",      "$type": "dimension" },
+    "soft": { "$value": "4px",    "$type": "dimension" },
+    "pill": { "$value": "9999px", "$type": "dimension" }
+  },
+  "motion": {
+    "$description": "Spare, mostly snappy. No long springs — this is an instrument tool.",
+    "duration": {
+      "tap":    { "$value": "80ms",  "$type": "duration" },
+      "toggle": { "$value": "160ms", "$type": "duration" },
+      "panel":  { "$value": "240ms", "$type": "duration" }
+    },
+    "easing": {
+      "default": { "$value": "cubic-bezier(0.2, 0.7, 0.3, 1)", "$type": "cubicBezier" }
+    }
+  },
+  "elevation": {
+    "$description": "Cockpit has no shadows — depth comes from ink borders, not light.",
+    "none": { "$value": "none", "$type": "shadow" }
+  },
+  "breakpoint": {
+    "$description": "Mobile-first — main use case is phone in the mountains. Desktop scales type up.",
+    "mobile": { "$value": "0px",    "$type": "dimension" },
+    "tablet": { "$value": "600px",  "$type": "dimension" },
+    "desktop":{ "$value": "960px",  "$type": "dimension" },
+    "wide":   { "$value": "1280px", "$type": "dimension" }
+  },
+  "z": {
+    "base":    { "$value": 0,    "$type": "number" },
+    "sticky":  { "$value": 10,   "$type": "number" },
+    "overlay": { "$value": 100,  "$type": "number" },
+    "modal":   { "$value": 1000, "$type": "number" },
+    "toast":   { "$value": 2000, "$type": "number" }
+  }
+}

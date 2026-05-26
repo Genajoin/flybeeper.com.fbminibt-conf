@@ -3,7 +3,7 @@
 }
 
 .prose .shiki {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--ck-font-mono);
   font-size: 1.2em;
   line-height: 1.4;
 }
@@ -71,7 +71,7 @@ html.dark .prose table tr:nth-child(even) {
 
 /* Стили для элементов code */
 .prose code {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--ck-font-mono);
   background-color: var(--code-bg, #f5f5f5);
   color: var(--code-color, #e83e8c);
   padding: 0.2em 0.4em;

@@ -35,7 +35,6 @@
   "devDependencies": {
     "@antfu/eslint-config": "^2.26.0",
     "@iconify-json/carbon": "^1.1.37",
-    "@iconify/json": "^2.2.239",
     "@intlify/unplugin-vue-i18n": "^2.0.0",
     "@types/markdown-it-link-attributes": "^3.0.5",
     "@types/nprogress": "^0.2.3",

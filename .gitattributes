@@ -1,0 +1,20 @@
+# Normalize all text files to LF on commit + checkout.
+# Prevents the CRLF↔LF noise that previously polluted PRs from
+# Windows/cross-platform contributors.
+* text=auto eol=lf
+
+# Explicit binaries — never try to normalize.
+*.stl    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+*.eot    binary
+*.pdf    binary
+*.zip    binary

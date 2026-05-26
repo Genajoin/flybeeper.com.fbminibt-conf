@@ -1,3 +1,4 @@
+@import './tokens.css';
 @import './markdown.css';
 
 html,
@@ -8,7 +9,14 @@ body,
   padding: 0;
 }
 
+body {
+  background: var(--ck-bg);
+  color: var(--ck-ink);
+  font-family: var(--ck-font-body);
+  font-size: var(--ck-fs-body);
+  line-height: var(--ck-line-body);
+}
+
 html.dark {
-  background: #121212;
   color-scheme: dark;
 }
