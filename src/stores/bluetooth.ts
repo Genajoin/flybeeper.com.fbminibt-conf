@@ -332,6 +332,19 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       if (!this.fss.miniBtSettings.characteristic)
         return
 
+      // Diff-write skip (audit §4.4): the ≤0.15 codec is monolithic — the
+      // device accepts only the whole struct — so the optimisation is binary,
+      // not field-level. If nothing changed vs the last known device state,
+      // don't waste a BLE round-trip or a flash-write cycle.
+      const settingsStore = useSettingsStore()
+      if (
+        settingsStore.lastDeviceSnapshot
+        && JSON.stringify(settings) === JSON.stringify(settingsStore.lastDeviceSnapshot)
+      ) {
+        log.debug('writeMiniBtSettings: no diff vs device, skipping')
+        return
+      }
+
       const bufferSize = this.dis.firmwareRevisionString.value > '0.13' ? 111 : 110
       // новый ArrayBuffer для записи данных
       const buffer = new ArrayBuffer(bufferSize) // Размер буфера зависит от структуры fb_settings
@@ -366,7 +379,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       //  буфер в характеристику
       this.fss.miniBtSettings.characteristic.writeValue(buffer)
         .then(() => {
-          const settingsStore = useSettingsStore()
           settingsStore.replaceLocal(settings)
           settingsStore.markSynced()
         })

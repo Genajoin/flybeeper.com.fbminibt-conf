@@ -160,6 +160,21 @@ sett:
   sim-label2: (0 - simulation off)
   sim-label3: Please set volume more than 1 and press Apply to hear the simulation.
   restart-device: After applying the changes, you must turn off and turn on the device again.
+  group-audio: Audio
+  group-curves: Curves
+  group-behaviour: Behaviour
+  group-uart: UART
+  group-power: Power
+  group-simulator: Simulator
+  group-audio-desc: Buzzer volume and the climb / sink thresholds that decide when the tone starts and stops.
+  group-curves-desc: Twelve breakpoints mapping vario rate to frequency, cycle and duty.
+  group-behaviour-desc: Silent-on-ground, LED indication, HID keyboard.
+  group-uart-desc: Serial protocol exposed over the BLE UART emulator.
+  group-power-desc: Bluetooth sleep behaviour.
+  group-simulator-desc: Inject a fake vario value to preview the audio curve without the sensor.
+  revert: Revert
+  no-changes: No local changes
+  unsynced: '{count} local change(s) pending'
 
 update:
   how-to: How to update

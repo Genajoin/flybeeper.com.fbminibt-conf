@@ -160,6 +160,22 @@ sett:
   sim-label1: Vario simulieren, cm/s
   sim-label2: (0 - Simulation aus)
   sim-label3: Bitte stellen Sie die Lautstärke auf mehr als 1 ein, um die Simulation zu hören.
+  restart-device: Nach dem Übernehmen der Änderungen muss das Gerät aus- und wieder eingeschaltet werden.
+  group-audio: Audio
+  group-curves: Kurven
+  group-behaviour: Verhalten
+  group-uart: UART
+  group-power: Energie
+  group-simulator: Simulator
+  group-audio-desc: Summerlautstärke und die Schwellen, ab denen der Ton ein- und ausgeht.
+  group-curves-desc: 12 Stützstellen, die Steigrate auf Frequenz, Zyklus und Duty abbilden.
+  group-behaviour-desc: Lautlos am Boden, LED-Anzeige, HID-Tastatur.
+  group-uart-desc: Serielles Protokoll über den BLE-UART-Emulator.
+  group-power-desc: Bluetooth-Schlafverhalten.
+  group-simulator-desc: Einen künstlichen Vario-Wert einspeisen, um die Kurve ohne Sensor zu hören.
+  revert: Zurücksetzen
+  no-changes: Keine lokalen Änderungen
+  unsynced: '{count} lokale Änderung(en) ausstehend'
 
 update:
   how-to: Wie man aktualisiert

@@ -150,6 +150,27 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.lastDeviceSnapshot = structuredClone(this.local)
       this.lastSyncedAt = Date.now()
     },
+
+    /**
+     * Per-group helpers (audit §8 IA).
+     *
+     * Each settings panel calls revertGroup() to undo just its fields without
+     * touching the others, and diffGroup() to render its own dirty count in
+     * the per-group footer. Fields outside the group are left as-is.
+     */
+    diffGroup(keys: (keyof iFbMiniBtSettings)[]): SettingsDiffEntry[] {
+      return this.diff().filter(d => keys.includes(d.key))
+    },
+
+    revertGroup(keys: (keyof iFbMiniBtSettings)[]): void {
+      if (!this.local || !this.lastDeviceSnapshot)
+        return
+      const patch: Partial<iFbMiniBtSettings> = {}
+      for (const k of keys)
+        (patch as Record<string, unknown>)[k] = structuredClone(this.lastDeviceSnapshot[k])
+      this.local = { ...this.local, ...patch }
+      this.pushHistory('local')
+    },
   },
 })
 
