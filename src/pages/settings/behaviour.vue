@@ -55,11 +55,6 @@ const showCpf = computed(() => cpfChars.value.length > 0)
   </SettingsPanel>
 </template>
 
-<route lang="yaml">
-meta:
-  layout: default
-</route>
-
 <style scoped>
 .toggle {
   display: inline-flex;

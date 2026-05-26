@@ -148,11 +148,6 @@ function applyPreset(name: keyof typeof presets) {
   </SettingsPanel>
 </template>
 
-<route lang="yaml">
-meta:
-  layout: default
-</route>
-
 <style scoped>
 .presets {
   display: flex;

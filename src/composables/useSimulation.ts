@@ -16,10 +16,23 @@ export function useSimulation() {
     return bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_SIM_UUID)
   }
 
+  // Codec preference is decided by what the *device* exposes, not what
+  // settings.local has in IDB. settings.local can be stale from a previous
+  // session with a different SKU (e.g. last week's FBminiBT cached struct
+  // surviving across a connect to FBfanetvario today) — if we keyed on it,
+  // we'd happily call SendSimulationVarioValue() on a device that never
+  // wired up miniBtSimulation.characteristic, and the write would silently
+  // no-op.
+  const hasLegacyCodec = computed(() =>
+    bt.fss.miniBtSimulation.characteristic !== null,
+  )
+
   /** Current simulation value in m/s, or 0 if not simulating. */
   const valueMs = computed<number>(() => {
-    if (settings.local?.buzzer_simulate_vario_value)
-      return settings.local.buzzer_simulate_vario_value / 100
+    if (hasLegacyCodec.value && settings.local) {
+      const v = settings.local.buzzer_simulate_vario_value
+      return typeof v === 'number' ? v / 100 : 0
+    }
     const v = getCpfChar()?.formattedValue
     return typeof v === 'number' ? v : 0
   })
@@ -28,15 +41,15 @@ export function useSimulation() {
 
   /**
    * Set the simulation value in cm/s, writing to whichever codec the device
-   * exposes. Doesn't await the BLE write — fire-and-forget so the slider stays
-   * responsive; failures are logged in the underlying call.
+   * exposes. Doesn't await the BLE write — fire-and-forget so the slider
+   * stays responsive; failures are logged in the underlying call.
    */
   function setValueCmS(cmS: number) {
     if (!bt.isConnected)
       return
-    if (settings.local) {
-      settings.local.buzzer_simulate_vario_value = cmS
-      // Legacy: a dedicated single-Int16 write, not the full settings blob.
+    if (hasLegacyCodec.value) {
+      if (settings.local)
+        settings.local.buzzer_simulate_vario_value = cmS
       bt.SendSimulationVarioValue(cmS)
       return
     }

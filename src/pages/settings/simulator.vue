@@ -248,11 +248,6 @@ onUnmounted(() => {
   </section>
 </template>
 
-<route lang="yaml">
-meta:
-  layout: default
-</route>
-
 <style scoped>
 .sim-panel {
   background: var(--ck-paper);
