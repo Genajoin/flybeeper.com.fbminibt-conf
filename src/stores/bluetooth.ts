@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
+import { useSavedDevicesStore } from '~/stores/saved-devices'
 
 interface BtCh {
   characteristic: object | null
@@ -74,8 +75,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
-    devices: [],
-    devicesRssi: { },
 
     dis: {
       modelNumberString: { characteristic: null, value: null },
@@ -173,6 +172,18 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.isConnected = true
       this.hasConnectedThisSession = true
       this.isFetching = false
+
+      // Remember the device in our own registry (DECISIONS.md §5).
+      // The browser keeps its own permission grant but its IDs are opaque
+      // and `getDevices()` triggers an Android location prompt — we never
+      // touch it. Saved-devices UI works off this list instead.
+      if (this.device.id && this.device.name) {
+        useSavedDevicesStore().remember({
+          id: this.device.id,
+          name: this.device.name,
+          firmware: (this.dis.firmwareRevisionString.value as string | null) ?? null,
+        })
+      }
     },
 
     async connectToRequestDevice() {
@@ -193,10 +204,17 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       })
         .then(device => this.connectToDevice(device))
         .catch((error) => {
+          // User dismissed the chooser — not an error, just nothing to do.
+          // (Audit §4.1: don't paint the page red when the user just changed
+          // their mind.)
+          if (error && (error as DOMException).name === 'NotFoundError') {
+            log.debug('Device chooser dismissed by user')
+            this.isConnecting = false
+            this.isFetching = false
+            return
+          }
           log.error('Error connecting to the device:', error)
-          this.errorMessage = error
-          this.isConnected = true
-          this.disconnectDevice()
+          this.errorMessage = error instanceof Error ? error.message : String(error)
           this.isConnecting = false
           this.isFetching = false
         })
@@ -362,33 +380,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       const view = new DataView(buffer)
       view.setInt16(0, value, true)
       this.fss.miniBtSimulation.characteristic.writeValue(buffer)
-    },
-    async getDevices() {
-      log.debug('Getting existing permitted Bluetooth devices...')
-      try {
-        const devices = await navigator.bluetooth.getDevices()
-        log.debug(`> Got ${devices.length} Bluetooth devices.`)
-        this.devices = devices
-
-        for (const device of devices) {
-          log.debug(`  > ${device.name} (${device.id})`)
-          log.debug(`    > add event`)
-          device.addEventListener('advertisementreceived', this.onAdvertisementReceived)
-          log.debug(`    > add watch`)
-          await device.watchAdvertisements()
-        }
-      }
-      catch (error) {
-        log.error(`Argh! ${error}`)
-      }
-    },
-    async onAdvertisementReceived(event) {
-      log.debug(`Advertisement received. ${event.device.name}  RSSI: ${event.rssi}  Device ID: ${event.device.id}`)
-      this.devicesRssi[event.device.id] = event.rssi
-    },
-
-    async stopAdvertisement() {
-
     },
   },
 })

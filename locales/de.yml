@@ -29,6 +29,27 @@ local:
   decide-later: Später entscheiden
   changes-count: '{count} Feld(er) geändert'
 
+pair:
+  explainer-title: FlyBeeper-Gerät verbinden
+  explainer-body: Wir sprechen über Web Bluetooth mit deinem Variometer. Beim Tippen auf Verbinden fragt der Browser, welches FB-Gerät gekoppelt werden soll. Hier geänderte Einstellungen werden zuerst auf diesem Telefon gespeichert und beim Übernehmen an das Gerät gesendet.
+  explainer-supported: Funktioniert in Chrome / Edge unter Android, Windows, macOS, Linux. Auf dem iPhone den Browser Bluefy nutzen.
+  continue: Weiter
+  connect: Gerät verbinden
+  connect-another: Weiteres Gerät verbinden
+  saved-title: Deine Geräte
+  saved-empty: Noch keine gekoppelten Geräte — tippe auf Verbinden, um eines hinzuzufügen.
+  reconnect: Neu verbinden
+  autoconnect-label: Beim Start automatisch verbinden
+  last-seen: Zuletzt gesehen
+  firmware: Firmware
+  rename: Umbenennen
+  forget: Vergessen
+  forget-confirm: Dieses Gerät vergessen? Die Kopplung muss erneut erfolgen.
+  unsupported-title: Web Bluetooth nicht verfügbar
+  unsupported-body: Dieser Browser kann nicht mit BLE-Geräten sprechen. Verwende Chrome oder Edge unter Android / Windows / macOS / Linux.
+  ios-banner-body: iPhone oder iPad? Web Bluetooth gibt es in Safari nicht. Öffne die Seite in Bluefy, um zu verbinden.
+  open-bluefy: In Bluefy öffnen
+
 msg:
   disconnected: Gerät getrennt
   connected: Gerät verbunden

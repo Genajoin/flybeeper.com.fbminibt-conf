@@ -28,6 +28,27 @@ local:
   decide-later: Решить позже
   changes-count: 'Изменено полей: {count}'
 
+pair:
+  explainer-title: Подключение FlyBeeper-устройства
+  explainer-body: Связь с вариометром идёт по Web Bluetooth. Когда вы нажмёте Подключить, браузер покажет список устройств с префиксом FB. Изменения настроек сохраняются на этом телефоне сразу, а на устройство уходят по кнопке Применить.
+  explainer-supported: Работает в Chrome и Edge на Android, Windows, macOS, Linux. На iPhone используйте браузер Bluefy.
+  continue: Продолжить
+  connect: Подключить устройство
+  connect-another: Подключить ещё одно
+  saved-title: Ваши устройства
+  saved-empty: Сохранённых устройств пока нет — нажмите Подключить, чтобы добавить.
+  reconnect: Переподключить
+  autoconnect-label: Подключаться при запуске
+  last-seen: Последнее подключение
+  firmware: Прошивка
+  rename: Переименовать
+  forget: Забыть
+  forget-confirm: Удалить устройство из списка? Сопряжение придётся выполнить заново.
+  unsupported-title: Web Bluetooth недоступен
+  unsupported-body: Этот браузер не умеет работать с BLE. Используйте Chrome или Edge на Android / Windows / macOS / Linux.
+  ios-banner-body: iPhone или iPad? В Safari нет Web Bluetooth. Откройте сайт в Bluefy, чтобы подключаться.
+  open-bluefy: Открыть в Bluefy
+
 msg:
   disconnected: Устройство отключено
   connected: устройство подключено

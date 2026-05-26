@@ -1,6 +1,7 @@
 import { createPinia } from 'pinia'
 import type { UserModule } from '~/types'
 import { useSettingsStore } from '~/stores/settings'
+import { useSavedDevicesStore } from '~/stores/saved-devices'
 
 // Setup Pinia + local-first settings hydration.
 // https://pinia.vuejs.org/
@@ -22,15 +23,26 @@ export const install: UserModule = async ({ isClient, initialState, app }) => {
   // route renders, then auto-persist on every mutation (debounced to coalesce
   // bursts from sliders / drag-edit). See DECISIONS.md §★ State model.
   const settings = useSettingsStore(pinia)
-  await settings.hydrate()
+  const savedDevices = useSavedDevicesStore(pinia)
+  await Promise.all([settings.hydrate(), savedDevices.hydrate()])
 
-  let persistTimer: ReturnType<typeof setTimeout> | null = null
+  let settingsPersistTimer: ReturnType<typeof setTimeout> | null = null
   settings.$subscribe(() => {
-    if (persistTimer)
-      clearTimeout(persistTimer)
-    persistTimer = setTimeout(() => {
+    if (settingsPersistTimer)
+      clearTimeout(settingsPersistTimer)
+    settingsPersistTimer = setTimeout(() => {
       settings.persist().catch(err => console.error('[settings] persist failed', err))
-      persistTimer = null
+      settingsPersistTimer = null
+    }, 250)
+  })
+
+  let savedDevicesPersistTimer: ReturnType<typeof setTimeout> | null = null
+  savedDevices.$subscribe(() => {
+    if (savedDevicesPersistTimer)
+      clearTimeout(savedDevicesPersistTimer)
+    savedDevicesPersistTimer = setTimeout(() => {
+      savedDevices.persist().catch(err => console.error('[savedDevices] persist failed', err))
+      savedDevicesPersistTimer = null
     }, 250)
   })
 }

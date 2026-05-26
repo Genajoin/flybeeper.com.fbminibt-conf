@@ -27,5 +27,5 @@ const { t } = useI18n()
       </template>
     </Suspense>
   </template>
-  <DeviceConnector v-else />
+  <PairingWizard v-else />
 </template>

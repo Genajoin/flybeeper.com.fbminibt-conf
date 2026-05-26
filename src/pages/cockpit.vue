@@ -3,7 +3,7 @@ const bt = useBluetoothStore()
 </script>
 
 <template>
-  <DeviceConnector v-if="!bt.isConnected" />
+  <PairingWizard v-if="!bt.isConnected" />
   <template v-else>
     <Suspense>
       <TheParams />

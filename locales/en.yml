@@ -28,6 +28,27 @@ local:
   decide-later: Decide later
   changes-count: '{count} field(s) changed'
 
+pair:
+  explainer-title: Connect a FlyBeeper device
+  explainer-body: We talk to your variometer over Web Bluetooth. When you tap Connect, the browser will ask which FB-prefixed device to pair with. Settings you change here are saved on this phone first and pushed to the device on Apply.
+  explainer-supported: Works in Chrome / Edge on Android, Windows, macOS, Linux. On iPhone use the Bluefy browser.
+  continue: Continue
+  connect: Connect a device
+  connect-another: Connect another device
+  saved-title: Your devices
+  saved-empty: No paired devices yet — tap Connect to add one.
+  reconnect: Reconnect
+  autoconnect-label: Auto-connect on launch
+  last-seen: Last seen
+  firmware: Firmware
+  rename: Rename
+  forget: Forget
+  forget-confirm: Forget this device? You'll need to pair it again.
+  unsupported-title: Web Bluetooth not available
+  unsupported-body: This browser can't talk to BLE devices. Use Chrome or Edge on Android / Windows / macOS / Linux.
+  ios-banner-body: iPhone / iPad? Web Bluetooth isn't in Safari. Open this site in Bluefy to connect.
+  open-bluefy: Open in Bluefy
+
 msg:
   disconnected: Device Disconnected
   connected: Device Connected

@@ -2,6 +2,7 @@
 </script>
 
 <template>
+  <BluefyBanner />
   <DisconnectBanner />
   <main
     px-4 py-1
