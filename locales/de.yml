@@ -19,6 +19,16 @@ intro:
 
 not-found: Nicht gefunden
 
+local:
+  disconnected-banner: Gerät getrennt — Einstellungen lokal gespeichert, Ton auf Browser umgeschaltet.
+  dismiss: Schließen
+  reconnect-diff-title: Lokale Einstellungen weichen vom Gerät ab
+  reconnect-diff-body: Deine lokalen Änderungen stimmen nicht mit dem Gerät überein. Anwenden oder verwerfen und Gerätewerte nutzen?
+  apply-local: Lokal anwenden
+  discard-local: Lokal verwerfen
+  decide-later: Später entscheiden
+  changes-count: '{count} Feld(er) geändert'
+
 msg:
   disconnected: Gerät getrennt
   connected: Gerät verbunden

@@ -18,6 +18,16 @@ intro:
   device-list: Device list
 not-found: Not Found
 
+local:
+  disconnected-banner: Device disconnected — settings saved locally, audio routed to browser.
+  dismiss: Dismiss
+  reconnect-diff-title: Local settings differ from the device
+  reconnect-diff-body: Your local changes don't match what's stored on the device. Apply them, or discard and use the device values?
+  apply-local: Apply local to device
+  discard-local: Discard local
+  decide-later: Decide later
+  changes-count: '{count} field(s) changed'
+
 msg:
   disconnected: Device Disconnected
   connected: Device Connected

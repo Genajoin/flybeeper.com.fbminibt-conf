@@ -61,6 +61,14 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     isFetching: false,
     isDisconnecting: false,
     isSubscribed: false,
+    /**
+     * True once this session has reached a successful connect. Used by
+     * DisconnectBanner to distinguish "you just lost the device" (true
+     * + !isConnected) from "cold start with hydrated local settings"
+     * (false + !isConnected). Resets to false on page reload by virtue
+     * of being plain Pinia state.
+     */
+    hasConnectedThisSession: false,
     devName: '',
     errorMessage: '',
     characteristicsData: {},
@@ -163,6 +171,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
       this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
       this.isConnected = true
+      this.hasConnectedThisSession = true
       this.isFetching = false
     },
 
