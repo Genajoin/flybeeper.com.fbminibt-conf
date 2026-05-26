@@ -145,6 +145,14 @@ function applyPreset(name: keyof typeof presets) {
     <p v-else class="empty">
       {{ t('msg.fetching') }}…
     </p>
+
+    <!-- Simulator controls under the chart so the user can drag a curve point
+         and immediately hear the result via the device or the browser synth.
+         The CurveEditor renders a vertical cursor at sim.valueMs, so you can
+         see where on the curve you're currently auditioning. -->
+    <div class="curves-sim">
+      <SimulatorControls />
+    </div>
   </SettingsPanel>
 </template>
 
@@ -178,5 +186,11 @@ function applyPreset(name: keyof typeof presets) {
   color: var(--ck-dim);
   margin: 0;
   text-align: center;
+}
+
+.curves-sim {
+  margin-top: var(--ck-s-sm);
+  padding-top: var(--ck-s-md);
+  border-top: var(--ck-stroke-hair) dashed var(--ck-grid);
 }
 </style>

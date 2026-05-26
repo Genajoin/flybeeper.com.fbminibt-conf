@@ -95,7 +95,7 @@ function revert() {
 </script>
 
 <template>
-  <section class="panel">
+  <section class="panel" :class="{ 'panel--dirty': isDirty }">
     <header class="panel__head">
       <p class="panel__eyebrow">
         {{ t(`sett.group-${group}`) }}
@@ -109,6 +109,9 @@ function revert() {
       <slot />
     </div>
 
+    <!-- Footer becomes sticky + signal-coloured when dirty so the user can't
+         miss that they have unsaved changes (audit feedback). Pure state badge
+         when clean. -->
     <footer class="panel__footer">
       <p class="panel__dirty" :class="{ 'panel__dirty--active': isDirty }">
         {{ isDirty ? t('sett.unsynced', { count: dirtyCount }) : t('sett.no-changes') }}
@@ -145,6 +148,11 @@ function revert() {
   flex-direction: column;
   gap: var(--ck-s-md);
   text-align: left;
+  transition: border-color var(--ck-dur-panel) var(--ck-ease);
+}
+
+.panel--dirty {
+  border-color: var(--ck-signal);
 }
 
 .panel__head {
@@ -182,8 +190,28 @@ function revert() {
   gap: var(--ck-s-md);
   flex-wrap: wrap;
   margin-top: var(--ck-s-sm);
-  padding-top: var(--ck-s-md);
+  padding: var(--ck-s-sm) var(--ck-s-md);
   border-top: var(--ck-stroke-hair) dashed var(--ck-grid);
+  border-radius: var(--ck-radius-soft);
+  transition:
+    background var(--ck-dur-panel) var(--ck-ease),
+    box-shadow var(--ck-dur-panel) var(--ck-ease);
+}
+
+/* When dirty: stick the footer to the bottom of the viewport with a strong
+ * signal-color background. Unsaved changes become impossible to miss whether
+ * the panel is scrolled into view or not. */
+.panel--dirty .panel__footer {
+  position: sticky;
+  bottom: var(--ck-s-sm);
+  z-index: 5;
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+  border-top-color: var(--ck-signal);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  margin-left: calc(var(--ck-s-md) * -1);
+  margin-right: calc(var(--ck-s-md) * -1);
+  margin-bottom: calc(var(--ck-s-md) * -1);
 }
 
 .panel__dirty {
@@ -196,7 +224,8 @@ function revert() {
 }
 
 .panel__dirty--active {
-  color: var(--ck-signal);
+  color: var(--ck-on-signal);
+  font-weight: 700;
 }
 
 .panel__actions {
@@ -231,6 +260,26 @@ function revert() {
 
 .panel__btn--primary:not(:disabled):hover {
   background: var(--ck-ink);
+  border-color: var(--ck-ink);
+}
+
+/* Inside the signal-coloured dirty footer the primary button needs the
+ * inverse colour scheme to read as the dominant action. */
+.panel--dirty .panel__btn {
+  border-color: var(--ck-on-signal);
+  background: transparent;
+  color: var(--ck-on-signal);
+}
+
+.panel--dirty .panel__btn--primary {
+  background: var(--ck-on-signal);
+  color: var(--ck-signal);
+  border-color: var(--ck-on-signal);
+}
+
+.panel--dirty .panel__btn--primary:not(:disabled):hover {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
   border-color: var(--ck-ink);
 }
 </style>

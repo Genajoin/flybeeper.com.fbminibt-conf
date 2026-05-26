@@ -20,6 +20,7 @@ const props = defineProps<{
 }>()
 
 const settings = useSettingsStore()
+const sim = useSimulation()
 
 type CurveKey = 'vario' | 'frequency' | 'cycle' | 'duty'
 
@@ -180,6 +181,16 @@ const yTicks = computed(() => {
     out.push({ y: yForNormalised(t), label: value.toFixed(0) })
   }
   return out
+})
+
+/**
+ * Vertical signal-color cursor at the simulator's current m/s, so the user
+ * sees exactly which part of the curve is playing while they drag a handle.
+ */
+const cursorX = computed(() => {
+  if (!sim.isActive.value)
+    return null
+  return xForCmS(sim.valueMs.value * 100)
 })
 
 const thresholdLines = computed(() => {
@@ -371,6 +382,15 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
           stroke-dasharray="4 4"
         />
       </g>
+
+      <!-- Simulator cursor — solid signal-color vertical at the m/s value
+           currently being auditioned (slider position). -->
+      <line
+        v-if="cursorX !== null"
+        class="editor__cursor"
+        :x1="cursorX" :y1="PAD_TOP"
+        :x2="cursorX" :y2="PAD_TOP + plotH"
+      />
 
       <!-- Non-active curves: drawn faded behind the active one -->
       <g class="editor__overlays">
@@ -582,6 +602,12 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
 .editor__thresholds line {
   stroke-width: 1.2;
   opacity: 0.6;
+}
+
+.editor__cursor {
+  stroke: var(--ck-signal);
+  stroke-width: 2;
+  pointer-events: none;
 }
 
 .editor__handle {
