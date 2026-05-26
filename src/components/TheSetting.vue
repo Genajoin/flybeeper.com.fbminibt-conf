@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import log from 'loglevel'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic.js'
 
 const props = defineProps(['cha'])
 const emit = defineEmits(['change'])
 const { t, te } = useI18n()
 const ch = props.cha as BleCharacteristic
-const isVisible = ref(false)
-// await ch.initialize()
 
-onMounted(async () => {
-  log.debug(`Настройка ${ch.characteristic.uuid}`)
-  if (ch.presentationFormatDescriptor && ch.presentationFormatDescriptor.format > 0 && ch.presentationFormatDescriptor.format !== 0x1B)
-    isVisible.value = true
-})
-
-onBeforeUnmount(() => {
-
-})
+// Reactive — CPF descriptors arrive async via ch.initialize() (kicked off by
+// useCpfGroup). If we computed this in onMounted, the very first paint after
+// connect would freeze isVisible=false and only unfreeze on next navigation.
+// computed re-evaluates on every formatDescriptor mutation, so the field
+// appears as soon as the descriptor lands.
+const isVisible = computed(() =>
+  !!ch.presentationFormatDescriptor
+  && ch.presentationFormatDescriptor.format > 0
+  && ch.presentationFormatDescriptor.format !== 0x1B,
+)
 
 function handelChange() {
   emit('change')
@@ -29,6 +27,7 @@ function getTranslation() {
     ? t(`sett.${ch.characteristic.uuid}`)
     : ch.userFormatDescriptor || ch.characteristic.uuid
 }
+
 function getTypeFromPresentationFormat() {
   if (!ch.presentationFormatDescriptor)
     return 'text'
@@ -44,6 +43,7 @@ function getTypeFromPresentationFormat() {
       return 'number'
   }
 }
+
 function getStepByFormatDescriptor() {
   if (!ch.presentationFormatDescriptor)
     return 1
