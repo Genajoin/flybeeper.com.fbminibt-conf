@@ -266,7 +266,7 @@ onUnmounted(() => {
       {{ t('msg.fetching') }}…
     </p>
 
-    <p v-if="local && local.buzzer_volume === 0 && sliderMs !== 0" class="hint hint--alert">
+    <p v-if="browserVolume === 0 && sliderMs !== 0" class="hint hint--alert">
       {{ t('sett.sim-label3') }}
     </p>
   </section>
