@@ -187,6 +187,8 @@ audio:
   preset-zero: 0
   preset-weak-climb: +1 m/s
   preset-strong-climb: +5 m/s
+  simulation-active: 'Simulating {value} m/s'
+  stop-simulation: Stop simulation
 
 update:
   how-to: How to update

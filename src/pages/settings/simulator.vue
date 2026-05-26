@@ -1,56 +1,64 @@
 <script setup lang="ts">
-import { SETTINGS_GROUPS } from '~/composables/useSettingsGroups'
-
 const bt = useBluetoothStore()
 const settings = useSettingsStore()
 const { t } = useI18n()
 const { source } = useAudioSource()
 const synth = useToneSynth()
+const sim = useSimulation()
 
-const fields = SETTINGS_GROUPS.simulator
-const cpfChars = useCpfGroup('simulator')
 const local = computed(() => settings.local)
-
-// CPF firmware exposes the simulation value as a separate characteristic
-// (904baf04-…0002, m/s units). The legacy ≤0.15 path stores it inside
-// buzzer_simulate_vario_value (cm/s). The slider works in m/s either way.
-const CPF_SIM_UUID = '904baf04-5814-11ee-8c99-0242ac120002'
-const cpfSimChar = computed(() =>
-  bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_SIM_UUID),
-)
 
 const SLIDER_MIN_MS = -5
 const SLIDER_MAX_MS = 10
 const SLIDER_STEP_MS = 0.1
 
-const varioMs = computed<number>({
-  get: () => {
-    if (local.value)
-      return local.value.buzzer_simulate_vario_value / 100
-    const cpf = cpfSimChar.value?.formattedValue
-    return typeof cpf === 'number' ? cpf : 0
-  },
-  set: (v: number) => {
-    if (local.value)
-      local.value.buzzer_simulate_vario_value = Math.round(v * 100)
-    else if (cpfSimChar.value)
-      cpfSimChar.value.formattedValue = v
-  },
-})
+// Reflect device state for the slider, but write through useSimulation so the
+// banner and any other reader stay in sync. The slider's own model is a local
+// ref because we want it to feel instant — pushing through the store on every
+// keystroke would couple slider lag to BLE write latency.
+const sliderMs = ref(sim.valueMs.value)
 
-const presets: { labelKey: string, value: number }[] = [
-  { labelKey: 'audio.preset-strong-sink', value: -3 },
-  { labelKey: 'audio.preset-zero', value: 0 },
-  { labelKey: 'audio.preset-weak-climb', value: 1 },
-  { labelKey: 'audio.preset-strong-climb', value: 5 },
-]
+// Throttle device writes (audit feedback: 150ms debounce was way too slow for
+// the demo and for drag — every intermediate step got dropped). 30ms ≈ 33Hz
+// is comfortably under typical Web Bluetooth write throughput.
+const THROTTLE_MS = 30
+let lastWriteAt = 0
+let pendingValue: number | null = null
+let pendingTimer: ReturnType<typeof setTimeout> | null = null
 
-// CPF curves source for the browser synth (m/s vario in characteristic →
-// normalised iVarioCurves shape in cm/s). Mirrors the adapter in curves.vue.
+function flushPending() {
+  if (pendingValue === null)
+    return
+  sim.setValueCmS(pendingValue)
+  lastWriteAt = Date.now()
+  pendingValue = null
+}
+
+function pushToDevice(cmS: number) {
+  const now = Date.now()
+  const elapsed = now - lastWriteAt
+  if (elapsed >= THROTTLE_MS) {
+    sim.setValueCmS(cmS)
+    lastWriteAt = now
+    return
+  }
+  // Coalesce intermediate values into one trailing write so we never skip the
+  // final position of a drag (which is what the user actually wants the
+  // device to play).
+  pendingValue = cmS
+  if (!pendingTimer) {
+    pendingTimer = setTimeout(() => {
+      pendingTimer = null
+      flushPending()
+    }, THROTTLE_MS - elapsed)
+  }
+}
+
 const CPF_VARIO_UUID = '512d6d89-7a6f-461c-983e-902b68d40f56'
 const CPF_FREQ_UUID = '8c090502-81c4-4d29-8d10-6db20607ace9'
 const CPF_CYCLE_UUID = '9c3b62c0-e227-4f1a-8342-7e647015555d'
 const CPF_DUTY_UUID = '98c16914-00ad-47ba-b625-148f0baaec47'
+const CPF_VOL_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
 
 const synthCurves = computed(() => {
   if (local.value)
@@ -70,7 +78,6 @@ const synthCurves = computed(() => {
   }
 })
 
-const CPF_VOL_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
 const browserVolume = computed(() => {
   const raw = local.value
     ? local.value.buzzer_volume
@@ -78,38 +85,16 @@ const browserVolume = computed(() => {
   return Math.min(raw / 3, 1)
 })
 
-let deviceDebounceTimer: ReturnType<typeof setTimeout> | null = null
-
-function pushToDevice(cmS: number) {
-  if (deviceDebounceTimer)
-    clearTimeout(deviceDebounceTimer)
-  deviceDebounceTimer = setTimeout(() => {
-    if (!bt.isConnected)
-      return
-    if (local.value) {
-      bt.SendSimulationVarioValue(cmS)
-    }
-    else if (cpfSimChar.value) {
-      cpfSimChar.value.formattedValue = cmS / 100
-      cpfSimChar.value.setFormattedValue().catch(() => {})
-    }
-  }, 150)
-}
-
 function previewBrowser(cmS: number) {
   const curves = synthCurves.value
-  if (!curves) {
-    synth.stop()
-    return
-  }
-  if (cmS === 0) {
+  if (!curves || cmS === 0) {
     synth.stop()
     return
   }
   synth.playForVario(cmS, curves, browserVolume.value)
 }
 
-watch(varioMs, (v) => {
+watch(sliderMs, (v) => {
   const cmS = Math.round(v * 100)
   if (source.value === 'device')
     pushToDevice(cmS)
@@ -121,8 +106,6 @@ watch(source, (s) => {
   if (s !== 'browser')
     synth.stop()
 })
-
-onUnmounted(() => synth.stop())
 
 const isDemoRunning = ref(false)
 const DEMO_START_MS = -2
@@ -140,7 +123,7 @@ function startDemo() {
   let step = 0
   demoTimer = setInterval(() => {
     const t = step / DEMO_STEPS
-    varioMs.value = DEMO_START_MS + (DEMO_END_MS - DEMO_START_MS) * t
+    sliderMs.value = DEMO_START_MS + (DEMO_END_MS - DEMO_START_MS) * t
     step++
     if (step > DEMO_STEPS)
       stopDemo()
@@ -152,23 +135,61 @@ function stopDemo() {
   if (demoTimer)
     clearInterval(demoTimer)
   demoTimer = null
-  varioMs.value = 0
+  sliderMs.value = 0
 }
-
-onUnmounted(() => {
-  if (demoTimer)
-    clearInterval(demoTimer)
-})
 
 function applyPreset(v: number) {
-  varioMs.value = v
+  sliderMs.value = v
 }
 
-const showSlider = computed(() => local.value !== null || cpfSimChar.value !== undefined)
+const presets: { labelKey: string, value: number }[] = [
+  { labelKey: 'audio.preset-strong-sink', value: -3 },
+  { labelKey: 'audio.preset-zero', value: 0 },
+  { labelKey: 'audio.preset-weak-climb', value: 1 },
+  { labelKey: 'audio.preset-strong-climb', value: 5 },
+]
+
+const showSlider = computed(() => bt.isConnected && (
+  local.value !== null
+  || bt.bleCharacteristics.some(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+))
+
+// Leaving the simulator page MUST take the device out of simulation mode —
+// otherwise it stays stuck (audit feedback). Same on unmount for any reason.
+onBeforeRouteLeave(() => {
+  if (pendingTimer) {
+    clearTimeout(pendingTimer)
+    pendingTimer = null
+  }
+  if (demoTimer) {
+    clearInterval(demoTimer)
+    demoTimer = null
+  }
+  if (sim.isActive.value)
+    sim.stop()
+  synth.stop()
+})
+
+onUnmounted(() => {
+  if (pendingTimer)
+    clearTimeout(pendingTimer)
+  if (demoTimer)
+    clearInterval(demoTimer)
+  synth.stop()
+})
 </script>
 
 <template>
-  <SettingsPanel group="simulator" :fields="fields" :cpf-chars="cpfChars">
+  <section class="sim-panel">
+    <header class="sim-panel__head">
+      <p class="sim-panel__eyebrow">
+        {{ t('sett.group-simulator') }}
+      </p>
+      <p class="sim-panel__desc">
+        {{ t('sett.group-simulator-desc') }}
+      </p>
+    </header>
+
     <div class="row">
       <span class="row__label">{{ t('audio.source-label') }}</span>
       <AudioSourceToggle />
@@ -177,11 +198,11 @@ const showSlider = computed(() => local.value !== null || cpfSimChar.value !== u
     <template v-if="showSlider">
       <div class="slider-block">
         <div class="slider-readout">
-          <span class="slider-readout__big">{{ varioMs.toFixed(1) }}</span>
+          <span class="slider-readout__big">{{ sliderMs.toFixed(1) }}</span>
           <span class="slider-readout__unit">m/s</span>
         </div>
         <input
-          v-model.number="varioMs"
+          v-model.number="sliderMs"
           type="range"
           :min="SLIDER_MIN_MS"
           :max="SLIDER_MAX_MS"
@@ -219,10 +240,10 @@ const showSlider = computed(() => local.value !== null || cpfSimChar.value !== u
       {{ t('msg.fetching') }}…
     </p>
 
-    <p v-if="local && local.buzzer_volume === 0 && varioMs !== 0" class="hint hint--alert">
+    <p v-if="local && local.buzzer_volume === 0 && sliderMs !== 0" class="hint hint--alert">
       {{ t('sett.sim-label3') }}
     </p>
-  </SettingsPanel>
+  </section>
 </template>
 
 <route lang="yaml">
@@ -231,6 +252,41 @@ meta:
 </route>
 
 <style scoped>
+.sim-panel {
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  font-family: var(--ck-font-body);
+  border: var(--ck-stroke-rule) solid var(--ck-grid);
+  border-radius: var(--ck-radius-soft);
+  padding: var(--ck-s-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ck-s-md);
+  text-align: left;
+}
+
+.sim-panel__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ck-s-xs);
+}
+
+.sim-panel__eyebrow {
+  font-family: var(--ck-font-display);
+  font-size: var(--ck-fs-h1);
+  font-weight: 700;
+  margin: 0;
+  line-height: var(--ck-line-tight);
+  text-transform: uppercase;
+}
+
+.sim-panel__desc {
+  font-size: var(--ck-fs-body);
+  color: var(--ck-ink-dim);
+  margin: 0;
+  line-height: var(--ck-line-body);
+}
+
 .row {
   display: flex;
   align-items: center;
