@@ -1,8 +1,15 @@
 <script setup>
-import { vue3dLoader } from 'vue-3d-loader'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps(['stl', 'pos'])
+
+// Lazy-load vue-3d-loader + three.js (~700 KB raw / ~200 KB gz) on first mount,
+// not as part of the parent route's chunk. Pages using <StlComponent /> stay
+// interactive while the 3D viewer loads in the background.
+const vue3dLoader = defineAsyncComponent(() =>
+  import('vue-3d-loader').then(m => m.vue3dLoader),
+)
+
 const stl = props.stl
 const pos = props.pos
 const light = [
@@ -12,17 +19,19 @@ const light = [
   { type: 'PointLight', color: '#ffffff', position: { x: -20, y: -90, z: -20 }, intensity: 0.1 },
 ]
 
-const rotation = ref({ x: -200, y: 0, z: 0 })
-const position = ref({ x: 0, y: 0, z: 0 })
+const modelRotation = ref({ x: 0, y: 0, z: 0 })
+const windowPosition = ref({ x: 0, y: 0, z: 0 })
+const modelPosition = ref({ x: 0, y: 0, z: 0 })
+// const cameraPosition = ref({ x: 0, y: 0, z: 0 })
 
 function moved(event) {
   try {
-    position.value.x = event.clientX
-    position.value.y = event.clientY
+    windowPosition.value.x = event.clientX
+    windowPosition.value.y = event.clientY
   }
-  catch (e) {
-    position.value.x = window.innerWidth / 2
-    position.value.y = window.innerHeight / 2
+  catch {
+    windowPosition.value.x = window.innerWidth / 2
+    windowPosition.value.y = window.innerHeight / 2
   }
 }
 
@@ -37,12 +46,12 @@ onUnmounted(() => {
 })
 
 // Watch position changes
-watch(position, (newValue) => {
+watch(windowPosition, (newValue) => {
   try {
-    rotation.value.y = Math.PI / 2 * (newValue.x / window.innerWidth - 0.5)
-    rotation.value.x = Math.PI / 2 * (newValue.y / window.innerHeight - 0.5) - 200
+    modelRotation.value.y = Math.PI / 2 * (newValue.x / window.innerWidth - 0.5)
+    modelRotation.value.x = Math.PI / 2 * (newValue.y / window.innerHeight - 0.5)
   }
-  catch (e) {
+  catch {
     // Handle error if needed
   }
 }, { deep: true })
@@ -58,9 +67,14 @@ watch(position, (newValue) => {
       :background-color="isDark ? '#121212' : '#ffffff'"
       :camera-position="pos"
       :lights="light"
-      :rotation="rotation"
+      :rotation="modelRotation"
+      :position="modelPosition"
     />
+    <!--      :enableAxesHelper="true" -->
   </div>
+<!--  <div>cam x:{{pos.x.toFixed(1)}} y:{{pos.y.toFixed(1)}} z:{{pos.z.toFixed(1)}}</div> -->
+<!--  <div>rot x:{{modelRotation.x.toFixed(1)}} y:{{modelRotation.y.toFixed(1)}} z:{{modelRotation.z.toFixed(1)}}</div> -->
+<!--  <div>pos x:{{modelPosition.x.toFixed(1)}} y:{{modelPosition.y.toFixed(1)}} z:{{modelPosition.z.toFixed(1)}}</div> -->
 </template>
 
 <style scoped>

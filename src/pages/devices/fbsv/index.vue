@@ -24,7 +24,7 @@ const { t, locale } = useI18n()
     <!--    <a m-4 mt-3 btn href="https://market.flybeeper.com/device/sv">{{ t('about.link-market') }}</a> -->
     <!--    <a m-4 mt-3 btn href="https://buy.stripe.com/5kA6rBamPdp866Q9AE">{{ t('button.buy-now') }}</a> -->
     <a m-4 mt-3 btn href="https://blog.regimov.net/flybeeper-sun-vario/">{{ t('about.link-blog') }}</a>
-    <StlComponent stl="/fbsv-model.stl" :pos="{ x: 0, y: -90, z: 40 }" />
+    <StlComponent stl="/fbsv-model.stl" :pos="{ x: -30, y: -30, z: 60 }" />
     <router-link text-sm btn m="3 t8" to="/devices">
       {{ t('button.back') }}
     </router-link>
