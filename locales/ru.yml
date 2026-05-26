@@ -18,6 +18,19 @@ intro:
   device-list: Список устройств
 not-found: Не найден
 
+home:
+  eyebrow: FlyBeeper · BLE конфигуратор
+  title: Настройте вариометр прямо в браузере
+  subtitle: Web Bluetooth подключает вариометры, трекеры и пульты FlyBeeper. Настройки сначала сохраняются здесь, на телефоне, а на устройство уходят, когда вы готовы.
+  connected-title: Устройство подключено
+  connected-body: Выберите, куда дальше.
+  link-settings: Настройки
+  link-cockpit: Кокпит
+  link-terminal: Терминал
+  link-update: Прошивка
+  catalog-eyebrow: Или загляните в каталог
+  catalog-link: Все устройства FlyBeeper
+
 local:
   disconnected-banner: Устройство отключено — настройки сохранены локально, звук переключён на браузер.
   dismiss: Закрыть

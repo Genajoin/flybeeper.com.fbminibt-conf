@@ -3,21 +3,31 @@ import log from 'loglevel'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic.js'
 
-const props = defineProps(['cha'])
+const props = defineProps<{ cha: BleCharacteristic }>()
 const { t, te } = useI18n()
-const ch = props.cha as BleCharacteristic
-const MAX_VALUES = 300 // Максимальное количество хранимых значений
-const lastValue = ref('--')
+const ch = props.cha
+
+const MAX_VALUES = 300
+const SVG_W = 300
+const SVG_H = 100
+
+const lastValue = ref<string | number | null>('--')
 const lastUpdated = ref('')
 const isNotified = ref(false)
-const backgroundSVG = ref('')
-const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
-let storedValues = JSON.parse(localStorage.getItem(storageName)) || []
-const valueClass = computed(() => {
-  return lastValue.value && lastValue.value.length > 10 ? 'value text-sm' : 'value text-4xl'
-})
+const sparklinePath = ref('')
 
-onMounted(async () => {
+const storageName = ch.characteristic.service.device.id + props.cha.characteristic.uuid
+let storedValues: { v: number, t: number }[] = JSON.parse(localStorage.getItem(storageName) ?? '[]')
+
+// Long readouts (hex dumps, multi-field strings) get a smaller font so they
+// don't overflow the card. Cheaper than reflow-on-content via JS.
+const valueClass = computed(() =>
+  typeof lastValue.value === 'string' && lastValue.value.length > 10
+    ? 'cell__value cell__value--small'
+    : 'cell__value',
+)
+
+onMounted(() => {
   ch.subscribe(subscriberFunction)
   log.debug(`Подписка на характеристику ${ch.characteristic.uuid}`)
   isNotified.value = ch.isNotified && !ch.isBlockNotify
@@ -26,46 +36,43 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   ch.unsubscribe(subscriberFunction)
-  log.debug(`Одписка от характеристики ${ch.characteristic.uuid}`)
+  log.debug(`Отписка от характеристики ${ch.characteristic.uuid}`)
   localStorage.setItem(storageName, JSON.stringify(storedValues))
 })
 
-// Определение функции-подписчика
 function subscriberFunction(newValue: any) {
-  lastValue.value = newValue instanceof DataView ? `0x${Array.from(new Uint8Array(newValue.buffer)).map(b => b.toString(16).padStart(2, '0')).join('')}` : newValue
+  lastValue.value = newValue instanceof DataView
+    ? `0x${Array.from(new Uint8Array(newValue.buffer)).map(b => b.toString(16).padStart(2, '0')).join('')}`
+    : newValue
   isNotified.value = ch.isNotified && !ch.isBlockNotify
   if (newValue === null)
+    return
+  if (typeof newValue !== 'number')
     return
   const timeStamp = new Date()
   lastUpdated.value = timeStamp.toLocaleTimeString()
   storedValues.push({ v: newValue, t: timeStamp.valueOf() })
   storedValues = storedValues.slice(-MAX_VALUES)
-  backgroundSVG.value = generateSVGContent(storedValues, 300, 100)
-  // log.info('Значение изменено:', newValue);
+  sparklinePath.value = buildPath(storedValues)
 }
 
-function generateSVGContent(storedValues, svgWidth, svgHeight) {
-  const maxValue = Math.max(...storedValues.map(({ v }) => v)) // Максимальное значение
-  const minValue = Math.min(...storedValues.map(({ v }) => v)) // Минимальное значение
-
-  // Определяем коэффициенты масштабирования для отображения точек внутри SVG
-  const scaleValueX = svgWidth / (storedValues.length - 1) // Горизонтальное масштабирование
-  const scaleValueY = svgHeight / (maxValue - minValue) // Вертикальное масштабирование
-
-  // Создаем пустой SVG-элемент
-  let svgContent = ''
-
-  // Формируем элементы точек графика
-  for (let i = 0; i < storedValues.length; i++) {
-    const { v } = storedValues[i]
-    const x = i * scaleValueX // Горизонтальная позиция точки
-    const y = svgHeight - (v - minValue) * scaleValueY // Вертикальная позиция точки
-
-    if (!Number.isNaN(x) && !Number.isNaN(y))
-      svgContent += `<circle cx="${x}" cy="${y}" r="2" />`
+function buildPath(values: { v: number }[]) {
+  if (values.length < 2)
+    return ''
+  const min = Math.min(...values.map(p => p.v))
+  const max = Math.max(...values.map(p => p.v))
+  const dx = SVG_W / (values.length - 1)
+  const range = max - min || 1
+  const dy = SVG_H / range
+  let d = ''
+  for (let i = 0; i < values.length; i++) {
+    const x = i * dx
+    const y = SVG_H - (values[i].v - min) * dy
+    if (!Number.isFinite(x) || !Number.isFinite(y))
+      continue
+    d += `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)} `
   }
-
-  return svgContent
+  return d.trim()
 }
 
 function getTranslation() {
@@ -80,51 +87,104 @@ async function notifyOff() {
     await ch.unsubscribeFromNotifications()
   else
     await ch.subscribeToNotifications()
-
   isNotified.value = ch.isNotified && !ch.isBlockNotify
 }
 </script>
 
 <template>
-  <div class="cell" @click="notifyOff()">
-    <div class="background">
-      <svg class="graph" :class="[isDark ? 'darkTheme' : 'lightTheme']" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100">
-        <g v-html="backgroundSVG" />
-      </svg>
-      <div text-sm opacity-50>
-        {{ getTranslation() }}
-      </div>
-      <div v-if="isNotified" :class="valueClass">
-        {{ lastValue !== null ? lastValue : "--" }}
-      </div>
-      <div text="sm right" opacity-50>
-        {{ lastUpdated }}
-      </div>
-    </div>
-  </div>
+  <button
+    class="cell"
+    :class="{ 'cell--paused': !isNotified }"
+    type="button"
+    :title="lastUpdated"
+    @click="notifyOff()"
+  >
+    <svg
+      class="cell__sparkline"
+      viewBox="0 0 300 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <path :d="sparklinePath" />
+    </svg>
+
+    <span class="cell__label">{{ getTranslation() }}</span>
+    <span :class="valueClass">{{ lastValue !== null ? lastValue : '--' }}</span>
+    <span v-if="!isNotified" class="cell__paused-tag">paused</span>
+  </button>
 </template>
 
-<style>
-.background {
+<style scoped>
+.cell {
   position: relative;
-  width: 100%;
-  height: 100%;
-}
-.value {
-  position: relative; /* Делаем блочным для корректного позиционирования */
-}
-.graph {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-.lightTheme circle {
-  fill: #ddf5e7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ck-s-xs);
+  padding: var(--ck-s-md);
+  background: var(--ck-paper);
+  border: var(--ck-stroke-hair) solid var(--ck-grid);
+  border-radius: var(--ck-radius-soft);
+  text-align: left;
+  font-family: var(--ck-font-body);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--ck-dur-toggle) var(--ck-ease);
 }
 
-.darkTheme circle {
-  fill: darkslategray;
+.cell:hover {
+  border-color: var(--ck-ink-dim);
+}
+
+.cell--paused {
+  border-style: dashed;
+  color: var(--ck-dim);
+}
+
+.cell__sparkline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--ck-grid);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.cell__label {
+  position: relative;
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-eyebrow);
+  letter-spacing: var(--ck-track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ck-dim);
+}
+
+.cell__value {
+  position: relative;
+  font-family: var(--ck-font-display);
+  font-size: var(--ck-fs-display);
+  font-weight: 700;
+  line-height: var(--ck-line-tight);
+  color: var(--ck-ink);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.cell__value--small {
+  font-size: var(--ck-fs-body);
+  font-family: var(--ck-font-mono);
+}
+
+.cell__paused-tag {
+  position: absolute;
+  top: var(--ck-s-xs);
+  right: var(--ck-s-xs);
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-micro);
+  letter-spacing: var(--ck-track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ck-signal);
 }
 </style>

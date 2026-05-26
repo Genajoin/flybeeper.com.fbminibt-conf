@@ -10,7 +10,7 @@ const loc = useLocationStore()
 const pause = ref<boolean>(false)
 const logArray = ref<string[]>([])
 const chas = bt.bleCharacteristics.filter(c => c.characteristic.properties.notify) as BleCharacteristicImpl[]
-const subscribers: Map<string, Function> = new Map()
+const subscribers: Map<string, (v: any) => void> = new Map()
 
 for (const c of chas)
   await c.initialize()
@@ -34,20 +34,17 @@ onBeforeUnmount(async () => {
     const characteristic = chas.find(c => c.characteristic.uuid === characteristicUuid)
     if (characteristic) {
       characteristic.unsubscribe(subscriber)
-      log.debug(`Одписка от характеристики ${characteristic.characteristic.uuid}`)
+      log.debug(`Отписка от характеристики ${characteristic.characteristic.uuid}`)
     }
   })
   loc.stopWatchingSpeed()
 })
 
-// Определение функции-подписчика
 function subscriberFunction(characteristic: BleCharacteristicImpl) {
   return (newValue: any) => {
     if (pause.value)
       return
-    // log.debug(`Значение характеристики ${characteristic.characteristic.uuid} изменено:`, newValue);
     const logEntry = `${getTimestamp()};${characteristic.userFormatDescriptor || characteristic.characteristic.uuid};${newValue}`
-
     logArray.value = logArray.value.slice(-36)
     logArray.value.push(logEntry)
   }
@@ -55,57 +52,44 @@ function subscriberFunction(characteristic: BleCharacteristicImpl) {
 
 function getTimestampFromValue(timestamp: number) {
   const date = new Date(timestamp)
-  const hours = (`0${date.getHours()}`).slice(-2)
-  const minutes = (`0${date.getMinutes()}`).slice(-2)
-  const seconds = (`0${date.getSeconds()}`).slice(-2)
-  const milliseconds = (`00${date.getMilliseconds()}`).slice(-3)
-  return `${hours}:${minutes}:${seconds}.${milliseconds}`
+  const hh = (`0${date.getHours()}`).slice(-2)
+  const mm = (`0${date.getMinutes()}`).slice(-2)
+  const ss = (`0${date.getSeconds()}`).slice(-2)
+  const ms = (`00${date.getMilliseconds()}`).slice(-3)
+  return `${hh}:${mm}:${ss}.${ms}`
 }
 
 function getTimestamp() {
   return getTimestampFromValue(new Date().valueOf())
 }
 
-watch(() => loc.speed, (newValue) => {
-  logArray.value.push(`${getTimestamp()};GNSS speed, km/h;${newValue}`)
-})
-watch(() => loc.accuracy, (newValue) => {
-  logArray.value.push(`${getTimestamp()};GNSS accuracy, m;${newValue}`)
-})
-watch(() => loc.heading, (newValue) => {
-  logArray.value.push(`${getTimestamp()};GNSS heading, °;${newValue}`)
-})
-watch(() => loc.altitude, (newValue) => {
-  logArray.value.push(`${getTimestamp()};GNSS altitude, m;${newValue}`)
-})
+watch(() => loc.speed, v => logArray.value.push(`${getTimestamp()};GNSS speed, km/h;${v}`))
+watch(() => loc.accuracy, v => logArray.value.push(`${getTimestamp()};GNSS accuracy, m;${v}`))
+watch(() => loc.heading, v => logArray.value.push(`${getTimestamp()};GNSS heading, °;${v}`))
+watch(() => loc.altitude, v => logArray.value.push(`${getTimestamp()};GNSS altitude, m;${v}`))
 
 async function saveProtocolToFile() {
-  const allEntries = chas.flatMap((ch) => {
-    return ch.entryArray.map(entry => ({
+  const allEntries = chas.flatMap(ch =>
+    ch.entryArray.map(entry => ({
       timestamp: entry.timestamp,
       value: entry.value,
       descriptor: ch.userFormatDescriptor || ch.characteristic.uuid,
-    }))
-  })
-  const allLocs = loc.locParams.flatMap((p) => {
-    return p.entryArray.map(entry => ({
+    })),
+  )
+  const allLocs = loc.locParams.flatMap(p =>
+    p.entryArray.map(entry => ({
       timestamp: entry.timestamp,
       value: entry.value,
       descriptor: p.description,
-    }))
-  })
+    })),
+  )
   const merged = [...allEntries, ...allLocs]
-  const sortedEntries = merged.sort((a, b) => a.timestamp - b.timestamp)
-  const stringEntries = sortedEntries.map((entry) => {
-    const timestamp = getTimestampFromValue(entry.timestamp)
-    return `${timestamp};${entry.descriptor};${entry.value}`
-  })
-  const joinedString = stringEntries.join('\n')
-  const blob = new Blob([joinedString], { type: 'text/plain' })
+  const sorted = merged.sort((a, b) => a.timestamp - b.timestamp)
+  const lines = sorted.map(entry => `${getTimestampFromValue(entry.timestamp)};${entry.descriptor};${entry.value}`)
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
-  const timestamp = getTimestamp()
-  a.download = `protocol-${timestamp}.txt`
+  a.download = `protocol-${getTimestamp()}.txt`
   a.style.display = 'none'
   document.body.appendChild(a)
   a.click()
@@ -114,8 +98,10 @@ async function saveProtocolToFile() {
 
 function clearProtocol() {
   logArray.value = []
-  chas.forEach(ch => ch.entryArray = [])
-  loc.locParams.forEach(p => p.entryArray = [])
+  for (const ch of chas)
+    ch.entryArray = []
+  for (const p of loc.locParams)
+    p.entryArray = []
 }
 
 function togglePause() {
@@ -124,17 +110,91 @@ function togglePause() {
 </script>
 
 <template>
-  <button btn m="3 t0" @click="saveProtocolToFile">
-    {{ t('msg.save-protocol') }}
-  </button>
-  <button btn m="3 t0" @click="clearProtocol">
-    {{ t('msg.clear-protocol') }}
-  </button>
-  <button btn m="3 t0" @click="togglePause">
-    {{ pause ? t('msg.resume') : t('msg.pause') }}
-  </button>
-  <div mx-auto max-w-full w-120>
-    <pre text="left sm">{{ logArray.join('\n') }}</pre>
-  </div>
-  <noSleep />
+  <section class="terminal">
+    <div class="terminal__bar">
+      <button class="terminal__btn terminal__btn--primary" type="button" @click="saveProtocolToFile">
+        <span class="i-carbon-download" aria-hidden="true" />
+        {{ t('msg.save-protocol') }}
+      </button>
+      <button class="terminal__btn" type="button" @click="clearProtocol">
+        <span class="i-carbon-trash-can" aria-hidden="true" />
+        {{ t('msg.clear-protocol') }}
+      </button>
+      <button class="terminal__btn" type="button" @click="togglePause">
+        <span class="i-carbon-pause" :class="{ 'i-carbon-play': pause }" aria-hidden="true" />
+        {{ pause ? t('msg.resume') : t('msg.pause') }}
+      </button>
+    </div>
+
+    <pre class="terminal__log" :class="{ 'terminal__log--paused': pause }">{{ logArray.join('\n') }}</pre>
+
+    <noSleep />
+  </section>
 </template>
+
+<style scoped>
+.terminal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ck-s-md);
+}
+
+.terminal__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ck-s-sm);
+}
+
+.terminal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ck-s-xs);
+  font-family: var(--ck-font-body);
+  font-size: var(--ck-fs-body);
+  font-weight: 600;
+  padding: var(--ck-s-sm) var(--ck-s-md);
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  border: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-radius: var(--ck-radius-soft);
+  cursor: pointer;
+}
+
+.terminal__btn:hover {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
+}
+
+.terminal__btn--primary {
+  background: var(--ck-signal);
+  border-color: var(--ck-signal);
+  color: var(--ck-on-signal);
+}
+
+.terminal__btn--primary:hover {
+  background: var(--ck-ink);
+  border-color: var(--ck-ink);
+}
+
+.terminal__log {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-meta);
+  line-height: 1.4;
+  color: var(--ck-ink);
+  background: var(--ck-bg-deep);
+  border: var(--ck-stroke-hair) solid var(--ck-grid);
+  border-radius: var(--ck-radius-soft);
+  padding: var(--ck-s-md);
+  margin: 0;
+  min-height: 24rem;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre;
+  text-align: left;
+}
+
+.terminal__log--paused {
+  border-color: var(--ck-signal);
+  border-style: dashed;
+}
+</style>

@@ -18,6 +18,19 @@ intro:
   device-list: Device list
 not-found: Not Found
 
+home:
+  eyebrow: FlyBeeper · BLE configurator
+  title: Tune your variometer in the browser
+  subtitle: Web Bluetooth talks to FlyBeeper variometers, trackers and remotes. Settings live on this phone first; push them to the device when you're ready.
+  connected-title: Device connected
+  connected-body: Pick where to go next.
+  link-settings: Settings
+  link-cockpit: Cockpit
+  link-terminal: Terminal
+  link-update: Firmware update
+  catalog-eyebrow: Or browse the catalog
+  catalog-link: All FlyBeeper devices
+
 local:
   disconnected-banner: Device disconnected — settings saved locally, audio routed to browser.
   dismiss: Dismiss

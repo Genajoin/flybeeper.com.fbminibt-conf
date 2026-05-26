@@ -17,6 +17,19 @@ intro:
   desc: Bluetooth Atmosphärendrucksensor
   device-list: Geräteliste
 
+home:
+  eyebrow: FlyBeeper · BLE-Konfigurator
+  title: Variometer direkt im Browser einstellen
+  subtitle: Web Bluetooth spricht mit FlyBeeper-Variometern, Trackern und Fernbedienungen. Einstellungen liegen zuerst auf diesem Telefon und werden auf das Gerät übertragen, wenn du bereit bist.
+  connected-title: Gerät verbunden
+  connected-body: Wähle, wohin als Nächstes.
+  link-settings: Einstellungen
+  link-cockpit: Cockpit
+  link-terminal: Terminal
+  link-update: Firmware-Update
+  catalog-eyebrow: Oder schau in den Katalog
+  catalog-link: Alle FlyBeeper-Geräte
+
 not-found: Nicht gefunden
 
 local:

@@ -3,15 +3,23 @@
   <DisconnectBanner />
   <RestartDeviceBanner />
   <SimulationBanner />
-  <main
-    px-4 py-4
-    text="center gray-700 dark:gray-200"
-  >
-    <TheFooter />
+  <TheFooter />
+  <main class="page">
     <RouterView />
-    <!--    <div mx-auto mt-5 text-center text-sm opacity-50> -->
-    <!--      [Default Layout] -->
-    <!--    </div> -->
   </main>
   <ReconnectDiffDialog />
 </template>
+
+<style scoped>
+.page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--ck-s-lg) var(--ck-s-md) var(--ck-s-2xl);
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: var(--ck-s-md) var(--ck-s-sm) var(--ck-s-xl);
+  }
+}
+</style>
