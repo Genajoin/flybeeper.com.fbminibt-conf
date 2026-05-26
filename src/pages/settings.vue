@@ -2,30 +2,30 @@
 import { SETTINGS_GROUP_NAV } from '~/composables/useSettingsGroups'
 
 const bt = useBluetoothStore()
+const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 
-const isLegacyCpfFirmware = computed(() => {
-  if (bt.dis.modelNumberString.value !== 'FBminiBT')
-    return false
-  const v = Number.parseFloat(bt.dis.firmwareRevisionString.value as string)
-  return v > 0.15
-})
+const fwRev = computed(() =>
+  Number.parseFloat((bt.dis.firmwareRevisionString.value as string) || '0'),
+)
+const model = computed(() => bt.dis.modelNumberString.value)
 
-const needsFirmwareUpdate = computed(() => {
-  if (bt.dis.modelNumberString.value !== 'FBminiBT')
-    return false
-  const v = Number.parseFloat(bt.dis.firmwareRevisionString.value as string)
-  return v <= 0.11
-})
+const needsFirmwareUpdate = computed(() =>
+  model.value === 'FBminiBT' && fwRev.value > 0 && fwRev.value <= 0.11,
+)
 
-// /settings → /settings/audio: this is the layout page; children live under
-// pages/settings/<group>.vue. The grouped IA only fits the legacy ≤0.15 codec
-// for now (the ≥0.15 CPF UI is rendered inline via CharacteristicForm15
-// until Phase 4 final groups it the same way).
+// Grouped settings IA (the new /settings/{audio,curves,…} children) only knows
+// the legacy ≤0.15 monolithic FBminiBT struct. Every other device — fw ≥0.16
+// FBminiBT with CPF descriptors, or other SKUs (fbps1/fbrc4/fbsv/fbtas/
+// fbfanet/fbfanetvario) — falls back to the CPF-generic CharacteristicForm15.
+const hasGroupedSettings = computed(() =>
+  model.value === 'FBminiBT' && fwRev.value >= 0.12 && fwRev.value <= 0.15,
+)
+
 watchEffect(() => {
-  if (!bt.isConnected || needsFirmwareUpdate.value || isLegacyCpfFirmware.value)
+  if (!bt.isConnected || !hasGroupedSettings.value)
     return
   if (route.path === '/settings')
     router.replace('/settings/audio')
@@ -46,14 +46,7 @@ watchEffect(() => {
       </router-link>
     </div>
 
-    <Suspense v-else-if="isLegacyCpfFirmware">
-      <CharacteristicForm15 />
-      <template #fallback>
-        <div i-carbon-fade m-auto animate-spin text-4xl />
-      </template>
-    </Suspense>
-
-    <template v-else>
+    <template v-else-if="hasGroupedSettings">
       <nav class="settings-nav" aria-label="Settings groups">
         <router-link
           v-for="item in SETTINGS_GROUP_NAV"
@@ -65,8 +58,19 @@ watchEffect(() => {
           {{ t(`sett.group-${item.key}`) }}
         </router-link>
       </nav>
-      <RouterView />
+      <RouterView v-if="settings.local" />
+      <div v-else class="settings-syncing">
+        <div i-carbon-fade m-auto animate-spin text-4xl />
+        <p>{{ t('msg.fetching') }}…</p>
+      </div>
     </template>
+
+    <Suspense v-else>
+      <CharacteristicForm15 />
+      <template #fallback>
+        <div i-carbon-fade m-auto animate-spin text-4xl />
+      </template>
+    </Suspense>
   </template>
 </template>
 
@@ -83,6 +87,19 @@ watchEffect(() => {
 
 .settings-needs-fw {
   text-align: center;
+}
+
+.settings-syncing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ck-s-sm);
+  padding: var(--ck-s-lg);
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-eyebrow);
+  letter-spacing: var(--ck-track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ck-dim);
 }
 
 .settings-nav {
