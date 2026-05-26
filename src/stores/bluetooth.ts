@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
+import { useSettingsStore } from '~/stores/settings'
 
 interface BtCh {
   characteristic: object | null
@@ -65,7 +66,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
-    settings: {} as iFbMiniBtSettings,
     devices: [],
     devicesRssi: { },
 
@@ -80,6 +80,20 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
 
   }),
+  getters: {
+    /**
+     * Backward-compat surface — settings now live in useSettingsStore
+     * (local-first, persisted to IDB, survives disconnect). Reading
+     * `bt.settings` returns the live local copy; null until the device
+     * has been read or the store has been hydrated from IDB.
+     *
+     * Phase 4 will migrate the settings UI to read settingsStore.local
+     * directly and this getter will be removed.
+     */
+    settings(): iFbMiniBtSettings | null {
+      return useSettingsStore().local
+    },
+  },
   actions: {
     async toggleConnectionBT() {
       if (this.isConnected && !this.isDisconnecting)
@@ -198,14 +212,15 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.isDisconnecting = false
     },
     onDisconnected() {
-      // Обработка отключения
+      // Обработка отключения. Settings больше НЕ обнуляем — они живут в
+      // useSettingsStore (local-first, IDB-backed) и должны переживать
+      // disconnect. См. DECISIONS.md §★ State model.
       this.isConnected = false
       this.isDisconnecting = false
       this.device = {}
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
       this.fss.miniBtSettings = { characteristic: null, value: null }
       this.fss.miniBtSimulation = { characteristic: null, value: null }
-      this.settings = {} as iFbMiniBtSettings
       this.subscribedCharacteristics = []
       this.characteristicsData = {}
       this.bleCharacteristics = []
@@ -265,8 +280,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         buzzer_duty_dots,
       } as iVarioCurves
 
-      // Создайте объект fb_settings
-      this.settings = {
+      const parsed: iFbMiniBtSettings = {
         buzzer_volume,
         climb_tone_on_threshold_cm,
         climb_tone_off_threshold_cm,
@@ -279,7 +293,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         ble_never_sleep,
         led_blinky_by_vario,
         hid_keyboard_off,
-      } as iFbMiniBtSettings
+      }
+
+      // Push to settings store: updates lastDeviceSnapshot for diff,
+      // seeds local on first read, leaves local untouched on subsequent
+      // reads (preserves user's in-flight edits — see DECISIONS §★1).
+      useSettingsStore().applyDeviceSnapshot(parsed)
     },
 
     async writeMiniBtSettings(settings: iFbMiniBtSettings) {
@@ -310,16 +329,20 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       view.setInt16(indexes.uart_protocols, settings.uart_protocols, true)
 
       if (this.dis.firmwareRevisionString.value > '0.13') {
-        const feature_bits = settings.silent_on_ground
-          | this.settings.ble_never_sleep << 1
-          | this.settings.led_blinky_by_vario << 2
-          | settings.hid_keyboard_off << 3
+        const feature_bits = Number(settings.silent_on_ground)
+          | Number(settings.ble_never_sleep) << 1
+          | Number(settings.led_blinky_by_vario) << 2
+          | Number(settings.hid_keyboard_off) << 3
         view.setUint8(indexes.feature_bits, feature_bits)
       }
 
       //  буфер в характеристику
       this.fss.miniBtSettings.characteristic.writeValue(buffer)
-        .then(() => this.settings = settings)
+        .then(() => {
+          const settingsStore = useSettingsStore()
+          settingsStore.replaceLocal(settings)
+          settingsStore.markSynced()
+        })
     },
 
     async SendSimulationVarioValue(value) {

@@ -28,18 +28,23 @@ const firmwareRevision = computed(() => {
   return (bt.dis.firmwareRevisionString.characteristic) ? bt.dis.firmwareRevisionString.value : '0.0'
 })
 
-const formValues = ref(cloneDeep(bt.settings))
-const originalValues = ref(cloneDeep(bt.settings))
+// bt.settings is now a getter on useSettingsStore().local — null until the
+// settings store hydrates from IDB or the device is read. The form binds
+// lazily once settings exist; the outer v-if guards every v-model.
+const formValues = ref(bt.settings ? cloneDeep(bt.settings) : null)
+const originalValues = ref(bt.settings ? cloneDeep(bt.settings) : null)
 const tableChanged = ref(false)
 const simulateVario = ref(0)
 let simulateVarioTimeout = null
 let simulateInProgress = false
 
 watch(() => bt.settings, (newSettings) => {
+  if (!newSettings)
+    return
   originalValues.value = cloneDeep(newSettings)
   formValues.value = cloneDeep(newSettings)
   tableChanged.value = false
-}, { deep: true })
+}, { deep: true, immediate: true })
 
 const theCurvesRef = ref()
 
@@ -111,7 +116,7 @@ function uploadJson(event) {
 </script>
 
 <template>
-  <template v-if="formValues !== {}">
+  <template v-if="formValues">
     <div m-auto max-w-320 flex flex-wrap justify-center>
       <div text-right="" max-w-full min-w-340px flex-1>
         <div v-if="firmwareRevision >= '0.14'">
@@ -223,7 +228,7 @@ function uploadJson(event) {
         </div>
       </div>
       <!-- Таблица для массивов настроек -->
-      <template v-if="formValues.curves !== {}">
+      <template v-if="formValues.curves">
         <div flex flex-1 justify-center>
           <table>
             <thead>
@@ -315,7 +320,7 @@ function uploadJson(event) {
         {{ t('sett.sim-label2') }}
       </div>
     </div>
-    <div v-if="bt.settings.buzzer_volume === 0 && simulateVario" text-red-600>
+    <div v-if="bt.settings?.buzzer_volume === 0 && simulateVario" text-red-600>
       {{ t('sett.sim-label3') }}
     </div>
     <div text-center>
