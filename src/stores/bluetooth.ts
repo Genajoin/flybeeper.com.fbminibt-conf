@@ -174,6 +174,19 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.hasConnectedThisSession = true
       this.isFetching = false
 
+      // Eager-initialize every FlyBeeper Settings Service characteristic so
+      // panels don't lazy-load per-visit (audit feedback: user couldn't hear
+      // the browser tone preview until they'd manually visited /settings/curves
+      // first, because synthCurves was null until those four characteristics
+      // had their descriptors read). Parallel; failures are non-fatal — many
+      // characteristics expose only the User Format descriptor and that's fine.
+      const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+      Promise.allSettled(
+        this.bleCharacteristics
+          .filter(c => c.characteristic.service.uuid === FSS_UUID)
+          .map(c => c.initialize()),
+      ).catch(() => { /* allSettled never rejects */ })
+
       // Remember the device in our own registry (DECISIONS.md §5).
       // The browser keeps its own permission grant but its IDs are opaque
       // and `getDevices()` triggers an Android location prompt — we never

@@ -1,75 +1,72 @@
 /* eslint-disable no-console -- intentional diagnostic logging on the BLE write
- * path. The simulator was silent in testing and there was no way for the user
- * to tell whether the write was happening, going to the wrong codec, or
- * silently no-op'ing. Console output is opt-in noise the user can ignore. */
+ * path. */
 
 /**
  * Simulation-mode helpers shared between the /settings/simulator page and the
- * global SimulationBanner. The device stays in "fake vario" mode as long as
- * buzzer_simulate_vario_value != 0 (legacy ≤0.15) or the simulator
- * characteristic 904baf04-…0002 reads non-zero (CPF ≥0.15). Both paths are
- * checked here so the rest of the app can ask one question.
+ * global SimulationBanner. The simulator characteristic (904baf04-…0002) takes
+ * an Int16 cm/s on the wire — same protocol the original legacy
+ * SendSimulationVarioValue used. We write the buffer directly because
+ * setFormattedValue() silently no-ops when the characteristic has no CPF
+ * Presentation Format Descriptor (which the simulator characteristic doesn't
+ * always expose), and that was making the page look like it worked while
+ * nothing ever reached the device.
  */
 
-const CPF_SIM_UUID = '904baf04-5814-11ee-8c99-0242ac120002'
+const SIM_UUID = '904baf04-5814-11ee-8c99-0242ac120002'
 
 export function useSimulation() {
   const bt = useBluetoothStore()
   const settings = useSettingsStore()
 
-  function getCpfChar() {
-    return bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_SIM_UUID)
+  function getSimChar() {
+    return bt.bleCharacteristics.find(c => c.characteristic.uuid === SIM_UUID)
   }
-
-  // Codec preference is decided by what the *device* exposes, not what
-  // settings.local has in IDB. settings.local can be stale from a previous
-  // session with a different SKU (e.g. last week's FBminiBT cached struct
-  // surviving across a connect to FBfanetvario today) — if we keyed on it,
-  // we'd happily call SendSimulationVarioValue() on a device that never
-  // wired up miniBtSimulation.characteristic, and the write would silently
-  // no-op.
-  const hasLegacyCodec = computed(() =>
-    bt.fss.miniBtSimulation.characteristic !== null,
-  )
 
   /** Current simulation value in m/s, or 0 if not simulating. */
   const valueMs = computed<number>(() => {
-    if (hasLegacyCodec.value && settings.local) {
+    // Prefer the live characteristic read — it's the device's word for what's
+    // actually being simulated. Fall back to the legacy struct only if there's
+    // no characteristic surfaced (older ≤0.13 firmware that bundles sim into
+    // the settings blob).
+    const ch = getSimChar()
+    if (ch && typeof ch.formattedValue === 'number')
+      return ch.formattedValue
+    if (settings.local) {
       const v = settings.local.buzzer_simulate_vario_value
       return typeof v === 'number' ? v / 100 : 0
     }
-    const v = getCpfChar()?.formattedValue
-    return typeof v === 'number' ? v : 0
+    return 0
   })
 
   const isActive = computed(() => valueMs.value !== 0)
 
   /**
-   * Set the simulation value in cm/s, writing to whichever codec the device
-   * exposes. Doesn't await the BLE write — fire-and-forget so the slider
-   * stays responsive; failures are logged in the underlying call.
+   * Write the simulation value to the device. Always Int16 cm/s little-endian,
+   * straight to characteristic.writeValue() — bypasses the CPF setFormattedValue
+   * path that silently drops the write when no Presentation Format Descriptor
+   * is exposed.
    */
   function setValueCmS(cmS: number) {
     if (!bt.isConnected) {
-      console.warn('[sim] setValueCmS skipped — not connected', cmS)
+      console.warn('[sim] skipped — not connected', cmS)
       return
     }
-    if (hasLegacyCodec.value) {
-      console.debug('[sim] legacy write', cmS, 'cm/s')
-      if (settings.local)
-        settings.local.buzzer_simulate_vario_value = cmS
-      bt.SendSimulationVarioValue(cmS)
-      return
-    }
-    const ch = getCpfChar()
+    const ch = getSimChar()
     if (!ch) {
-      console.warn('[sim] no CPF simulator characteristic — device does not expose 904baf04-…0002', { connected: bt.isConnected, chars: bt.bleCharacteristics.length })
+      console.warn('[sim] no simulator characteristic found', { chars: bt.bleCharacteristics.length })
       return
     }
-    const msValue = cmS / 100
-    console.debug('[sim] CPF write', msValue, 'm/s →', ch.characteristic.uuid)
-    ch.formattedValue = msValue
-    ch.setFormattedValue().catch(err => console.error('[sim] setFormattedValue failed', err))
+    const buffer = new ArrayBuffer(2)
+    new DataView(buffer).setInt16(0, cmS, true)
+    console.debug('[sim] write', cmS, 'cm/s →', ch.characteristic.uuid)
+    ch.characteristic.writeValue(buffer).catch(err =>
+      console.error('[sim] writeValue failed', err),
+    )
+    // Reflect locally so the banner / slider sync without waiting for the
+    // device to notify us back.
+    ch.formattedValue = cmS / 100
+    if (settings.local)
+      settings.local.buzzer_simulate_vario_value = cmS
   }
 
   function stop() {

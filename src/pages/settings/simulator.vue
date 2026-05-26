@@ -66,7 +66,18 @@ const CPF_VARIO_UUID = '512d6d89-7a6f-461c-983e-902b68d40f56'
 const CPF_FREQ_UUID = '8c090502-81c4-4d29-8d10-6db20607ace9'
 const CPF_CYCLE_UUID = '9c3b62c0-e227-4f1a-8342-7e647015555d'
 const CPF_DUTY_UUID = '98c16914-00ad-47ba-b625-148f0baaec47'
-const CPF_VOL_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
+
+// Default curves — used by the browser tone synth when the device hasn't read
+// its curves yet (or there's no device at all). Matches the "default" preset
+// in /settings/curves so the offline preview is at least sensible. Spec says
+// the user should be able to play with these settings without a device, and
+// this is what makes the simulator audible immediately on /settings/simulator.
+const DEFAULT_CURVES = {
+  buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
+  buzzer_frequency_dots: [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
+  buzzer_cycle_dots: [850, 790, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
+  buzzer_duty_dots: [100, 98, 95, 38, 40, 41, 43, 46, 49, 54, 78, 90],
+}
 
 const synthCurves = computed(() => {
   if (local.value)
@@ -76,43 +87,33 @@ const synthCurves = computed(() => {
   const freq = find(CPF_FREQ_UUID)?.formattedValue as number[] | undefined
   const cycle = find(CPF_CYCLE_UUID)?.formattedValue as number[] | undefined
   const duty = find(CPF_DUTY_UUID)?.formattedValue as number[] | undefined
-  if (!vario || !freq || !cycle || !duty)
-    return null
   // 12-element CPF arrays (format 0x1B) bypass the descriptor exponent —
   // vario is already cm/s, matching useToneSynth.playForVario(varioCmS, …).
-  return {
-    buzzer_vario_dots: vario,
-    buzzer_frequency_dots: freq,
-    buzzer_cycle_dots: cycle,
-    buzzer_duty_dots: duty,
-  }
+  if (vario && freq && cycle && duty)
+    return { buzzer_vario_dots: vario, buzzer_frequency_dots: freq, buzzer_cycle_dots: cycle, buzzer_duty_dots: duty }
+  // Fall back to defaults so the browser preview works even before the device
+  // finished reading its curves (BLE reads are serialised — curves are 4 of
+  // ~20 characteristics in the queue).
+  return DEFAULT_CURVES
 })
 
-const browserVolume = computed(() => {
-  const raw = local.value
-    ? local.value.buzzer_volume
-    : (bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_VOL_UUID)?.formattedValue as number | undefined) ?? 0
-  return Math.min(raw / 3, 1)
-})
+// Browser tone is independent of the device buzzer_volume — the user explicitly
+// chose Browser as the audio source, presumably to preview without bothering
+// the device (or with the device muted in flight). Keep a comfortable constant
+// so it's always audible. If a per-browser volume knob is wanted, we'll add
+// one as a slider next to AudioSourceToggle.
+const BROWSER_TONE_VOLUME = 0.5
 
 function previewBrowser(cmS: number) {
-  const curves = synthCurves.value
-  if (!curves) {
-    console.warn('[sim] browser tone: no curves available — device does not expose vario/freq/cycle/duty characteristics, or they haven\'t been read yet')
-    synth.stop()
-    return
-  }
   if (cmS === 0) {
     synth.stop()
     return
   }
-  const params = synth.playForVario(cmS, curves, browserVolume.value)
-  if (!params) {
-    console.warn('[sim] browser tone: playForVario returned null', { cmS, curves, volume: browserVolume.value })
-  }
-  else if (browserVolume.value === 0) {
-    console.warn('[sim] browser tone: volume is 0 — set buzzer_volume > 0 in /settings/audio to hear browser preview')
-  }
+  // synthCurves never returns null now — falls back to DEFAULT_CURVES.
+  const params = synth.playForVario(cmS, synthCurves.value, BROWSER_TONE_VOLUME)
+  if (!params)
+
+    console.warn('[sim] playForVario returned null', { cmS, curves: synthCurves.value })
 }
 
 watch(sliderMs, (v) => {
@@ -175,10 +176,11 @@ const presets: { labelKey: string, value: number }[] = [
   { labelKey: 'audio.preset-strong-climb', value: 5 },
 ]
 
-const showSlider = computed(() => bt.isConnected && (
-  local.value !== null
-  || bt.bleCharacteristics.some(c => c.characteristic.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-))
+// Slider is always usable in browser mode — the spec calls for the user to
+// be able to try settings without a device. The `device` source obviously
+// no-ops without a connection (the underlying setValueCmS guards on
+// bt.isConnected and logs a hint).
+const showSlider = computed(() => true)
 
 // Leaving the simulator page MUST take the device out of simulation mode —
 // otherwise it stays stuck (audit feedback). Same on unmount for any reason.
@@ -264,10 +266,6 @@ onUnmounted(() => {
 
     <p v-else class="hint">
       {{ t('msg.fetching') }}…
-    </p>
-
-    <p v-if="browserVolume === 0 && sliderMs !== 0" class="hint hint--alert">
-      {{ t('sett.sim-label3') }}
     </p>
   </section>
 </template>
