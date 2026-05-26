@@ -1,3 +1,8 @@
+/* eslint-disable no-console -- intentional diagnostic logging on the BLE write
+ * path. The simulator was silent in testing and there was no way for the user
+ * to tell whether the write was happening, going to the wrong codec, or
+ * silently no-op'ing. Console output is opt-in noise the user can ignore. */
+
 /**
  * Simulation-mode helpers shared between the /settings/simulator page and the
  * global SimulationBanner. The device stays in "fake vario" mode as long as
@@ -45,19 +50,26 @@ export function useSimulation() {
    * stays responsive; failures are logged in the underlying call.
    */
   function setValueCmS(cmS: number) {
-    if (!bt.isConnected)
+    if (!bt.isConnected) {
+      console.warn('[sim] setValueCmS skipped — not connected', cmS)
       return
+    }
     if (hasLegacyCodec.value) {
+      console.debug('[sim] legacy write', cmS, 'cm/s')
       if (settings.local)
         settings.local.buzzer_simulate_vario_value = cmS
       bt.SendSimulationVarioValue(cmS)
       return
     }
     const ch = getCpfChar()
-    if (ch) {
-      ch.formattedValue = cmS / 100
-      ch.setFormattedValue().catch(() => { /* underlying impl logs */ })
+    if (!ch) {
+      console.warn('[sim] no CPF simulator characteristic — device does not expose 904baf04-…0002', { connected: bt.isConnected, chars: bt.bleCharacteristics.length })
+      return
     }
+    const msValue = cmS / 100
+    console.debug('[sim] CPF write', msValue, 'm/s →', ch.characteristic.uuid)
+    ch.formattedValue = msValue
+    ch.setFormattedValue().catch(err => console.error('[sim] setFormattedValue failed', err))
   }
 
   function stop() {

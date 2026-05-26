@@ -14,9 +14,17 @@ const SLIDER_STEP_MS = 0.1
 
 // Reflect device state for the slider, but write through useSimulation so the
 // banner and any other reader stay in sync. The slider's own model is a local
-// ref because we want it to feel instant — pushing through the store on every
-// keystroke would couple slider lag to BLE write latency.
+// ref so dragging feels instant — pushing through the store on every keystroke
+// would couple slider lag to BLE write latency. We re-sync from sim.valueMs
+// when external code resets it (e.g. SimulationBanner's Stop button calling
+// sim.stop() — without this, the banner went away but the slider stayed at
+// the last drag position).
 const sliderMs = ref(sim.valueMs.value)
+const SYNC_EPS = 0.05
+watch(() => sim.valueMs.value, (v) => {
+  if (Math.abs(sliderMs.value - v) > SYNC_EPS)
+    sliderMs.value = v
+})
 
 // Throttle device writes (audit feedback: 150ms debounce was way too slow for
 // the demo and for drag — every intermediate step got dropped). 30ms ≈ 33Hz
@@ -89,11 +97,22 @@ const browserVolume = computed(() => {
 
 function previewBrowser(cmS: number) {
   const curves = synthCurves.value
-  if (!curves || cmS === 0) {
+  if (!curves) {
+    console.warn('[sim] browser tone: no curves available — device does not expose vario/freq/cycle/duty characteristics, or they haven\'t been read yet')
     synth.stop()
     return
   }
-  synth.playForVario(cmS, curves, browserVolume.value)
+  if (cmS === 0) {
+    synth.stop()
+    return
+  }
+  const params = synth.playForVario(cmS, curves, browserVolume.value)
+  if (!params) {
+    console.warn('[sim] browser tone: playForVario returned null', { cmS, curves, volume: browserVolume.value })
+  }
+  else if (browserVolume.value === 0) {
+    console.warn('[sim] browser tone: volume is 0 — set buzzer_volume > 0 in /settings/audio to hear browser preview')
+  }
 }
 
 watch(sliderMs, (v) => {
@@ -105,8 +124,13 @@ watch(sliderMs, (v) => {
 })
 
 watch(source, (s) => {
-  if (s !== 'browser')
+  if (s !== 'browser') {
     synth.stop()
+    return
+  }
+  // Need a user gesture to construct AudioContext; the source toggle click is
+  // that gesture, so spin it up here instead of waiting for slider drag.
+  void synth.ensureContext()
 })
 
 const isDemoRunning = ref(false)
