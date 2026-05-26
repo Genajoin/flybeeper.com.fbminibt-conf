@@ -53,62 +53,7 @@ function applyPreset(name: keyof typeof presets) {
       </button>
     </div>
 
-    <!-- Numeric grid placeholder. Replaced by a draggable SVG editor in Phase 4.2. -->
-    <div class="curves-grid">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ t('sett.vario') }}</th>
-            <th>{{ t('sett.freq') }}</th>
-            <th>{{ t('sett.cycle') }}</th>
-            <th>{{ t('sett.duty') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(_, i) in local.curves.buzzer_vario_dots" :key="i">
-            <td>
-              <input
-                v-model.number="local.curves.buzzer_vario_dots[i]"
-                type="number"
-                min="-2000"
-                max="2000"
-                step="5"
-                class="input"
-              >
-            </td>
-            <td>
-              <input
-                v-model.number="local.curves.buzzer_frequency_dots[i]"
-                type="number"
-                min="100"
-                max="6000"
-                step="5"
-                class="input"
-              >
-            </td>
-            <td>
-              <input
-                v-model.number="local.curves.buzzer_cycle_dots[i]"
-                type="number"
-                min="100"
-                max="1000"
-                step="5"
-                class="input"
-              >
-            </td>
-            <td>
-              <input
-                v-model.number="local.curves.buzzer_duty_dots[i]"
-                type="number"
-                min="2"
-                max="100"
-                class="input"
-              >
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <CurveEditor />
   </SettingsPanel>
 </template>
 
@@ -139,47 +84,5 @@ meta:
 
 .preset-btn:hover {
   border-color: var(--ck-ink);
-}
-
-.curves-grid {
-  overflow-x: auto;
-}
-
-table {
-  margin: 0 auto;
-  border-collapse: collapse;
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
-}
-
-th {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-  padding: var(--ck-s-xs);
-  border-bottom: var(--ck-stroke-hair) dashed var(--ck-grid);
-}
-
-td {
-  padding: 2px;
-}
-
-.input {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-meta);
-  padding: 2px 4px;
-  border: var(--ck-stroke-hair) solid var(--ck-grid);
-  border-radius: var(--ck-radius-soft);
-  background: var(--ck-paper);
-  color: var(--ck-ink);
-  width: 7ch;
-  text-align: right;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--ck-signal);
 }
 </style>
