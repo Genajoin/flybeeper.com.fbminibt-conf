@@ -24,7 +24,7 @@ Standardmäßig schlägt ein Versuch, das Variometer mit einem zweiten Gerät zu
 
 ### Einstellungen
 
-Alle Einstellungen werden über die grafische Oberfläche [auf der Konfigurator-Webseite](https://fbminibt-conf.flybeeper.com/) vorgenommen. Rufen Sie die Seite mit einem Gerät auf, das ein Bluetooth-Modul hat, z. B. Smartphone, Laptop oder PC mit Bluetooth. Klicken Sie auf Verbinden und wählen Sie FBminiBT aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Ändern Sie eine beliebige Einstellung und klicken Sie auf Anwenden.
+Sie benötigen ein Gerät mit Bluetooth-Modul, z. B. Smartphone, Laptop oder PC. Klicken Sie auf Verbinden und wählen Sie FBminiBT aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Ändern Sie eine beliebige Einstellung und klicken Sie auf Anwenden.
 
 `Silent on the ground` — bei Aktivierung merkt sich das Gerät den aktuellen Druck. Der Vario-Ton wird gemäß `Buzzer Volume` ausgelöst, wenn sich der Druck um einen Wert ändert, der etwa 1,5 m Höhenänderung entspricht.
 

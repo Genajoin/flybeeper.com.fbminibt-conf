@@ -44,7 +44,7 @@ Der Prototyp hat einen `USB Type C`-Anschluss zum Laden. Er unterstützt nur ein
 
 ### Konfiguration
 
-Sie können das Gerät über die grafische Oberfläche des [Konfigurators](https://fbminibt-conf.flybeeper.com/settings) testen und konfigurieren. Sie benötigen ein Gerät mit Bluetooth, z. B. Smartphone, Laptop oder PC mit Bluetooth. Klicken Sie auf `Connect` und wählen Sie `FBTAS` aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Ändern Sie einen Parameter und klicken Sie auf `Apply`. Auf der Registerkarte `Cockpit` sehen Sie alle vom Gerät gesendeten Daten in Echtzeit.
+Sie benötigen ein Gerät mit Bluetooth, z. B. Smartphone, Laptop oder PC mit Bluetooth. Klicken Sie auf `Connect` und wählen Sie `FBTAS` aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Ändern Sie einen Parameter und klicken Sie auf `Apply`. Auf der Registerkarte `Cockpit` sehen Sie alle vom Gerät gesendeten Daten in Echtzeit.
 
 `Pitot K factor (o.e.)` — Kalibrierungskoeffizient, der den konstruktiven Druckverlust im Pitotrohr und im Weg zum Differenzdrucksensor berücksichtigt. Eine Erhöhung erhöht IAS und TAS proportional. Nutzen Sie den [TAS-Kalibrierungs-Service](https://flybeeper.com/utils/tas-calibration/).
 

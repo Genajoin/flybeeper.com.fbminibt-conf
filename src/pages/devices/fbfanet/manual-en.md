@@ -77,7 +77,7 @@ Characteristics UUID for service `0x180A` DevInfo
 
 ### Settings
 
-Typically, all settings are managed by an external application. However, the user also has the option to configure through the graphical interface of the configurator. You need a device with a Bluetooth module, such as a smartphone, laptop, or PC with Bluetooth. Go to the [settings page](https://fbminibt-conf.flybeeper.com/settings). Click `Connect` and select `FBFANET` from the list. Keep the devices as close to each other as possible. Change any parameter and click `Apply`.
+Typically, all settings are managed by an external application — but you can also change them manually. You need a device with a Bluetooth module, such as a smartphone, laptop, or PC with Bluetooth. Click `Connect` and select `FBFANET` from the list. Keep the devices as close to each other as possible. Change any parameter and click `Apply`.
 
 | Name                | UUID                                 | Size   | Values                                                                |
 | ------------------- | ------------------------------------ | ------ | --------------------------------------------------------------------- |

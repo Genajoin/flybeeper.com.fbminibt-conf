@@ -24,7 +24,7 @@ By default, an attempt to pair a variometer with a second device will fail. Ther
 
 ### Settings
 
-All settings are made through the graphical interface on [the configurator's website](https://fbminibt-conf.flybeeper.com/). Go to the website with a device that has a Bluetooth module, such as a smartphone or laptop, or a PC with a Bluetooth module. Click Connect and select FBminiBT from the list. Keep the devices as close to each other as possible. Change any setting and click Apply.
+Use a device with a Bluetooth module — a smartphone, laptop, or PC. Click Connect and select FBminiBT from the list. Keep the devices as close to each other as possible. Change any setting and click Apply.
 
 `Silent on the ground` - when activated, the device memorizes the current pressure. The vario sound is triggered based on the `Buzzer Volume` when the pressure changes by an amount roughly equivalent to a 1.5-meter change in altitude.
 

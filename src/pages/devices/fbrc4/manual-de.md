@@ -26,7 +26,7 @@ Beim Entnehmen der Batterie werden auch die Pairing-Informationen für den HID-T
 
 ### Konfiguration
 
-Sie können das Gerät über die grafische Oberfläche des [Konfigurators](https://fbminibt-conf.flybeeper.com/settings) testen. Sie benötigen ein Bluetooth-fähiges Gerät, z. B. Smartphone, Laptop oder PC mit Bluetooth-Modul. Klicken Sie auf `Connect` und wählen Sie `FBRC4` aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Auf der Seite `cockpit` sehen Sie Änderungen beim Drücken der FBRC4-Tasten. Auf der Seite `settings` finden und ändern Sie folgende Einstellungen:
+Sie benötigen ein Bluetooth-fähiges Gerät, z. B. Smartphone, Laptop oder PC mit Bluetooth-Modul. Klicken Sie auf `Connect` und wählen Sie `FBRC4` aus der Liste. Halten Sie die Geräte möglichst nah beieinander. Auf der Seite `cockpit` sehen Sie Änderungen beim Drücken der FBRC4-Tasten. Auf der Seite `settings` finden und ändern Sie folgende Einstellungen:
 
 - `hid_keyboard_off`: Externer HID-Tastatur-Modus. Nach Ändern und `Apply` Batterie kurz entnehmen und wieder einsetzen. Ist das Flag nicht gesetzt, ist HID aktiv und die Verbindung erfordert das übliche System-Pairing. Beachten Sie: Das Gerät schaltet sich nie aus. Sie müssen die Verbindung nach Gebrauch manuell über das Betriebssystem trennen. Sonst hält das System die Verbindung offen, baut sie bei Abbruch wieder auf und entlädt nach und nach den Akku. Unterstützt Ihre Anwendung das Lesen der Tastenzustände über den AIOS-Dienst, sollten Sie HID durch Aktivieren dieser Einstellung deaktivieren. Das verlängert die Akkulaufzeit.
 
