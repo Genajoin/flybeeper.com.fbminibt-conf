@@ -54,11 +54,13 @@ function setVolume(v: number) {
       <CkEyebrow block>
         {{ t('sett.group-audio') }}
       </CkEyebrow>
-      <TheSetting
-        v-for="ch in otherChars"
-        :key="ch.characteristic.uuid"
-        :cha="ch"
-      />
+      <div class="vt__list">
+        <TheSetting
+          v-for="ch in otherChars"
+          :key="ch.characteristic.uuid"
+          :cha="ch"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -105,5 +107,18 @@ function setVolume(v: number) {
 .vt__btn--active {
   background: var(--ck-ink);
   color: var(--ck-paper);
+}
+
+.vt__list {
+  /* Shared 2-column grid for TheSetting rows so input seams align.
+   * Left-aligned on mobile (the audio block already sits in a narrow
+   * column on desktop too, so we don't auto-centre here). */
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: center;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
+  margin-top: 12px;
 }
 </style>

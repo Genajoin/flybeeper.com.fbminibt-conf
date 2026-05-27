@@ -41,25 +41,37 @@ function labelFor(ch: BleCharacteristic): string {
 
 <style scoped>
 .b-list {
+  /* Single shared 2-column grid: values (toggles + native inputs from
+   * TheSetting) in col 1, labels in col 2. .b-row and TheSetting itself
+   * are both display:contents so their children drop straight into this
+   * grid — keeps the value/label seam aligned across boolean and numeric
+   * rows. Left-aligned on mobile, centred on tablet+. */
   display: grid;
-  grid-template-columns: auto auto;
-  justify-content: center;
+  grid-template-columns: max-content max-content;
   align-items: center;
-  gap: 16px 28px;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
   margin: 0;
   padding: 22px;
   list-style: none;
 }
 
-.b-row {
+@media (min-width: 720px) {
+  .b-list {
+    justify-content: center;
+  }
+}
+
+.b-row,
+.b-row--full {
   display: contents;
 }
 
-.b-row--full > * {
-  /* TheSetting brings its own internal grid + max-width — let it span the
-   * whole two-column row instead of trying to splice into the parent grid. */
-  grid-column: 1 / -1;
-  min-width: 320px;
+/* Pin the col-1 cell (toggle for boolean rows) to the seam so a 28px
+ * toggle shares the same right edge as a 10ch <input> in the next row. */
+.b-list > .b-row > :first-child {
+  justify-self: end;
 }
 
 .b-row__label {

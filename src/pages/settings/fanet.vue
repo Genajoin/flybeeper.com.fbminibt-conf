@@ -20,12 +20,26 @@ const cpfChars = useCpfGroup('fanet')
 
 <style scoped>
 .f-list {
-  /* TheSetting brings a max-width:480px centred grid for each row;
-   * keep the wrapping list as a simple vertical stack with spacing. */
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  /* Shared 2-column grid so every TheSetting input lines up under one
+   * vertical seam. TheSetting itself is display:contents — its <input>
+   * and <label> drop straight into THIS grid.
+   * Mobile: pin to the left edge with normal page padding (centring
+   * looks awkward on a narrow viewport).
+   * Desktop ≥720px: centre the whole block so the seam sits mid-page.
+   * Wide ≥960px: split into two field-pairs per row to use the space. */
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: center;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
   padding: 22px;
+}
+
+@media (min-width: 720px) {
+  .f-list {
+    justify-content: center;
+  }
 }
 
 .empty {

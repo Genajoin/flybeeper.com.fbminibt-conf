@@ -74,17 +74,13 @@ const inputType = computed(() => getTypeFromPresentationFormat())
 
 <style scoped>
 .row {
-  /* Values stack along a single vertical seam on the LEFT, labels read
-   * from that seam to the right. Same idea as form inputs in a settings
-   * dialog: scan the column of values, glance right for what each is. */
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  max-width: 540px;
-  margin-left: auto;
-  margin-right: auto;
+  /* display:contents drops <input> + <label> straight into the parent
+   * grid so VALUES from every row share one column (single vertical seam)
+   * and LABELS share another. Each TheSetting having its own grid would
+   * shift the seam row-to-row depending on label length — the list
+   * container (.f-list / .t-list / .uart-extras / .vt__list) defines the
+   * shared 2-column track. */
+  display: contents;
 }
 
 .row__label {

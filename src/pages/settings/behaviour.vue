@@ -41,18 +41,24 @@ const list = computed(() => cpfChars.value)
 
 <style scoped>
 .b-list {
-  /* Two-column grid that hugs the centre seam: labels right-aligned in
-   * the left column, controls left-aligned in the right. On desktop the
-   * whole thing centres on the page so the eye doesn't have to span a
-   * full-width row to pair a setting with its toggle. */
+  /* Shared 2-column grid (toggle | label). Pinned to the left edge on
+   * mobile — a single centred column on a narrow viewport feels lost —
+   * and centred at tablet+ where there's whitespace to balance. */
   display: grid;
-  grid-template-columns: auto auto;
-  justify-content: center;
+  grid-template-columns: max-content max-content;
   align-items: center;
-  gap: 16px 28px;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
   margin: 0;
   padding: 22px;
   list-style: none;
+}
+
+@media (min-width: 720px) {
+  .b-list {
+    justify-content: center;
+  }
 }
 
 .b-row {

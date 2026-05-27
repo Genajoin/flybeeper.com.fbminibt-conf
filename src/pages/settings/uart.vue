@@ -56,10 +56,28 @@ const protocolOptions = [
 </template>
 
 <style scoped>
-.uart-row,
-.uart-extras {
+.uart-row {
   padding: 18px 22px;
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.uart-extras {
+  /* Shared 2-column grid for TheSetting rows (display:contents at the
+   * child level). Left-aligned on mobile, centred on tablet+. */
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: center;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
+  padding: 18px 22px;
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+@media (min-width: 720px) {
+  .uart-extras {
+    justify-content: center;
+  }
 }
 
 .uart-row__seg {
