@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useInstallPrompt } from '~/composables/useInstallPrompt'
+import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSettingsGroups'
 
 const { t } = useI18n()
 const bt = useBluetoothStore()
@@ -14,19 +15,38 @@ interface Row {
   sub: string
   signal?: boolean
   action?: () => void
+  /** When set, the row is hidden if the device exposes no chars in this group. */
+  conditionalGroup?: SettingsGroupKey
 }
+
+/**
+ * Which groups the connected device actually exposes. Driven by the real
+ * bleCharacteristics list — offline (demo mode) we treat every group as
+ * present so the user can still browse settings without hardware.
+ */
+const presentGroups = computed<Set<SettingsGroupKey>>(() => {
+  if (!bt.isConnected)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
+  const out = new Set<SettingsGroupKey>()
+  for (const ch of bt.bleCharacteristics) {
+    const g = CPF_UUID_TO_GROUP[ch.characteristic.uuid]
+    if (g)
+      out.add(g)
+  }
+  return out
+})
 
 const rows = computed<Row[]>(() => {
   const out: Row[] = [
-    { to: '/settings/audio', label: t('dashboard.hub-sound'), sub: t('dashboard.hub-sound-sub', { v: '—' }) },
-    { to: '/settings/curves', label: t('dashboard.hub-curves'), sub: t('dashboard.hub-curves-sub') },
-    { to: '/settings/behaviour', label: t('dashboard.hub-behaviour'), sub: t('dashboard.hub-behaviour-sub') },
-    { to: '/settings/power', label: t('dashboard.hub-power'), sub: t('dashboard.hub-power-sub') },
-    { to: '/settings/uart', label: t('dashboard.hub-uart'), sub: t('dashboard.hub-uart-sub') },
-    { to: '/settings/simulator', label: t('dashboard.hub-simulator'), sub: t('dashboard.hub-simulator-sub') },
+    { to: '/settings/audio', label: t('dashboard.hub-sound'), sub: t('dashboard.hub-sound-sub'), conditionalGroup: 'audio' },
+    { to: '/settings/behaviour', label: t('dashboard.hub-behaviour'), sub: t('dashboard.hub-behaviour-sub'), conditionalGroup: 'behaviour' },
+    { to: '/settings/fanet', label: t('sett.group-fanet'), sub: t('sett.group-fanet-desc'), conditionalGroup: 'fanet' },
+    { to: '/settings/tas', label: t('sett.group-tas'), sub: t('sett.group-tas-desc'), conditionalGroup: 'tas' },
+    { to: '/settings/power', label: t('dashboard.hub-power'), sub: t('dashboard.hub-power-sub'), conditionalGroup: 'power' },
+    { to: '/settings/uart', label: t('dashboard.hub-uart'), sub: t('dashboard.hub-uart-sub'), conditionalGroup: 'uart' },
     { to: '/update', label: t('dashboard.hub-firmware'), sub: t('dashboard.hub-firmware-sub', { v: fw.value }) },
     { to: '/terminal', label: t('dashboard.hub-terminal'), sub: t('dashboard.hub-terminal-sub') },
-  ]
+  ].filter(r => !r.conditionalGroup || presentGroups.value.has(r.conditionalGroup))
   if (canInstall.value) {
     out.push({
       label: t('install.hub-row'),

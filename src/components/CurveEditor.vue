@@ -310,6 +310,8 @@ function onPointerUp(evt: PointerEvent) {
 /* ---------------------------------------------------------------- grid */
 const gridXLines = computed(() => xTicks.value.map(t => t.x))
 const gridYLines = computed(() => yTicks.value.map(t => t.y))
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -330,6 +332,10 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
           {{ key }}
         </button>
       </div>
+
+      <span v-if="zoomLevel > 1" class="editor__hint">
+        {{ t('sett.drag-to-hear') }}
+      </span>
 
       <div class="editor__zoom" role="group" aria-label="Zoom">
         <button
@@ -583,6 +589,18 @@ const gridYLines = computed(() => yTicks.value.map(t => t.y))
   border-radius: var(--ck-radius-soft);
   touch-action: none;
   cursor: grab;
+}
+
+.editor__hint {
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+  font-weight: 700;
+  align-self: center;
+  margin-left: auto;
+  margin-right: var(--ck-s-sm);
 }
 
 .editor__svg:active {

@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
 import { get as idbGet, set as idbSet } from 'idb-keyval'
 
+// structuredClone() chokes on Pinia reactive proxies ("could not be cloned").
+// JSON.parse(JSON.stringify) strips proxies and the resulting plain object is
+// safe for IDB writes and history snapshots. Acceptable because every value we
+// store here is JSON-serialisable (numbers, booleans, strings, int arrays).
+function cloneJson<T>(v: T): T {
+  return v === null || v === undefined ? v : JSON.parse(JSON.stringify(v))
+}
+
 /**
  * Local-first settings store.
  *
@@ -75,11 +83,10 @@ export const useSettingsStore = defineStore('settingsStore', {
     },
 
     async persist(): Promise<void> {
-      const stripProxy = <T>(v: T): T => v === null || v === undefined ? v : JSON.parse(JSON.stringify(v))
       await Promise.all([
-        idbSet(IDB_KEY_SETTINGS, stripProxy(this.local)),
-        idbSet(IDB_KEY_SNAPSHOT, stripProxy(this.lastDeviceSnapshot)),
-        idbSet(IDB_KEY_HISTORY, stripProxy(this.history)),
+        idbSet(IDB_KEY_SETTINGS, cloneJson(this.local)),
+        idbSet(IDB_KEY_SNAPSHOT, cloneJson(this.lastDeviceSnapshot)),
+        idbSet(IDB_KEY_HISTORY, cloneJson(this.history)),
       ])
     },
 
@@ -90,17 +97,17 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.history.unshift({
         ts: Date.now(),
         source,
-        settings: structuredClone(snap),
+        settings: cloneJson(snap),
       })
       if (this.history.length > HISTORY_LIMIT)
         this.history.length = HISTORY_LIMIT
     },
 
     applyDeviceSnapshot(snap: SettingsLocal): void {
-      this.lastDeviceSnapshot = structuredClone(snap)
+      this.lastDeviceSnapshot = cloneJson(snap)
       this.lastSyncedAt = Date.now()
       if (!this.local)
-        this.local = structuredClone(snap)
+        this.local = cloneJson(snap)
       this.pushHistory('device', snap)
     },
 
@@ -112,7 +119,7 @@ export const useSettingsStore = defineStore('settingsStore', {
     },
 
     replaceLocal(next: SettingsLocal): void {
-      this.local = structuredClone(next)
+      this.local = cloneJson(next)
       this.pushHistory('local')
     },
 
@@ -133,7 +140,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       const entry = this.history.find(e => e.ts === ts)
       if (!entry)
         return false
-      this.local = structuredClone(entry.settings)
+      this.local = cloneJson(entry.settings)
       this.pushHistory('local')
       return true
     },
@@ -141,7 +148,7 @@ export const useSettingsStore = defineStore('settingsStore', {
     markSynced(): void {
       if (!this.local)
         return
-      this.lastDeviceSnapshot = structuredClone(this.local)
+      this.lastDeviceSnapshot = cloneJson(this.local)
       this.lastSyncedAt = Date.now()
     },
 
@@ -154,7 +161,7 @@ export const useSettingsStore = defineStore('settingsStore', {
         return
       const patch: SettingsLocal = {}
       for (const k of keys)
-        patch[k] = structuredClone(this.lastDeviceSnapshot[k])
+        patch[k] = cloneJson(this.lastDeviceSnapshot[k])
       this.local = { ...this.local, ...patch }
       this.pushHistory('local')
     },

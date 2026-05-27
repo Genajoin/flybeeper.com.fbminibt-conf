@@ -4,8 +4,11 @@ withDefaults(defineProps<{
   eyebrow: string
   title: string
   sub?: string
+  /** Appends an animated ellipsis after the title (CONNECTING/FETCHING states). */
+  loading?: boolean
 }>(), {
   accent: 'var(--ck-ink)',
+  loading: false,
 })
 </script>
 
@@ -17,7 +20,7 @@ withDefaults(defineProps<{
         {{ eyebrow }}
       </CkEyebrow>
       <div class="ck-banner-row__title">
-        {{ title }}
+        {{ title }}<CkDots v-if="loading" />
       </div>
       <div v-if="sub" class="ck-banner-row__sub">
         {{ sub }}

@@ -73,6 +73,7 @@ pair:
   explainer-body: We talk to your variometer over Web Bluetooth. When you tap Connect, the browser will ask which FB-prefixed device to pair with. Settings you change here are saved on this phone first and pushed to the device on Apply.
   explainer-supported: Works in Chrome / Edge on Android, Windows, macOS, Linux. On iPhone use the Bluefy browser.
   continue: Continue →
+  skip-demo: Skip · view demo
   connect: Connect →
   connect-another: Connect another →
   saved-title: Your devices
@@ -146,7 +147,7 @@ dashboard:
   synced: ● SYNCED
   dirty: ● UNSYNCED
   hub-sound: SOUND
-  hub-sound-sub: 12-pt curve · vol {v}/3
+  hub-sound-sub: volume · thresholds · 12-pt curve · simulator
   hub-curves: CURVES
   hub-curves-sub: response · 12 points
   hub-behaviour: BEHAVIOUR
@@ -164,6 +165,20 @@ dashboard:
   back-dashboard: ← DASHBOARD
   offline-eyebrow: OFFLINE
   offline-body: no device · changes saved locally · connect to sync
+  demo-device: DEMO MODE
+  demo-mode-eyebrow: DEMO
+  demo-mode-title: NOT LIVE · CONNECT TO READ REAL VARIO
+  demo-mode-sub: Settings shown are demo defaults — pair a FlyBeeper device to see live values.
+  connect-cta: ● CONNECT
+  cancel-cta: ● CANCEL
+  connecting-cta: ● CONNECTING
+  fetching-cta: 'FETCHING {n}/{total}'
+  connect-error-eyebrow: CONNECT FAILED
+  connect-error-title: COULD NOT REACH DEVICE
+  connecting-eyebrow: PAIRING
+  connecting-title: REACHING DEVICE
+  fetching-eyebrow: READING
+  fetching-title: 'LOADING {n}/{total} CHARACTERISTICS'
 
 msg:
   disconnected: Device Disconnected
@@ -282,6 +297,11 @@ sett:
   group-uart: UART
   group-power: Power
   group-simulator: Simulator
+  group-fanet: FANET
+  group-tas: TAS
+  group-fanet-desc: FANET radio parameters and gateway UART protocol.
+  group-tas-desc: True Air Speed calibration — Pitot K factor and differential pressure offset.
+  drag-to-hear: ● DRAG TO HEAR
   group-audio-desc: Buzzer volume and the climb / sink thresholds that decide when the tone starts and stops.
   group-curves-desc: Twelve breakpoints mapping vario rate to frequency, cycle and duty.
   group-behaviour-desc: Silent-on-ground, LED indication, HID keyboard.
@@ -299,6 +319,9 @@ audio:
   source-off: Off
   demo: ▶ Demo
   demo-stop: ■ Stop
+  silent-device-eyebrow: DEVICE MUTED
+  silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
+  silent-device-cta: Open audio settings
   preset-strong-sink: -3 m/s
   preset-zero: '0'
   preset-weak-climb: +1 m/s

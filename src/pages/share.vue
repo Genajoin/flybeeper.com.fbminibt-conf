@@ -94,48 +94,52 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
       </template>
     </PageHeader>
 
-    <div class="share__qr">
-      <div class="share__qr-box" v-html="qrSvg" />
-      <div class="share__qr-meta">
-        <CkEyebrow>{{ t('preset.scan-eyebrow') }}</CkEyebrow>
-        <div class="share__qr-name">
-          {{ presetName || t('preset.import-default-name') }}
-        </div>
-        <div class="share__qr-stats">
-          <div>{{ Object.keys(localBag).length }} FIELDS</div>
-          <div class="share__qr-signal">
-            {{ byteSize }} {{ t('preset.bytes') }}
+    <div class="share__grid">
+      <div class="share__qr">
+        <div class="share__qr-box" v-html="qrSvg" />
+        <div class="share__qr-meta">
+          <CkEyebrow>{{ t('preset.scan-eyebrow') }}</CkEyebrow>
+          <div class="share__qr-name">
+            {{ presetName || t('preset.import-default-name') }}
+          </div>
+          <div class="share__qr-stats">
+            <div>{{ Object.keys(localBag).length }} FIELDS</div>
+            <div class="share__qr-signal">
+              {{ byteSize }} {{ t('preset.bytes') }}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="share__url">
-      <CkEyebrow block>
-        {{ t('preset.url-eyebrow') }}
-      </CkEyebrow>
-      <div class="share__url-box">
-        <span class="share__url-head">{{ urlHead }}</span><span>{{ urlTail }}</span>
-      </div>
-      <div class="share__url-actions">
-        <button class="share__url-cta share__url-cta--ink" type="button" @click="copyUrl">
-          {{ t('preset.copy-url') }}
-        </button>
-        <button class="share__url-cta" type="button" @click="downloadJson">
-          {{ t('preset.download-json') }}
-        </button>
-      </div>
-    </div>
+      <div class="share__right">
+        <div class="share__url">
+          <CkEyebrow block>
+            {{ t('preset.url-eyebrow') }}
+          </CkEyebrow>
+          <div class="share__url-box">
+            <span class="share__url-head">{{ urlHead }}</span><span>{{ urlTail }}</span>
+          </div>
+          <div class="share__url-actions">
+            <button class="share__url-cta share__url-cta--ink" type="button" @click="copyUrl">
+              {{ t('preset.copy-url') }}
+            </button>
+            <button class="share__url-cta" type="button" @click="downloadJson">
+              {{ t('preset.download-json') }}
+            </button>
+          </div>
+        </div>
 
-    <div class="share__form">
-      <label class="share__field">
-        <CkEyebrow>{{ t('preset.preset-name') }}</CkEyebrow>
-        <input v-model="presetName" class="share__input" type="text" :placeholder="t('preset.import-default-name')">
-      </label>
-      <label class="share__field">
-        <CkEyebrow>{{ t('preset.preset-by') }}</CkEyebrow>
-        <input v-model="presetBy" class="share__input" type="text" placeholder="@pilot">
-      </label>
+        <div class="share__form">
+          <label class="share__field">
+            <CkEyebrow>{{ t('preset.preset-name') }}</CkEyebrow>
+            <input v-model="presetName" class="share__input" type="text" :placeholder="t('preset.import-default-name')">
+          </label>
+          <label class="share__field">
+            <CkEyebrow>{{ t('preset.preset-by') }}</CkEyebrow>
+            <input v-model="presetBy" class="share__input" type="text" placeholder="@pilot">
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="share__privacy">
@@ -154,11 +158,14 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
 .share__display {
   font-family: var(--ck-font-display);
   font-weight: 800;
-  font-size: 28px;
-  letter-spacing: -1px;
+  font-size: clamp(20px, 7.2vw, 28px);
+  letter-spacing: -0.8px;
   margin: 6px 0 6px;
   text-transform: uppercase;
   line-height: 0.95;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .share__sub {
@@ -321,5 +328,30 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
   letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
   line-height: 1.6;
+}
+
+.share__grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.share__right {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 960px) {
+  .share__grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+  .share__qr {
+    border-right: 1.5px solid var(--ck-ink);
+    border-bottom: none;
+  }
+  .share__right .share__url,
+  .share__right .share__form {
+    border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  }
 }
 </style>

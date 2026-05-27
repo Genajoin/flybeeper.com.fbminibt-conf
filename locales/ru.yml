@@ -73,6 +73,7 @@ pair:
   explainer-body: Связь с вариометром идёт по Web Bluetooth. Когда вы нажмёте Подключить, браузер покажет список устройств с префиксом FB. Изменения настроек сохраняются на этом телефоне сразу, а на устройство уходят по кнопке Применить.
   explainer-supported: Работает в Chrome и Edge на Android, Windows, macOS, Linux. На iPhone используйте браузер Bluefy.
   continue: Продолжить →
+  skip-demo: Пропустить · демо-режим
   connect: Подключить →
   connect-another: Подключить ещё →
   saved-title: Ваши устройства
@@ -146,7 +147,7 @@ dashboard:
   synced: ● СИНХР
   dirty: ● НЕ СИНХР
   hub-sound: ЗВУК
-  hub-sound-sub: 12-точечная кривая · громк {v}/3
+  hub-sound-sub: громкость · пороги · 12-точечная кривая · симулятор
   hub-curves: КРИВЫЕ
   hub-curves-sub: отклик · 12 точек
   hub-behaviour: ПОВЕДЕНИЕ
@@ -164,6 +165,20 @@ dashboard:
   back-dashboard: ← ДАШБОРД
   offline-eyebrow: ОФФЛАЙН
   offline-body: нет устройства · изменения сохраняются локально · подключитесь для синхронизации
+  demo-device: ДЕМО-РЕЖИМ
+  demo-mode-eyebrow: ДЕМО
+  demo-mode-title: НЕ LIVE · ПОДКЛЮЧИТЕСЬ ДЛЯ РЕАЛЬНЫХ ДАННЫХ
+  demo-mode-sub: Показаны демо-настройки — подключите устройство FlyBeeper, чтобы увидеть реальные значения.
+  connect-cta: ● ПОДКЛЮЧИТЬ
+  cancel-cta: ● ОТМЕНА
+  connecting-cta: ● ПОДКЛЮЧЕНИЕ
+  fetching-cta: 'ЧТЕНИЕ {n}/{total}'
+  connect-error-eyebrow: СБОЙ ПОДКЛЮЧЕНИЯ
+  connect-error-title: НЕ УДАЁТСЯ ДОСТУЧАТЬСЯ ДО УСТРОЙСТВА
+  connecting-eyebrow: СОЕДИНЕНИЕ
+  connecting-title: УСТАНАВЛИВАЕМ КАНАЛ
+  fetching-eyebrow: ЧТЕНИЕ
+  fetching-title: 'ЗАГРУЖАЕМ {n}/{total} ХАРАКТЕРИСТИК'
 
 msg:
   disconnected: Устройство отключено
@@ -280,12 +295,17 @@ sett:
   group-uart: UART
   group-power: Питание
   group-simulator: Симулятор
+  group-fanet: FANET
+  group-tas: TAS
   group-audio-desc: Громкость зумера и пороги, при которых тон начинается и заканчивается.
   group-curves-desc: 12 точек, задающих зависимость частоты, цикла и заполнения от скороподъёмности.
   group-behaviour-desc: Беззвучный на земле, индикация светодиодом, HID-клавиатура.
   group-uart-desc: Протокол на BLE UART-эмуляторе.
   group-power-desc: Поведение Bluetooth-сна.
   group-simulator-desc: Подайте искусственное значение варио, чтобы услышать кривую без датчика.
+  group-fanet-desc: Параметры радио FANET и протокол UART-шлюза.
+  group-tas-desc: Калибровка истинной воздушной скорости — коэффициент трубки Пито и смещение дифференциального давления.
+  drag-to-hear: ● ТЯНИТЕ И СЛУШАЙТЕ
   revert: Откатить
   no-changes: Локальных изменений нет
   unsynced: 'Локальных изменений: {count}'
@@ -297,6 +317,9 @@ audio:
   source-off: Выкл
   demo: ▶ Демо
   demo-stop: ■ Стоп
+  silent-device-eyebrow: ЗВУК УСТРОЙСТВА ВЫКЛЮЧЕН
+  silent-device-body: Громкость зумера на устройстве выставлена в 0 — симулятор играть не будет, пока не увеличите её.
+  silent-device-cta: Открыть настройки звука
   preset-strong-sink: −3 м/с
   preset-zero: '0'
   preset-weak-climb: +1 м/с

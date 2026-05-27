@@ -1,21 +1,47 @@
 <script setup lang="ts">
 /**
  * Shared simulator UI — audio source toggle, slider with readout, snap presets,
- * Demo walk-through. Used by /settings/simulator and /settings/curves (where
- * it sits under the CurveEditor so the user can drag breakpoints and hear
- * the result without leaving the page).
+ * Demo walk-through. Mounted inside the combined Sound page (/settings/audio)
+ * under the curve editor so the user can drag breakpoints and hear the result
+ * without leaving the page.
  *
- * State that needs to survive across the two mount points lives in the
- * shared composables (useSimulation singleton write queue, useAudioSource
- * persisted toggle, useToneSynth — one synth per component instance, which
- * is fine because only one of these is mounted at a time).
+ * State that survives across mount/unmount lives in the shared composables
+ * (useSimulation singleton write queue, useAudioSource persisted toggle,
+ * useToneSynth — one synth per component instance).
  */
 
+import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+
 const bt = useBluetoothStore()
+const settings = useSettingsStore()
 const { t } = useI18n()
 const { source } = useAudioSource()
 const synth = useToneSynth()
 const sim = useSimulation()
+const route = useRoute()
+
+const CPF_BUZZER_VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
+
+// Device buzzer_volume — only relevant when the audio source is "device":
+// the simulator routes the slider to the GATT simulate characteristic and
+// the firmware plays the buzzer. If volume is 0, nothing will be audible
+// regardless of how vigorously the user drags. Warn so they don't sit there
+// thinking the simulator is broken.
+const deviceBuzzerVolume = computed<number | null>(() => {
+  const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_BUZZER_VOLUME_UUID)
+  const v = ch?.formattedValue
+  return typeof v === 'number' ? v : null
+})
+
+const showSilentDeviceWarning = computed(() =>
+  bt.isConnected
+  && source.value === 'device'
+  && deviceBuzzerVolume.value === 0
+  // The /settings/audio page already exposes the volume picker right next
+  // to the simulator — surfacing the same warning twice on that route is
+  // noise.
+  && route.path !== '/settings/audio',
+)
 
 const SLIDER_MIN_MS = -5
 const SLIDER_MAX_MS = 10
@@ -33,22 +59,24 @@ const CPF_FREQ_UUID = '8c090502-81c4-4d29-8d10-6db20607ace9'
 const CPF_CYCLE_UUID = '9c3b62c0-e227-4f1a-8342-7e647015555d'
 const CPF_DUTY_UUID = '98c16914-00ad-47ba-b625-148f0baaec47'
 
-const DEFAULT_CURVES = {
-  buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
-  buzzer_frequency_dots: [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
-  buzzer_cycle_dots: [850, 790, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
-  buzzer_duty_dots: [100, 98, 95, 38, 40, 41, 43, 46, 49, 54, 78, 90],
-}
-
+// Resolve each curve UUID in priority order:
+//   1. live BLE characteristic (when connected),
+//   2. local store (mutated by virtual-CPF chars when offline),
+//   3. DEMO_SETTINGS (last-resort fallback for SSG / before hydrate).
 const synthCurves = computed(() => {
-  const find = (uuid: string) => bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
-  const vario = find(CPF_VARIO_UUID)?.formattedValue as number[] | undefined
-  const freq = find(CPF_FREQ_UUID)?.formattedValue as number[] | undefined
-  const cycle = find(CPF_CYCLE_UUID)?.formattedValue as number[] | undefined
-  const duty = find(CPF_DUTY_UUID)?.formattedValue as number[] | undefined
-  if (vario && freq && cycle && duty)
-    return { buzzer_vario_dots: vario, buzzer_frequency_dots: freq, buzzer_cycle_dots: cycle, buzzer_duty_dots: duty }
-  return DEFAULT_CURVES
+  const fromBle = (uuid: string) =>
+    bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)?.formattedValue as number[] | undefined
+  const fromLocal = (uuid: string) =>
+    settings.local?.[uuid] as number[] | undefined
+  const pick = (uuid: string) =>
+    fromBle(uuid) ?? fromLocal(uuid) ?? (DEMO_SETTINGS[uuid] as number[])
+
+  return {
+    buzzer_vario_dots: pick(CPF_VARIO_UUID),
+    buzzer_frequency_dots: pick(CPF_FREQ_UUID),
+    buzzer_cycle_dots: pick(CPF_CYCLE_UUID),
+    buzzer_duty_dots: pick(CPF_DUTY_UUID),
+  }
 })
 
 // Browser tone volume — independent of the device buzzer_volume on purpose
@@ -145,6 +173,12 @@ onUnmounted(() => {
       <span class="ctrl__label">{{ t('audio.source-label') }}</span>
       <AudioSourceToggle />
     </div>
+
+    <RouterLink v-if="showSilentDeviceWarning" to="/settings/audio" class="ctrl__warning">
+      <span class="ctrl__warning-eyebrow">{{ t('audio.silent-device-eyebrow') }}</span>
+      <span class="ctrl__warning-body">{{ t('audio.silent-device-body') }}</span>
+      <span class="ctrl__warning-cta">{{ t('audio.silent-device-cta') }} →</span>
+    </RouterLink>
 
     <div class="ctrl__slider-block">
       <div class="ctrl__readout">
@@ -243,5 +277,44 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 0;
   text-transform: uppercase;
+}
+
+.ctrl__warning {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--ck-paper);
+  border: var(--ck-stroke-rule) solid var(--ck-signal);
+  text-decoration: none;
+  color: var(--ck-ink);
+  font-family: var(--ck-font-body);
+}
+
+.ctrl__warning:hover {
+  background: var(--ck-bg-deep);
+}
+
+.ctrl__warning-eyebrow {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-eyebrow);
+  letter-spacing: var(--ck-track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+  font-weight: 700;
+}
+
+.ctrl__warning-body {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ctrl__warning-cta {
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
 }
 </style>

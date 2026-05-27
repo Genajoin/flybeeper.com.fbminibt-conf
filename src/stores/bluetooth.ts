@@ -23,6 +23,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     isConnected: false,
     isConnecting: false,
     isFetching: false,
+    /**
+     * Progress of the eager FSS initialize() pass. Used by PairingWizard /
+     * cockpit / terminal to surface "FETCHING 4 / 12" while the user waits.
+     * Reset to 0 / 0 before each connect attempt.
+     */
+    fetchProgress: 0,
+    fetchTotal: 0,
     isDisconnecting: false,
     isSubscribed: false,
     /**
@@ -59,71 +66,90 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         return
 
       this.errorMessage = ''
+      this.fetchProgress = 0
+      this.fetchTotal = 0
       this.isConnecting = true
       this.device = device
       this.devName = this.device.name
       log.info('Connecting to', this.devName)
 
-      const server = await this.device.gatt.connect()
+      try {
+        const server = await this.device.gatt.connect()
 
-      const services = await server.getPrimaryServices()
-      this.isConnecting = false
-      this.isFetching = true
-      log.info('fetching')
-      for (const service of services) {
-        log.debug('SERVICE', service.uuid)
-        const characteristics = await service.getCharacteristics()
-        for (const ch of characteristics) {
-          log.debug('characteristic', ch.uuid)
-          const bleCharacteristic = new BleCharacteristicImpl(ch)
-          this.bleCharacteristics.push(bleCharacteristic)
+        const services = await server.getPrimaryServices()
+        this.isConnecting = false
+        this.isFetching = true
+        log.info('fetching')
+        for (const service of services) {
+          log.debug('SERVICE', service.uuid)
+          const characteristics = await service.getCharacteristics()
+          for (const ch of characteristics) {
+            log.debug('characteristic', ch.uuid)
+            const bleCharacteristic = new BleCharacteristicImpl(ch)
+            this.bleCharacteristics.push(bleCharacteristic)
+          }
+        }
+
+        this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
+          .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
+
+        // Device Information Service
+        const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
+        if (fwRev)
+          this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
+
+        const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
+        if (modNum)
+          this.dis.modelNumberString.value = await modNum.getFormattedValue()
+
+        const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
+        if (manName)
+          this.dis.manufacturerNameString.value = await manName.getFormattedValue()
+
+        // FlyBeeper Settings Service — pin the simulation characteristic so
+        // useSimulation() can write to it without re-scanning every time.
+        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
+        if (FSS) {
+          const characteristics = await FSS.getCharacteristics()
+          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+        }
+
+        this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
+        this.isConnected = true
+        this.hasConnectedThisSession = true
+
+        // Eager-initialize every FlyBeeper Settings Service characteristic so
+        // panels render without lazy per-visit reads. We stay in isFetching
+        // until the whole batch settles so the UI can show progress N/total.
+        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+        const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
+        this.fetchTotal = fssChars.length
+        Promise.allSettled(
+          fssChars.map(c => c.initialize().finally(() => { this.fetchProgress++ })),
+        ).finally(() => {
+          this.isFetching = false
+        })
+
+        if (this.device.id && this.device.name) {
+          useSavedDevicesStore().remember({
+            id: this.device.id,
+            name: this.device.name,
+            firmware: (this.dis.firmwareRevisionString.value as string | null) ?? null,
+          })
         }
       }
-
-      this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
-        .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
-
-      // Device Information Service
-      const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
-      if (fwRev)
-        this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
-
-      const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
-      if (modNum)
-        this.dis.modelNumberString.value = await modNum.getFormattedValue()
-
-      const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
-      if (manName)
-        this.dis.manufacturerNameString.value = await manName.getFormattedValue()
-
-      // FlyBeeper Settings Service — pin the simulation characteristic so
-      // useSimulation() can write to it without re-scanning every time.
-      const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
-      if (FSS) {
-        const characteristics = await FSS.getCharacteristics()
-        this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-      }
-
-      this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-      this.isConnected = true
-      this.hasConnectedThisSession = true
-      this.isFetching = false
-
-      // Eager-initialize every FlyBeeper Settings Service characteristic so
-      // panels render without lazy per-visit reads.
-      const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
-      Promise.allSettled(
-        this.bleCharacteristics
-          .filter(c => c.characteristic.service.uuid === FSS_UUID)
-          .map(c => c.initialize()),
-      ).catch(() => { /* allSettled never rejects */ })
-
-      if (this.device.id && this.device.name) {
-        useSavedDevicesStore().remember({
-          id: this.device.id,
-          name: this.device.name,
-          firmware: (this.dis.firmwareRevisionString.value as string | null) ?? null,
-        })
+      catch (error) {
+        log.error('Error during device connect:', error)
+        this.errorMessage = error instanceof Error ? error.message : String(error)
+        this.isConnecting = false
+        this.isFetching = false
+        try {
+          this.device?.gatt?.disconnect()
+        }
+        catch { /* device already gone */ }
+        this.bleCharacteristics = []
+        this.device = null as BluetoothDevice
+        this.isConnected = false
       }
     },
 
@@ -173,6 +199,28 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         log.error('Error disconnecting from the device:', error)
       }
       this.isDisconnecting = false
+    },
+
+    /**
+     * Abort an in-flight connect/fetch. The Chrome device-picker dialog
+     * itself can't be dismissed programmatically (user has to hit X), but
+     * once gatt.connect has returned we can tear down the link, clear flags,
+     * and let the UI revert to demo mode.
+     */
+    async cancelConnect() {
+      if (!this.isConnecting && !this.isFetching)
+        return
+      try {
+        this.device?.gatt?.disconnect()
+      }
+      catch { /* device already gone or never paired */ }
+      this.bleCharacteristics = []
+      this.device = null as BluetoothDevice
+      this.isConnecting = false
+      this.isFetching = false
+      this.isConnected = false
+      this.fetchProgress = 0
+      this.fetchTotal = 0
     },
     onDisconnected() {
       this.isConnected = false

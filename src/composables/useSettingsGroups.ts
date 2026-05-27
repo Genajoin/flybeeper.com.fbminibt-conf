@@ -14,6 +14,8 @@ export type SettingsGroupKey =
   | 'uart'
   | 'power'
   | 'simulator'
+  | 'fanet'
+  | 'tas'
 
 export interface SettingsGroupNav {
   key: SettingsGroupKey
@@ -21,12 +23,17 @@ export interface SettingsGroupNav {
 }
 
 export const SETTINGS_GROUP_NAV: SettingsGroupNav[] = [
+  // Audio is the combined Sound page — volume, thresholds, 12-pt curves and
+  // simulator all live there now, so the curves and simulator groups route
+  // back to /settings/audio (no standalone pages for them).
   { key: 'audio', route: '/settings/audio' },
-  { key: 'curves', route: '/settings/curves' },
+  { key: 'curves', route: '/settings/audio' },
+  { key: 'simulator', route: '/settings/audio' },
   { key: 'behaviour', route: '/settings/behaviour' },
+  { key: 'fanet', route: '/settings/fanet' },
+  { key: 'tas', route: '/settings/tas' },
   { key: 'uart', route: '/settings/uart' },
   { key: 'power', route: '/settings/power' },
-  { key: 'simulator', route: '/settings/simulator' },
 ]
 
 /**
@@ -63,11 +70,23 @@ export const CPF_UUID_TO_GROUP: Record<string, SettingsGroupKey> = {
   '113bb48c-7e3f-4580-a561-acf6c9eb42a5': 'uart', // UART duplication
 
   // power
-  'd9eec180-344e-41e3-8c18-adf312dce8bb': 'power', // ble_never_sleep
+  '3c844ac9-87fb-42aa-b28e-00e8b71b6126': 'power', // ble_never_sleep (firmware UUID)
   '9a560750-0bca-4d0c-a1fc-21bbc574d5a6': 'power', // power off timeout
 
   // simulator
   '904baf04-5814-11ee-8c99-0242ac120002': 'simulator',
+
+  // fanet (only present on FANET-equipped hardware — fbfanet, fbfanetvario)
+  '8d8e8809-4697-41fc-8ee2-ca0b999354ec': 'fanet', // radio frequency
+  'f19422e2-982a-4954-9a75-b38927236a59': 'fanet', // radio bandwidth
+  '108b855f-11cd-4bc5-adee-eafce49bc77a': 'fanet', // radio datarate
+  '17a95752-3c12-438f-9244-4f4612a1ab49': 'fanet', // radio coding rate
+  '8ef0c42e-adb6-4897-b9c9-6fe93143faf4': 'fanet', // radio tx power
+  '9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba': 'fanet', // FANET UART protocol
+
+  // tas (only present on TAS — fbtas)
+  '904baf04-5814-11ee-8c99-0242ac120201': 'tas', // Pitot K factor
+  '904baf04-5814-11ee-8c99-0242ac120202': 'tas', // DP offset
 }
 
 /** Characteristic UUIDs that require a device power-cycle on change. */

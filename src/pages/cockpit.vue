@@ -1,19 +1,37 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Hotspot } from '~/components/DeviceTopdown.vue'
+import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSettingsGroups'
 
 const bt = useBluetoothStore()
 const { t } = useI18n()
 const router = useRouter()
 
+const presentGroups = computed<Set<SettingsGroupKey>>(() => {
+  if (!bt.isConnected)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
+  const out = new Set<SettingsGroupKey>()
+  for (const ch of bt.bleCharacteristics) {
+    const g = CPF_UUID_TO_GROUP[ch.characteristic.uuid]
+    if (g)
+      out.add(g)
+  }
+  return out
+})
+
+const hasFanet = computed(() => presentGroups.value.has('fanet'))
+const hasTas = computed(() => presentGroups.value.has('tas'))
+const hasUart = computed(() => presentGroups.value.has('uart'))
+
 // Hotspots map the device's interactive areas to settings sub-pages.
+// Coordinates target the 240×240 viewBox in DeviceTopdown — button centres
+// sit at (66,66) / (174,66) / (66,174) / (174,174); LED is dead-center.
 const hotspots = computed<Hotspot[]>(() => [
-  { id: 'led', x: 110, y: 120, r: 18, route: '/settings/behaviour', label: 'LED · behaviour' },
-  { id: 'btn-1', x: 88, y: 180, r: 18, route: '/settings/behaviour', label: 'Button 1' },
-  { id: 'btn-2', x: 132, y: 180, r: 18, route: '/settings/behaviour', label: 'Button 2' },
-  { id: 'btn-3', x: 88, y: 224, r: 18, route: '/settings/behaviour', label: 'Button 3' },
-  { id: 'btn-4', x: 132, y: 224, r: 18, route: '/settings/behaviour', label: 'Button 4' },
-  { id: 'buzzer', x: 110, y: 272, r: 22, route: '/settings/audio', label: 'Buzzer' },
+  { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: 'LED · behaviour' },
+  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 1' },
+  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 2' },
+  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 3' },
+  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 4' },
 ])
 
 function onJump(h: Hotspot) {
@@ -23,30 +41,116 @@ function onJump(h: Hotspot) {
 
 const ledOn = computed(() => bt.isConnected)
 const fwLabel = computed(() => bt.dis.firmwareRevisionString.value ?? '—')
+const isOffline = computed(() => !bt.isConnected)
+const headerTitle = computed(() =>
+  bt.dis.modelNumberString.value || (isOffline.value ? t('dashboard.demo-device') : 'DEVICE'),
+)
+const headerSub = computed(() => {
+  if (isOffline.value)
+    return t('dashboard.demo-mode-sub')
+  return `${bt.dis.manufacturerNameString.value} · fw ${fwLabel.value}`
+})
+
+const isBusyConnecting = computed(() => bt.isConnecting || bt.isFetching)
+
+const connectLabel = computed(() => {
+  if (isBusyConnecting.value)
+    return t('dashboard.cancel-cta')
+  return t('dashboard.connect-cta')
+})
+
+// Banner state priority: connect-error → connecting/fetching progress → demo.
+const banner = computed(() => {
+  if (bt.errorMessage) {
+    return {
+      accent: 'var(--ck-signal)',
+      eyebrow: t('dashboard.connect-error-eyebrow'),
+      title: t('dashboard.connect-error-title'),
+      sub: bt.errorMessage,
+      loading: false,
+    }
+  }
+  if (bt.isConnecting) {
+    return {
+      accent: 'var(--ck-signal)',
+      eyebrow: t('dashboard.connecting-eyebrow'),
+      title: t('dashboard.connecting-title'),
+      sub: '',
+      loading: true,
+    }
+  }
+  if (bt.isFetching) {
+    return {
+      accent: 'var(--ck-signal)',
+      eyebrow: t('dashboard.fetching-eyebrow'),
+      title: t('dashboard.fetching-title', { n: bt.fetchProgress, total: bt.fetchTotal || '?' }),
+      sub: '',
+      loading: true,
+    }
+  }
+  if (isOffline.value) {
+    return {
+      accent: 'var(--ck-signal)',
+      eyebrow: t('dashboard.demo-mode-eyebrow'),
+      title: t('dashboard.demo-mode-title'),
+      sub: t('dashboard.demo-mode-sub'),
+      loading: false,
+    }
+  }
+  return null
+})
 
 function disconnect() {
   bt.disconnectDevice()
 }
+
+function connectOrDisconnect() {
+  if (isBusyConnecting.value) {
+    bt.cancelConnect()
+    return
+  }
+  if (bt.isConnected)
+    disconnect()
+  else
+    bt.connectToRequestDevice()
+}
 </script>
 
 <template>
-  <PairingWizard v-if="!bt.isConnected" />
-
-  <section v-else class="dash">
+  <section class="dash">
     <PageHeader
-      :eyebrow="t('dashboard.eyebrow')"
-      :title="bt.dis.modelNumberString.value || 'DEVICE'"
-      :sub="`${bt.dis.manufacturerNameString.value} · fw ${fwLabel}`"
+      :eyebrow="isOffline ? t('dashboard.demo-mode-eyebrow') : t('dashboard.eyebrow')"
+      :title="headerTitle"
+      :sub="headerSub"
     >
       <template #right>
         <RouterLink to="/share" class="dash__hdr-btn">
           {{ t('dashboard.share') }}
         </RouterLink>
-        <button type="button" class="dash__hdr-btn dash__hdr-btn--signal" @click="disconnect">
-          {{ t('dashboard.disconnect') }}
+        <button
+          type="button"
+          class="dash__hdr-btn dash__hdr-btn--signal"
+          :disabled="isOffline && !bt.bleAvailable"
+          @click="connectOrDisconnect"
+        >
+          <template v-if="isOffline">
+            <span>{{ connectLabel }}</span><CkDots v-if="isBusyConnecting" />
+          </template>
+          <template v-else>
+            {{ t('dashboard.disconnect') }}
+          </template>
         </button>
       </template>
     </PageHeader>
+
+    <CkBannerRow
+      v-if="banner"
+      :accent="banner.accent"
+      :eyebrow="banner.eyebrow"
+      :title="banner.title"
+      :sub="banner.sub"
+      :loading="banner.loading"
+    />
 
     <div class="dash__grid">
       <!-- Button map -->
@@ -85,18 +189,7 @@ function disconnect() {
               {{ t('dashboard.hub-sound') }}
             </div>
             <div class="dash__hub-sub">
-              {{ t('dashboard.hub-curves-sub') }}
-            </div>
-          </div>
-          <span>→</span>
-        </RouterLink>
-        <RouterLink to="/settings/curves" class="dash__hub-row">
-          <div>
-            <div class="dash__hub-label">
-              {{ t('dashboard.hub-curves') }}
-            </div>
-            <div class="dash__hub-sub">
-              {{ t('dashboard.hub-curves-sub') }}
+              {{ t('dashboard.hub-sound-sub') }}
             </div>
           </div>
           <span>→</span>
@@ -123,13 +216,35 @@ function disconnect() {
           </div>
           <span>→</span>
         </RouterLink>
-        <RouterLink to="/settings/uart" class="dash__hub-row">
+        <RouterLink v-if="hasUart" to="/settings/uart" class="dash__hub-row">
           <div>
             <div class="dash__hub-label">
               {{ t('dashboard.hub-uart') }}
             </div>
             <div class="dash__hub-sub">
               {{ t('dashboard.hub-uart-sub') }}
+            </div>
+          </div>
+          <span>→</span>
+        </RouterLink>
+        <RouterLink v-if="hasFanet" to="/settings/fanet" class="dash__hub-row">
+          <div>
+            <div class="dash__hub-label">
+              {{ t('sett.group-fanet') }}
+            </div>
+            <div class="dash__hub-sub">
+              {{ t('sett.group-fanet-desc') }}
+            </div>
+          </div>
+          <span>→</span>
+        </RouterLink>
+        <RouterLink v-if="hasTas" to="/settings/tas" class="dash__hub-row">
+          <div>
+            <div class="dash__hub-label">
+              {{ t('sett.group-tas') }}
+            </div>
+            <div class="dash__hub-sub">
+              {{ t('sett.group-tas-desc') }}
             </div>
           </div>
           <span>→</span>

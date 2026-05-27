@@ -95,12 +95,15 @@ withDefaults(defineProps<{
 .page-head__title {
   font-family: var(--ck-font-display);
   font-weight: 800;
-  font-size: 36px;
-  letter-spacing: -1.3px;
+  font-size: clamp(22px, 8.4vw, 32px);
+  letter-spacing: -1px;
   line-height: 0.95;
   margin: 6px 0 8px;
   text-transform: uppercase;
   color: var(--ck-ink);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .page-head__sub {
@@ -114,7 +117,7 @@ withDefaults(defineProps<{
 
 @media (min-width: 960px) {
   .page-head__body {
-    padding: 28px 32px 18px;
+    padding: 40px 64px 24px;
   }
   .page-head__title {
     font-size: 52px;

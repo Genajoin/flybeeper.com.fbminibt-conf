@@ -23,6 +23,10 @@ function dismissExplainer() {
 }
 
 function connect() {
+  if (bt.isConnecting || bt.isFetching) {
+    bt.cancelConnect()
+    return
+  }
   if (!wizardSeen.value)
     dismissExplainer()
   bt.connectToRequestDevice()
@@ -34,6 +38,12 @@ const bullets = computed(() => [
   { t: t('pair.explainer-bullet-3-title'), d: t('pair.explainer-bullet-3-desc') },
   { t: t('pair.explainer-bullet-4-title'), d: t('pair.explainer-bullet-4-desc') },
 ])
+
+const step2CtaLabel = computed(() => {
+  if (bt.isConnecting || bt.isFetching)
+    return t('dashboard.cancel-cta')
+  return t('pair.step2-cta')
+})
 </script>
 
 <template>
@@ -73,10 +83,13 @@ const bullets = computed(() => [
       </div>
     </div>
 
-    <div class="wizard__cta-row">
+    <div class="wizard__cta-row wizard__cta-row--explainer">
       <CkCTA kind="signal" @click="connect">
         {{ t('pair.continue') }}
       </CkCTA>
+      <RouterLink to="/cockpit" class="wizard__skip">
+        {{ t('pair.skip-demo') }}
+      </RouterLink>
     </div>
   </section>
 
@@ -104,8 +117,8 @@ const bullets = computed(() => [
     </div>
 
     <div class="wizard__cta-row">
-      <CkCTA kind="signal" :disabled="bt.isConnecting || bt.isFetching" @click="connect">
-        {{ t('pair.step2-cta') }}
+      <CkCTA kind="signal" @click="connect">
+        <span>{{ step2CtaLabel }}</span><CkDots v-if="bt.isConnecting || bt.isFetching" />
       </CkCTA>
       <div class="wizard__meta">
         <span>{{ t('pair.step2-meta-left') }}</span>
@@ -144,8 +157,6 @@ const bullets = computed(() => [
     <p v-if="bt.errorMessage" class="wizard__error">
       {{ bt.errorMessage }}
     </p>
-
-    <InvertedFooter />
   </section>
 </template>
 
@@ -161,17 +172,20 @@ const bullets = computed(() => [
 .wizard__display {
   font-family: var(--ck-font-display);
   font-weight: 800;
-  font-size: 48px;
-  letter-spacing: -2px;
+  font-size: clamp(28px, 10.5vw, 48px);
+  letter-spacing: -1.6px;
   line-height: 0.92;
   margin: 12px 0 0;
   text-transform: uppercase;
   color: var(--ck-ink);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .wizard__display--md {
-  font-size: 36px;
-  letter-spacing: -1.3px;
+  font-size: clamp(22px, 8.4vw, 36px);
+  letter-spacing: -1.1px;
   line-height: 0.95;
   margin: 6px 0 8px;
 }
@@ -274,6 +288,25 @@ const bullets = computed(() => [
   gap: 10px;
 }
 
+.wizard__cta-row--explainer {
+  align-items: center;
+}
+
+.wizard__skip {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-dim);
+  text-decoration: none;
+  padding: 4px 0;
+}
+
+.wizard__skip:hover {
+  color: var(--ck-signal);
+}
+
 .wizard__meta {
   display: flex;
   justify-content: space-between;
@@ -345,6 +378,11 @@ const bullets = computed(() => [
   }
   .wizard__bullet:nth-child(odd) {
     border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  }
+  .wizard__cta-row--explainer {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 24px;
   }
   .wizard__display {
     font-size: 84px;

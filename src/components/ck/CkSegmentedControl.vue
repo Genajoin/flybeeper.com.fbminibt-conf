@@ -55,13 +55,14 @@ const optionsArr = computed(() => props.options)
 
 .ck-seg__btn {
   flex: 1;
+  min-width: 0;
   background: var(--ck-paper);
   color: var(--ck-ink);
   border: none;
   border-left: var(--ck-stroke-rule) solid var(--ck-ink);
-  padding: 10px 14px;
+  padding: 10px clamp(4px, 1.4vw, 14px);
   font-family: var(--ck-font-mono);
-  font-size: 11px;
+  font-size: clamp(9px, 2.6vw, 11px);
   font-weight: 700;
   letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
@@ -71,6 +72,8 @@ const optionsArr = computed(() => props.options)
     color var(--ck-dur-toggle) var(--ck-ease);
   border-radius: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ck-seg__btn--first {

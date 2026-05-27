@@ -23,7 +23,9 @@ const { t } = useI18n()
       </template>
     </PageHeader>
 
-    <div v-if="bt.isConnected" class="landing__cells">
+    <PairingWizard v-if="!bt.isConnected" />
+
+    <div class="landing__cells">
       <RouterLink class="landing__cell" to="/settings">
         <Icon name="settings" :size="32" />
         <span class="landing__cell-label">{{ t('home.link-settings') }}</span>
@@ -41,8 +43,6 @@ const { t } = useI18n()
         <span class="landing__cell-label">{{ t('home.link-update') }}</span>
       </RouterLink>
     </div>
-
-    <PairingWizard v-else />
 
     <div class="landing__catalog">
       <CkEyebrow color="var(--ck-dim)" block>
@@ -67,11 +67,13 @@ const { t } = useI18n()
 .landing__display {
   font-family: var(--ck-font-display);
   font-weight: 800;
-  font-size: 44px;
-  letter-spacing: -1.6px;
+  font-size: clamp(28px, 10.5vw, 44px);
+  letter-spacing: -1.4px;
   line-height: 0.95;
   margin: 8px 0 8px;
   text-transform: uppercase;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .landing__sub {
@@ -147,7 +149,8 @@ const { t } = useI18n()
 
 @media (min-width: 960px) {
   .landing__display {
-    font-size: 64px;
+    font-size: 84px;
+    letter-spacing: -2.4px;
   }
   .landing__cells {
     grid-template-columns: repeat(4, 1fr);

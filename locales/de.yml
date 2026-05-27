@@ -91,6 +91,7 @@ pair:
   explainer-body: Wir sprechen über Web Bluetooth mit deinem Variometer. Beim Tippen auf Verbinden fragt der Browser, welches FB-Gerät gekoppelt werden soll. Hier geänderte Einstellungen werden zuerst auf diesem Telefon gespeichert und beim Übernehmen an das Gerät gesendet.
   explainer-supported: Funktioniert in Chrome / Edge unter Android, Windows, macOS, Linux. Auf dem iPhone den Browser Bluefy nutzen.
   continue: Weiter →
+  skip-demo: Überspringen · Demo
   connect: Verbinden →
   connect-another: Weiteres verbinden →
   saved-title: Deine Geräte
@@ -223,12 +224,17 @@ sett:
   group-uart: UART
   group-power: Energie
   group-simulator: Simulator
+  group-fanet: FANET
+  group-tas: TAS
   group-audio-desc: Summerlautstärke und die Schwellen, ab denen der Ton ein- und ausgeht.
   group-curves-desc: 12 Stützstellen, die Steigrate auf Frequenz, Zyklus und Duty abbilden.
   group-behaviour-desc: Lautlos am Boden, LED-Anzeige, HID-Tastatur.
   group-uart-desc: Serielles Protokoll über den BLE-UART-Emulator.
   group-power-desc: Bluetooth-Schlafverhalten.
   group-simulator-desc: Einen künstlichen Vario-Wert einspeisen, um die Kurve ohne Sensor zu hören.
+  group-fanet-desc: FANET-Funkparameter und Gateway-UART-Protokoll.
+  group-tas-desc: TAS-Kalibrierung — Pitot-K-Faktor und Druckdifferenz-Offset.
+  drag-to-hear: ● ZIEHEN ZUM HÖREN
   revert: Zurücksetzen
   no-changes: Keine lokalen Änderungen
   unsynced: '{count} lokale Änderung(en) ausstehend'
@@ -240,6 +246,9 @@ audio:
   source-off: Aus
   demo: ▶ Demo
   demo-stop: ■ Stopp
+  silent-device-eyebrow: GERÄT STUMM
+  silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
+  silent-device-cta: Audio-Einstellungen öffnen
   preset-strong-sink: −3 m/s
   preset-zero: '0'
   preset-weak-climb: +1 m/s
@@ -317,7 +326,7 @@ dashboard:
   synced: ● SYNCED
   dirty: ● UNSYNCED
   hub-sound: KLANG
-  hub-sound-sub: 12-Punkt-Kurve · Lautst. {v}/3
+  hub-sound-sub: Lautstärke · Schwellen · 12-Punkt-Kurve · Simulator
   hub-curves: KURVEN
   hub-curves-sub: Antwort · 12 Punkte
   hub-behaviour: VERHALTEN
@@ -335,3 +344,17 @@ dashboard:
   back-dashboard: ← DASHBOARD
   offline-eyebrow: OFFLINE
   offline-body: kein Gerät · lokal gespeichert · zum Sync verbinden
+  demo-device: DEMO-MODUS
+  demo-mode-eyebrow: DEMO
+  demo-mode-title: NICHT LIVE · VERBINDEN FÜR ECHTE WERTE
+  demo-mode-sub: Angezeigt werden Demo-Standardwerte — verbinde ein FlyBeeper-Gerät für Live-Daten.
+  connect-cta: ● VERBINDEN
+  cancel-cta: ● ABBRECHEN
+  connecting-cta: ● VERBINDEN
+  fetching-cta: 'LESEN {n}/{total}'
+  connect-error-eyebrow: VERBINDUNG FEHLGESCHLAGEN
+  connect-error-title: GERÄT NICHT ERREICHBAR
+  connecting-eyebrow: PAIRING
+  connecting-title: KANAL WIRD AUFGEBAUT
+  fetching-eyebrow: LESEN
+  fetching-title: 'LADE {n}/{total} CHARAKTERISTIKEN'
