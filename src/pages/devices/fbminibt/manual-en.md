@@ -10,7 +10,7 @@ Power-off procedure: press and hold the button with a circle until the LED stops
 
 Volume adjustment: when the device is on, press the "up" button to increase the volume or the "down" button to decrease the volume. Each press is accompanied by a sequence of tones. The number of tones indicates the volume level. The lowest level is silent. Important! If the device is paired with a smartphone via Bluetooth, this functionality does not work as the device switches to keyboard mode.
 
-![Image](https://market.flybeeper.com/img/device/mini-bt/i1text.jpg)
+![Button layout — top button cycles volume up, bottom cycles down, circle is power, square is cancel](/manual-media/fbminibt/finger-en.jpg)
 
 ### Operating Modes
 
@@ -54,7 +54,7 @@ All settings are made through the graphical interface on [the configurator's web
 
 `Vario, Frequency, Cycle, Duty` - a table describing curves of frequency (Hz), period (ms), and duty (%) dependence on vertical speed (cm/s).
 
-![Image](https://market.flybeeper.com//img/device/mini-bt/i2diagr.png)
+![Settings panel — the in-browser configurator showing the audio curve and thresholds](/manual-media/fbminibt/settings.jpg)
 
 In the lower part of the configurator, in the `Simulate Vario` field, you can enter any variometer value and hear how the device will sound at a given vertical speed. All values are entered in cm/s.
 
@@ -112,4 +112,7 @@ Characteristics UUID for service `0x180A` DevInfo
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
 | Firmware Revision | 0x2A26 | STRING | 0.01      |
 
-<router-link to="/devices/fbminibt">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

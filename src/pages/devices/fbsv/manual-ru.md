@@ -1,5 +1,7 @@
 # FlyBeeper Sun Vario
 
+![FlyBeeper Sun Vario — вариометр на солнечной батарее с ионистром вместо аккумулятора](/manual-media/fbsv/01-overview.jpg)
+
 ## Инструкция
 
 ### Режимы работы
@@ -70,4 +72,7 @@
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
 | Firmware Revision | 0x2A26 | STRING | 0.01      |
 
-<router-link to="/devices/fbminibt">НАЗАД</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

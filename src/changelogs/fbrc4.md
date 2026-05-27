@@ -1,8 +1,3 @@
-# FlyBeeper Remote Control 4
-
-<a btn href="https://flybeeper.com/fbrc4/app_update.0.05.bin" download>Download last firmware</a>
-<TheUpdate />
-
 ## Changelog
 
 **Version:** 0.05 | **Date:** 01.06.2024 | [**Download**](https://flybeeper.com/fbrc4/app_update.0.05.bin)

@@ -1,5 +1,7 @@
 # FlyBeeper FANET
 
+![FlyBeeper FANET — радиоприёмопередатчик FANET / ADS-L с управлением по Bluetooth](/manual-media/fbfanet/01-intro.jpg)
+
 ## Инструкция
 
 ### Управление
@@ -87,4 +89,8 @@ UUID сервиса `0x1819`
 | fanet_uart_protocol | 9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba | INT8   | 1-FNNGB, 2-FBFAN, 3-FNF                                               |
 
 `*` - значения по умолчанию
-<router-link to="/devices/fbfanet">НАЗАД</router-link>
+
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

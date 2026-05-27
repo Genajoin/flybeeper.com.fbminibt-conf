@@ -76,4 +76,7 @@ The device settings are available for reading and writing in the service 904baf0
 | char_button3     | 46cbd27b-57d8-421c-8ff6-9ec75e3515d4 | UINT8 | 0x3C  | keychar |
 | char_button4     | 5b975063-9256-4bdf-bd8c-d6c1688902d2 | UINT8 | 0x3D  | keychar |
 
-<router-link to="/devices/fbrc4">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

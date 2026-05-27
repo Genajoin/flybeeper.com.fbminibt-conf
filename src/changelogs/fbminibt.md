@@ -1,8 +1,3 @@
-# FlyBeeper mini BT
-
-<a btn href="https://flybeeper.com/minibt/app_update.0.21.bin" download>Download last firmware</a>
-<TheUpdate />
-
 ## Changelog
 
 **Version:** x.xx | **Date:** in the future | Use [polling](https://t.me/flybeeperchat/32) to vote for your favorite new feature

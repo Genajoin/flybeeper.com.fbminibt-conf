@@ -1,5 +1,7 @@
 # FlyBeeper FANET
 
+![FlyBeeper FANET — Bluetooth-controlled FANET / ADS-L radio transceiver](/manual-media/fbfanet/01-intro.jpg)
+
 ## Manual
 
 ### Control
@@ -88,4 +90,7 @@ Typically, all settings are managed by an external application. However, the use
 
 `*` - values by default
 
-<router-link to="/devices/fbfanet">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

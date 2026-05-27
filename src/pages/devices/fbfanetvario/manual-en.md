@@ -14,4 +14,7 @@ In development
 - TheFlightVario XC 2.38+ (static pressure)
 - maps.flybeeper.com (full support)
 
-<router-link to="/devices/fbfanet">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

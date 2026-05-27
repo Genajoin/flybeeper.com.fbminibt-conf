@@ -1,8 +1,3 @@
-# FlyBeeper TAS
-
-<a btn href="https://flybeeper.com/fbtas/app_update.0.08.bin" download>Download last firmware</a>
-<TheUpdate />
-
 ## Changelog
 
 **Version:** 0.09 | **Date:** future

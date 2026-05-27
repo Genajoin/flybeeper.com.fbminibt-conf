@@ -14,4 +14,7 @@
 - TheFlightVario XC 2.38+ (static pressure)
 - maps.flybeeper.com (full support FANET + pressure)
 
-<router-link to="/devices/fbfanet">НАЗАД</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

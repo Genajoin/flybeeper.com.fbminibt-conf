@@ -1,5 +1,7 @@
 # FlyBeeper Pressure Sensor
 
+![FlyBeeper Pressure Sensor — внешний барометр, всегда доступный по Bluetooth](/manual-media/fbps1/overview.png)
+
 ## Инструкция
 
 ### Режимы работы
@@ -58,4 +60,7 @@
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
 | Firmware Revision | 0x2A26 | STRING | 0.01      |
 
-<router-link to="/devices/fbps1">НАЗАД</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

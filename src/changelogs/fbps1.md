@@ -1,8 +1,3 @@
-# FlyBeeper Pressure Sensor
-
-<a btn href="https://flybeeper.com/fbps1/app_update.0.04.bin" download>Download last firmware</a>
-<TheUpdate />
-
 ## Changelog
 
 **Version:** 0.04 | **Date:** 19.05.2024 | [**Download**](https://flybeeper.com/fbps1/app_update.0.04.bin)

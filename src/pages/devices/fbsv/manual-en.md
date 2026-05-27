@@ -1,5 +1,7 @@
 # FlyBeeper Sun Vario
 
+![FlyBeeper Sun Vario — solar-powered variometer with supercapacitor storage](/manual-media/fbsv/01-overview.jpg)
+
 ## Manual
 
 ### Device Operation Modes
@@ -70,4 +72,7 @@ Characteristics UUID for service `0x180A` DevInfo
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
 | Firmware Revision | 0x2A26 | STRING | 0.01      |
 
-<router-link to="/devices/fbminibt">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

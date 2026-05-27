@@ -1,5 +1,7 @@
 # FlyBeeper Pressure Sensor
 
+![FlyBeeper Pressure Sensor — always-on external Bluetooth barometer](/manual-media/fbps1/overview.png)
+
 ## Manual
 
 ### Control
@@ -58,4 +60,7 @@ Characteristics UUID for service `0x180A` DevInfo
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
 | Firmware Revision | 0x2A26 | STRING | 0.01      |
 
-<router-link to="/devices/fbps1">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

@@ -1,8 +1,3 @@
-# FlyBeeper FANET
-
-<a btn href="https://flybeeper.com/fbfanet/app_update.0.02.bin" download>Download last firmware</a>
-<TheUpdate />
-
 ## Changelog
 
 **Version:** 0.02 | **Date:** 11.06.2024 | [**Download**](https://flybeeper.com/fbfanet/app_update.0.02.bin)

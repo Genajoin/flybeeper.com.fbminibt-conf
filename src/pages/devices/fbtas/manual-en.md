@@ -16,6 +16,8 @@ There is a transport mode where the device remains in sleep mode continuously an
 
 ### Placement
 
+![FlyBeeper TAS — Pitot probe and tail fin keep it aligned with the airflow under the harness](/manual-media/fbtas/03-mount.jpg)
+
 #### For Paragliders
 
 The standard position is on the harness using a line with a length of 1 meter under the pilot, attached to the carabiner. The tail fin ensures self-alignment with the airflow. The line length should allow the device to be distanced from the pilot’s harness to avoid the influence of the compressed airflow. Insufficient distancing will result in speed readings being higher than actual. The device's low weight and low frontal resistance help effectively counteract the pendulum effect, but if the line is too long, undesirable oscillations may occur.
@@ -107,4 +109,7 @@ The device settings are available for reading and writing in the service 904baf0
 | Pitot K factor               | 904baf04-5814-11ee-8c99-0242ac120201 | INT16 | -3       | o.e.   |
 | Diffirencial Pressure offset | 904baf04-5814-11ee-8c99-0242ac120202 | INT16 | -1       | Pascal |
 
-<router-link to="/devices/fbtas">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>
