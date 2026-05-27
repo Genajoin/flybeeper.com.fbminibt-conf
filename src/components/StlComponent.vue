@@ -12,12 +12,31 @@ const vue3dLoader = defineAsyncComponent(() =>
 
 const stl = props.stl
 const pos = props.pos
+// FlyBeeper enclosures are matte black plastic. Pure black would crush
+// without form; we tint the default white MeshPhongMaterial to a warm
+// near-black inside onSceneLoad. Light rig keeps a single key + a
+// signal-orange rim so the silhouette reads against ck-bg.
 const light = [
-  { type: 'AmbientLight', color: '#025e15' },
-  { type: 'DirectionalLight', position: { x: 20, y: 20, z: 70 }, color: '#00FF33', intensity: 0.5 },
-  { type: 'DirectionalLight', position: { x: -20, y: -20, z: -70 }, color: '#FF0033', intensity: 0.8 },
-  { type: 'PointLight', color: '#ffffff', position: { x: -20, y: -90, z: -20 }, intensity: 0.1 },
+  { type: 'AmbientLight', color: '#8a8a82', intensity: 0.55 },
+  { type: 'DirectionalLight', position: { x: 30, y: 25, z: 60 }, color: '#ffffff', intensity: 0.65 },
+  { type: 'DirectionalLight', position: { x: -30, y: -10, z: -40 }, color: '#ff6a00', intensity: 0.3 },
+  { type: 'PointLight', position: { x: -20, y: -90, z: -20 }, color: '#ece9dd', intensity: 0.15 },
 ]
+
+function onSceneLoad(scene) {
+  scene.traverse((node) => {
+    if (!node.isMesh || !node.material)
+      return
+    const m = node.material
+    if (m.color)
+      m.color.set('#2a2724')
+    if (m.specular)
+      m.specular.set('#3a3835')
+    if ('shininess' in m)
+      m.shininess = 18
+    m.needsUpdate = true
+  })
+}
 
 const modelRotation = ref({ x: 0, y: 0, z: 0 })
 const windowPosition = ref({ x: 0, y: 0, z: 0 })
@@ -64,11 +83,12 @@ watch(windowPosition, (newValue) => {
       :width="400"
       :show-fps="false"
       :file-path="stl"
-      :background-color="isDark ? '#121212' : '#ffffff'"
+      :background-color="isDark ? '#0a0a0a' : '#ffffff'"
       :camera-position="pos"
       :lights="light"
       :rotation="modelRotation"
       :position="modelPosition"
+      @load="onSceneLoad"
     />
     <!--      :enableAxesHelper="true" -->
   </div>
