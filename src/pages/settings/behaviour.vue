@@ -1,0 +1,87 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+
+const { t, te } = useI18n()
+const cpfChars = useCpfGroup('behaviour')
+
+/**
+ * Label resolution order:
+ *   1. `sett.<uuid>` i18n key (curated translation).
+ *   2. BLE User Format Descriptor (0x2901) — firmware-provided name.
+ *   3. UUID as last resort.
+ */
+function labelFor(ch: BleCharacteristic): string {
+  const k = `sett.${ch.characteristic.uuid}`
+  if (te(k))
+    return t(k)
+  return ch.userFormatDescriptor || ch.characteristic.uuid
+}
+
+const list = computed(() => cpfChars.value)
+</script>
+
+<template>
+  <SettingsPanel group="behaviour" :cpf-chars="cpfChars">
+    <ul v-if="list.length" class="b-list">
+      <li v-for="ch in list" :key="ch.characteristic.uuid" class="b-row">
+        <CkSquareToggle
+          :model-value="Boolean(ch.formattedValue)"
+          :aria-label="labelFor(ch)"
+          @update:model-value="ch.formattedValue = $event"
+        />
+        <span class="b-row__label">{{ labelFor(ch) }}</span>
+      </li>
+    </ul>
+    <p v-else class="empty">
+      {{ t('msg.fetching') }}…
+    </p>
+  </SettingsPanel>
+</template>
+
+<style scoped>
+.b-list {
+  /* Shared 2-column grid (toggle | label). Pinned to the left edge on
+   * mobile — a single centred column on a narrow viewport feels lost —
+   * and centred at tablet+ where there's whitespace to balance. */
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: center;
+  justify-content: start;
+  column-gap: 16px;
+  row-gap: 14px;
+  margin: 0;
+  padding: 22px;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .b-list {
+    justify-content: center;
+  }
+}
+
+.b-row {
+  /* Each row's two children fall straight into the parent grid so labels
+   * line up across rows. */
+  display: contents;
+}
+
+.b-row__label {
+  font-family: var(--ck-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  text-align: left;
+}
+
+.empty {
+  font-family: var(--ck-font-mono);
+  font-size: var(--ck-fs-meta);
+  color: var(--ck-dim);
+  margin: 0;
+  padding: 22px;
+  text-align: center;
+}
+</style>

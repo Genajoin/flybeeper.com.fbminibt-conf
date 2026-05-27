@@ -1,12 +1,25 @@
+<script setup lang="ts">
+</script>
+
 <template>
-  <main
-    px-4 py-4
-    text="center gray-700 dark:gray-200"
-  >
-    <TheFooter />
+  <UpdateBanner />
+  <BluefyBanner />
+  <DisconnectBanner />
+  <RestartDeviceBanner />
+  <SimulationBanner />
+  <PresetImportBanner />
+  <main class="page">
     <RouterView />
-    <!--    <div mx-auto mt-5 text-center text-sm opacity-50> -->
-    <!--      [Default Layout] -->
-    <!--    </div> -->
   </main>
+  <TheFooter />
+  <ReconnectDiffDialog />
+  <InstallToast />
 </template>
+
+<style scoped>
+.page {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+</style>

@@ -1,28 +1,58 @@
 <script setup>
-import { vue3dLoader } from 'vue-3d-loader'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps(['stl', 'pos'])
+
+// Lazy-load vue-3d-loader + three.js (~700 KB raw / ~200 KB gz) on first mount,
+// not as part of the parent route's chunk. Pages using <StlComponent /> stay
+// interactive while the 3D viewer loads in the background.
+const vue3dLoader = defineAsyncComponent(() =>
+  import('vue-3d-loader').then(m => m.vue3dLoader),
+)
+
 const stl = props.stl
 const pos = props.pos
+// FlyBeeper enclosures are matte black plastic. Pure black would crush
+// without form; we tint the default white MeshPhongMaterial to a warm
+// near-black inside onSceneLoad. Light rig keeps a single key + a
+// signal-orange rim so the silhouette reads against ck-bg.
 const light = [
-  { type: 'AmbientLight', color: '#025e15' },
-  { type: 'DirectionalLight', position: { x: 20, y: 20, z: 70 }, color: '#00FF33', intensity: 0.5 },
-  { type: 'DirectionalLight', position: { x: -20, y: -20, z: -70 }, color: '#FF0033', intensity: 0.8 },
-  { type: 'PointLight', color: '#ffffff', position: { x: -20, y: -90, z: -20 }, intensity: 0.1 },
+  { type: 'AmbientLight', color: '#9a9890', intensity: 0.5 },
+  { type: 'HemisphereLight', skyColor: '#f5f4ee', groundColor: '#3a3a36', intensity: 0.55 },
+  { type: 'DirectionalLight', position: { x: 30, y: 25, z: 60 }, color: '#ffffff', intensity: 0.55 },
+  { type: 'DirectionalLight', position: { x: -30, y: -10, z: -40 }, color: '#ff6a00', intensity: 0.35 },
+  { type: 'PointLight', position: { x: -20, y: -90, z: -20 }, color: '#ece9dd', intensity: 0.3 },
+  { type: 'PointLight', position: { x: 0, y: 40, z: -70 }, color: '#ece9dd', intensity: 0.3 },
 ]
 
-const rotation = ref({ x: -200, y: 0, z: 0 })
-const position = ref({ x: 0, y: 0, z: 0 })
+function onSceneLoad(scene) {
+  scene.traverse((node) => {
+    if (!node.isMesh || !node.material)
+      return
+    const m = node.material
+    if (m.color)
+      m.color.set('#33302c')
+    if (m.specular)
+      m.specular.set('#3a3835')
+    if ('shininess' in m)
+      m.shininess = 18
+    m.needsUpdate = true
+  })
+}
+
+const modelRotation = ref({ x: 0, y: 0, z: 0 })
+const windowPosition = ref({ x: 0, y: 0, z: 0 })
+const modelPosition = ref({ x: 0, y: 0, z: 0 })
+// const cameraPosition = ref({ x: 0, y: 0, z: 0 })
 
 function moved(event) {
   try {
-    position.value.x = event.clientX
-    position.value.y = event.clientY
+    windowPosition.value.x = event.clientX
+    windowPosition.value.y = event.clientY
   }
-  catch (e) {
-    position.value.x = window.innerWidth / 2
-    position.value.y = window.innerHeight / 2
+  catch {
+    windowPosition.value.x = window.innerWidth / 2
+    windowPosition.value.y = window.innerHeight / 2
   }
 }
 
@@ -37,12 +67,12 @@ onUnmounted(() => {
 })
 
 // Watch position changes
-watch(position, (newValue) => {
+watch(windowPosition, (newValue) => {
   try {
-    rotation.value.y = Math.PI / 2 * (newValue.x / window.innerWidth - 0.5)
-    rotation.value.x = Math.PI / 2 * (newValue.y / window.innerHeight - 0.5) - 200
+    modelRotation.value.y = Math.PI / 2 * (newValue.x / window.innerWidth - 0.5)
+    modelRotation.value.x = Math.PI / 2 * (newValue.y / window.innerHeight - 0.5)
   }
-  catch (e) {
+  catch {
     // Handle error if needed
   }
 }, { deep: true })
@@ -55,12 +85,18 @@ watch(position, (newValue) => {
       :width="400"
       :show-fps="false"
       :file-path="stl"
-      :background-color="isDark ? '#121212' : '#ffffff'"
+      :background-color="isDark ? '#0a0a0a' : '#ffffff'"
       :camera-position="pos"
       :lights="light"
-      :rotation="rotation"
+      :rotation="modelRotation"
+      :position="modelPosition"
+      @load="onSceneLoad"
     />
+    <!--      :enableAxesHelper="true" -->
   </div>
+<!--  <div>cam x:{{pos.x.toFixed(1)}} y:{{pos.y.toFixed(1)}} z:{{pos.z.toFixed(1)}}</div> -->
+<!--  <div>rot x:{{modelRotation.x.toFixed(1)}} y:{{modelRotation.y.toFixed(1)}} z:{{modelRotation.z.toFixed(1)}}</div> -->
+<!--  <div>pos x:{{modelPosition.x.toFixed(1)}} y:{{modelPosition.y.toFixed(1)}} z:{{modelPosition.z.toFixed(1)}}</div> -->
 </template>
 
 <style scoped>

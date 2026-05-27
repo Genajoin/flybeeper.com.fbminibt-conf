@@ -18,6 +18,194 @@ intro:
   device-list: Device list
 not-found: Not Found
 
+catalog:
+  pitch-eyebrow: BUILD YOUR OWN
+  pitch-title: BLE wearables, end-to-end.
+  pitch-body: The same hands behind FlyBeeper take on client work — nRF52 firmware, BLE protocols, KiCad PCBs, web back-ends.
+  pitch-cta: ALPISTO ↗
+
+home:
+  eyebrow: FlyBeeper · BLE configurator
+  title: Tune your variometer in the browser
+  subtitle: Web Bluetooth talks to FlyBeeper variometers, trackers and remotes. Settings live on this phone first; push them to the device when you're ready.
+  connected-title: Device connected
+  connected-body: Pick where to go next.
+  link-settings: Settings
+  link-cockpit: Cockpit
+  link-terminal: Terminal
+  link-update: Firmware update
+
+local:
+  disconnected-banner: Device disconnected — settings saved locally, audio routed to browser.
+  dismiss: Dismiss
+  reconnect-diff-title: Local settings differ from the device
+  reconnect-diff-body: Your local changes don't match what's stored on the device. Apply them, or discard and use the device values?
+  apply-local: Apply local to device
+  discard-local: Discard local
+  decide-later: Decide later
+  changes-count: '{count} field(s) changed'
+
+pair:
+  step1-eyebrow: Pair · pre-flight
+  step1-title-line1: Four
+  step1-title-line2: checks.
+  step1-title-line3: Then go.
+  step2-eyebrow: Connect
+  step2-title-line1: Power on.
+  step2-title-line2: Then connect.
+  step2-sub: Chromium opens the system chooser. Pick anything starting with FB-.
+  step2-cta: ⚡ Connect via Bluetooth
+  step2-meta-left: navigator.bluetooth · prefix FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Devices · paired
+  saved-count: '{count} in your kit'
+  saved-scanning: Scanning · {count} in range
+  in-range: ● IN RANGE
+  pair-new: +  PAIR NEW DEVICE
+  retry: Retry
+  auto: AUTO
+  last-ago: 'LAST · {when}'
+  explainer-bullet-1-title: Browser-native
+  explainer-bullet-1-desc: Web Bluetooth speaks straight to your FlyBeeper device.
+  explainer-bullet-2-title: Power on the device
+  explainer-bullet-2-desc: Long-press until LED breathes orange.
+  explainer-bullet-3-title: Pick from the chooser
+  explainer-bullet-3-desc: Native picker. Your device shows as FB-…
+  explainer-bullet-4-title: One-tap reconnect
+  explainer-bullet-4-desc: Stored locally. No cloud, no account.
+  explainer-title: Connect a FlyBeeper device
+  explainer-body: We talk to your variometer over Web Bluetooth. When you tap Connect, the browser will ask which FB-prefixed device to pair with. Settings you change here are saved on this phone first and pushed to the device on Apply.
+  explainer-supported: Works in Chrome / Edge on Android, Windows, macOS, Linux. On iPhone use the Bluefy browser.
+  continue: Continue →
+  skip-demo: Skip · view demo
+  connect: Connect →
+  connect-another: Connect another →
+  saved-title: Your devices
+  saved-empty: No paired devices yet — tap Connect to add one.
+  reconnect: Reconnect
+  autoconnect-label: Auto-connect on launch
+  last-seen: Last seen
+  firmware: Firmware
+  rename: Rename
+  forget: Forget
+  forget-confirm: Forget this device? You'll need to pair it again.
+  no-ble-eyebrow: Browser unsupported
+  unsupported-title: Web Bluetooth not available
+  unsupported-body: This browser can't talk to BLE devices. Use Chrome or Edge on Android / Windows / macOS / Linux.
+  insecure-eyebrow: HTTPS required
+  insecure-title: Web Bluetooth needs a secure connection
+  insecure-body: This page is loaded over plain HTTP. Browsers only expose Bluetooth on https:// or localhost. Open this site over HTTPS to pair a device.
+  ios-banner-body: iPhone / iPad? Web Bluetooth isn't in Safari. Open this site in Bluefy to connect.
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth not supported
+  ios-sub: Open in Bluefy — adds Web BLE on iOS. Free.
+  open-bluefy: OPEN BLUEFY ↗
+  disc-eyebrow: Disconnected
+  disc-title: Settings saved locally
+  disc-sub: Audio preview routed to Browser. Reconnect anytime.
+  disc-reconnect: RECONNECT
+  disc-work-offline: WORK OFFLINE
+  restart-eyebrow: Restart required
+  restart-title: Cycle device power
+  restart-sub: Some settings only take effect after a power-cycle.
+  restart-ack: ACKNOWLEDGE
+  sim-eyebrow: Simulator
+  sim-title: Vario simulation active
+  sim-sub: 'Injecting {value} m/s. Stop to resume real readings.'
+  sim-stop: STOP
+
+preset:
+  import-eyebrow: Preset import
+  import-default-name: Untitled preset
+  bytes: BYTES
+  fields: FIELDS
+  via-url: via URL fragment
+  apply: APPLY
+  discard: DISCARD
+  share-title: Share your settings
+  share-eyebrow: Export preset · URL fragment
+  share-sub: Encoded in URL hash · never sent to server · static-hosting safe
+  scan-eyebrow: Scan with phone
+  url-eyebrow: URL
+  copy-url: 📋 Copy URL
+  download-json: ↓ JSON
+  preset-name: Preset name
+  preset-by: By
+  privacy-note: Privacy · URL fragment is client-only · never sent to server
+  share-cta: SHARE ↗
+  share-strip-eyebrow: Export
+  share-strip-cta: Share these settings →
+  share-strip-sub: Get a link or QR your friends can scan
+
+install:
+  eyebrow: Install · offline
+  title: For offline use in the mountains
+  cta: INSTALL
+  hub-row: INSTALL APP
+
+dashboard:
+  eyebrow: Dashboard · live
+  share: SHARE
+  disconnect: ● DISCONNECT
+  button-map: Button-map
+  live: ● LIVE
+  hover-jump-hint: HOVER → JUMP
+  manual-link: MANUAL ↗
+  manual-link-need-connect: Connect a device to read its manual
+  vario: Vario
+  alt: ALT
+  press: PRESS
+  temp: TEMP
+  bat: BAT
+  settings-title: Settings
+  synced: ONLINE
+  dirty: ● UNSYNCED
+  hub-sound: SOUND
+  hub-sound-sub: volume · thresholds · 12-pt curve · simulator
+  hub-curves: CURVES
+  hub-curves-sub: response · 12 points
+  hub-behaviour: BEHAVIOUR
+  hub-behaviour-sub: silent · LED · HID
+  hub-power: POWER
+  hub-power-sub: sleep · timeout
+  hub-uart: UART
+  hub-uart-sub: protocol
+  hub-simulator: SIMULATOR
+  hub-simulator-sub: inject value
+  hub-firmware: FIRMWARE
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: TERMINAL
+  hub-terminal-sub: live BLE log
+  back-dashboard: ← DASHBOARD
+  offline-eyebrow: OFFLINE
+  offline-body: no device · changes saved locally · connect to sync
+  demo-device: DEMO MODE
+  demo-mode-eyebrow: DEMO
+  demo-mode-title: NOT LIVE · CONNECT TO READ REAL VARIO
+  demo-mode-sub: Settings shown are demo defaults — pair a FlyBeeper device to see live values.
+  connect-cta: ● CONNECT
+  cancel-cta: ● CANCEL
+  connecting-cta: ● CONNECTING
+  fetching-cta: 'FETCHING {n}/{total}'
+  connect-error-eyebrow: CONNECT FAILED
+  connect-error-title: COULD NOT REACH DEVICE
+  connecting-eyebrow: PAIRING
+  connecting-title: REACHING DEVICE
+  fetching-eyebrow: READING
+  fetching-title: 'LOADING {n}/{total} CHARACTERISTICS'
+  fw-update-warn: UPDATE FW
+
+device:
+  firmware-eyebrow: FIRMWARE
+  firmware-title: 'FW {latest}'
+  firmware-body: '{count} public builds — full history below.'
+  firmware-download: ↓ Download .bin
+  firmware-all-builds: All builds →
+  firmware-empty: No public firmware build yet.
+  changelog-title: Changelog
+  manual-title: Manual
+  manual-open-standalone: Open in new tab ↗
+
 msg:
   disconnected: Device Disconnected
   connected: Device Connected
@@ -71,13 +259,35 @@ about:
   install-app: Install Application
   p4: Detailed project description can be found on the project page.
   link-description: Project Page
-  link-blog: Project Page
   link-market: FlyBeeper Shop
+  alpisto-eyebrow: BUILT BY ALPISTO
+  alpisto-title: Working code, not slide decks.
+  alpisto-body: 'FlyBeeper hardware and firmware come out of Alpisto — a solo engineering practice in Tolmin, Slovenia, run by Evgeny Istomin. Twenty years of nRF52 firmware, BLE protocols, KiCad PCBs and back-end glue, delivered hands-on. No outsourcing, no slide decks.'
+  alpisto-services: 'Embedded BLE (nRF52, Zephyr, ESP32) · IoT back-ends (FastAPI, NATS, MQTT) · MATLAB → Python migrations · technical due diligence.'
+  alpisto-address: 'Rutarjeva ulica 15, 5220 Tolmin, Slovenia · VAT SI91102227'
+  alpisto-cta: Visit alpisto.eu
+  contact-eyebrow: GET IN TOUCH
+  contact-title: Send a message
+  contact-body: 'Bug reports, hardware questions, partnership ideas — drop a note. Replies arrive within two working days.'
+  contact-name: Name
+  contact-name-ph: Optional
+  contact-email: Email
+  contact-email-ph: 'you{''@''}example.com'
+  contact-message: Message
+  contact-message-ph: What's on your mind?
+  contact-send: Send message
+  contact-sending: Sending…
+  contact-success-eyebrow: SENT
+  contact-success-body: Thanks — your message landed. You will hear back at the address you provided.
+  contact-error-eyebrow: SEND FAILED
+  contact-error-body: 'Could not reach the form endpoint. Check your connection and try again, or email hello{''@''}alpisto.eu directly.'
   fbminibt-p1: Variometer with Bluetooth and wireless buttons. Audible climb rate indication based on user-defined curves. The battery is cold-resistant.
   fbps1-p1: Always available for Bluetooth connection external barometer. High sensitivity and stability with minimal delays. Turn any smartphone into a reliable variometer.
   fbrc4-p1: 4 external buttons are always available for connecting via Bluetooth.
   fbtas-p1: Autonomous true airspeed sensor with Bluetooth.
   fbfanet-p1: External Bluetooth-controlled radio transmitter with a customizable channel for receiving FANET, ADS-L or the like. Send and receive any data without an Internet connection.
+  fbfanetvario-p1: External FANET with Bluetooth and variometer in one device with a solar panel. Send and receive FANET packets without an internet connection. Use it as a sensitive variometer and source of barometric altitude for smartphone apps.
+  fbsv-p1: Super-light variometer with Bluetooth, solar panel, and supercapacitor. Operates from -25 to +65 °C. 500k charge/discharge cycles. 60 seconds of USB Type C charging to 100% or 15 minutes of sunlight for activation. Always ready with a "perpetual" battery.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Silent on the ground
@@ -97,9 +307,18 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Simulate Vario, m/s (0-off)
   904baf04-5814-11ee-8c99-0242ac120201: Pitot K factor (o.e.)
   904baf04-5814-11ee-8c99-0242ac120202: Diffirencial Pressure offset, Pa
+  # FANET radio (firmware names: see FbFANET/src/settings/settings.h)
+  8d8e8809-4697-41fc-8ee2-ca0b999354ec: Radio frequency
+  f19422e2-982a-4954-9a75-b38927236a59: Radio bandwidth
+  108b855f-11cd-4bc5-adee-eafce49bc77a: Radio datarate
+  17a95752-3c12-438f-9244-4f4612a1ab49: Radio coding rate
+  8ef0c42e-adb6-4897-b9c9-6fe93143faf4: Radio TX power
+  9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba: FANET UART protocol (1-FNNGB, 2-FBFAN, 3-FNF)
   7e035080-7417-4393-959a-58505ef9cf4a: Vario averaging time (sec)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Power off timeout (hour)
   113bb48c-7e3f-4580-a561-acf6c9eb42a5: Data duplication in UART emulator
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: Smooth frequency change
+  0e984fe9-534c-4f13-969c-58ce03d33527: End of climb hysteresis (m/s)
 
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
@@ -125,10 +344,84 @@ sett:
   sim-label2: (0 - simulation off)
   sim-label3: Please set volume more than 1 and press Apply to hear the simulation.
   restart-device: After applying the changes, you must turn off and turn on the device again.
+  group-audio: Audio
+  group-curves: Curves
+  group-behaviour: Behaviour
+  group-uart: UART
+  group-power: Power
+  group-simulator: Simulator
+  group-fanet: FANET
+  group-tas: TAS
+  group-fanet-desc: FANET radio parameters and gateway UART protocol.
+  group-tas-desc: True Air Speed calibration — Pitot K factor and differential pressure offset.
+  slide-to-pan: ↔ SLIDE TO PAN
+  drag-point-edit: ● DRAG DOTS TO EDIT
+  group-audio-desc: Buzzer volume and the climb / sink thresholds that decide when the tone starts and stops.
+  group-curves-desc: Twelve breakpoints mapping vario rate to frequency, cycle and duty.
+  group-behaviour-desc: Silent-on-ground, LED indication, HID keyboard.
+  group-uart-desc: Serial protocol exposed over the BLE UART emulator.
+  group-power-desc: Bluetooth sleep behaviour.
+  group-simulator-desc: Inject a fake vario value to preview the audio curve without the sensor.
+  revert: Revert
+  reset: Defaults
+  reset-confirm: Reset this group to factory defaults?
+  no-changes: No local changes
+  unsynced: '{count} local change(s) pending'
+
+audio:
+  source-label: Live tone source
+  source-device: Device
+  source-browser: Browser
+  source-off: Off
+  demo: ▶ Demo
+  demo-stop: ■ Stop
+  silent-device-eyebrow: DEVICE MUTED
+  silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
+  silent-device-cta: Open audio settings
+  preset-strong-sink: -3 m/s
+  preset-zero: '0'
+  preset-weak-climb: +1 m/s
+  preset-strong-climb: +5 m/s
+  simulation-active: 'Simulating {value} m/s'
+  stop-simulation: Stop simulation
 
 update:
   how-to: How to update
+  eyebrow: Firmware update
+  title-line1: Use nRF Connect.
+  title-line2: It just works.
+  intro: 'We don''t ship in-browser OTA. Nordic''s free nRF Connect for Mobile is the industry-standard tool for nRF52 firmware updates — battle-tested, recoverable, supported on both platforms. Use it.'
+  callout-eyebrow: Why not in-browser?
+  callout-body: 'A failed OTA on a vario can brick it. Native MCUmgr clients handle retry, error recovery and signature validation. A web app over flaky BLE can''t match that safely. Until SMP-over-WebBLE has a recovery path — use the native tool.'
+  step-1-title: Install nRF Connect Mobile
+  step-1-desc: Free, Nordic-official. iOS App Store + Google Play. Works without an account.
+  step-2-title: Power on your mini BT
+  step-2-desc: Long-press until the LED breathes signal-orange.
+  step-3-title: Open Device Manager tab
+  step-3-desc: Select your mini BT from the scan list. The Device Manager card pops up.
+  step-4-title: Tap Firmware Upgrade
+  step-4-desc: Choose the .bin file you downloaded from flybeeper.com/firmware. Tap Start.
+  step-5-title: Wait 60–90 seconds
+  step-5-desc: Progress bar runs to 100%. The device reboots once. nRF Connect shows "complete".
+  step-6-title: Reopen this configurator
+  step-6-desc: Reconnect to verify the firmware version in the status bar matches.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Get firmware ↓
   changelog: Changelog
   firmware: Firmware
   descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.
+  descr2: Starting from fw version 0.21 you can use a simpler and more intuitive application for updating firmware
   update-first: Update firmware first, please.
+  available-eyebrow: UPDATE AVAILABLE
+  available-body: 'Your device is on FW {current}; FW {latest} is published.'
+  firmware-list-title: 'Firmware history for {model}'
+  no-public-firmware-eyebrow: NO BUILD YET
+  no-public-firmware: No public firmware build yet for this device.
+  latest-badge: LATEST
+
+footer:
+  about: About FlyBeeper
+  devices: Devices
+  firmware-update: Firmware update
+  alpisto: alpisto.eu ↗

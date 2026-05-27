@@ -16,6 +16,8 @@ There is a transport mode where the device remains in sleep mode continuously an
 
 ### Placement
 
+![FlyBeeper TAS — Pitot probe and tail fin keep it aligned with the airflow under the harness](/manual-media/fbtas/03-mount.jpg)
+
 #### For Paragliders
 
 The standard position is on the harness using a line with a length of 1 meter under the pilot, attached to the carabiner. The tail fin ensures self-alignment with the airflow. The line length should allow the device to be distanced from the pilot’s harness to avoid the influence of the compressed airflow. Insufficient distancing will result in speed readings being higher than actual. The device's low weight and low frontal resistance help effectively counteract the pendulum effect, but if the line is too long, undesirable oscillations may occur.
@@ -36,25 +38,23 @@ To activate transport mode, press the reset button once, then press it again aft
 
 ### Charging
 
-The prototype device has a `USB Type C` port for charging; however, it only supports simple chargers that consistently output 5V, such as USB ports on personal computers. Smart chargers and `PD` are not supported.
+The final device includes a built-in solar panel and does not require any other charging method. Recommend to put it on open air before use for 1 hour.
 
-The final device includes a built-in solar panel and does not require any other charging method.
+The prototype device has a `USB Type C` port for charging. It only supports simple chargers that consistently output 5V, such as USB ports on personal computers. Smart chargers and `PD` are not supported.
 
 ### Configuration
 
-You can test and configure the device through the graphical interface of the [configurator](https://fbminibt-conf.flybeeper.com/settings). You need a device with a Bluetooth module, such as a smartphone, laptop, or PC with Bluetooth. Click `Connect` and select `FBTAS` from the list. Keep the devices as close to each other as possible. Change any parameter and click `Apply`. You can view all the data sent by the device in real time on the `Cockpit` tab.
+You need a device with a Bluetooth module, such as a smartphone, laptop, or PC with Bluetooth. Click `Connect` and select `FBTAS` from the list. Keep the devices as close to each other as possible. Change any parameter and click `Apply`. You can view all the data sent by the device in real time on the `Cockpit` tab.
 
-`Pitot K factor (o.e.)` - a calibration coefficient that accounts for the structural pressure loss in the Pitot tube and the pathway to the differential pressure sensor. Increasing this coefficient proportionally increases the IAS and TAS readings. It can be adjusted based on ground speed measurement results in perfectly still air.
+`Pitot K factor (o.e.)` - a calibration coefficient that accounts for the structural pressure loss in the Pitot tube and the pathway to the differential pressure sensor. Increasing this coefficient proportionally increases the IAS and TAS readings. Use [TAS calibration](https://flybeeper.com/utils/tas-calibration/) service.
+
 `Differential Pressure offset, Pa` - the offset of the differential pressure sensor relative to still air. The default is 0, as the standard sensor has built-in auto-calibration. However, in some experimental device models, you may need to adjust the offset to compensate for sensor drift.
 
 ### List of Flight Programs with Direct Support
 
 - xcTrack v.0.9.11.10+
 - SeeYou Navigator v.3.0.6+
-
-Soon:
-
-- LK8000
+- LK8000 v.7.4.19+
 
 ### Communication Protocol Description
 
@@ -72,10 +72,10 @@ Characteristics UUID for service `0x1819` LNS
 
 Characteristics UUID for service `0x181A` ESS
 
-| Name        | UUID   | Size  | Exponent | Unit    |
-| ----------- | ------ | ----- | -------- | ------- |
-| Temperature | 0x2a6e | INT16 | -2       | Celcius |
-| Pressure    | 0x2a6d | INT16 | -1       | Pascal  |
+| Name        | UUID   | Size   | Exponent | Unit    |
+| ----------- | ------ | ------ | -------- | ------- |
+| Temperature | 0x2a6e | INT16  | -2       | Celcius |
+| Pressure    | 0x2a6d | UINT32 | -1       | Pascal  |
 
 Characteristics UUID for service `0x180F` BAS
 
@@ -109,4 +109,7 @@ The device settings are available for reading and writing in the service 904baf0
 | Pitot K factor               | 904baf04-5814-11ee-8c99-0242ac120201 | INT16 | -3       | o.e.   |
 | Diffirencial Pressure offset | 904baf04-5814-11ee-8c99-0242ac120202 | INT16 | -1       | Pascal |
 
-<router-link to="/devices/fbtas">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

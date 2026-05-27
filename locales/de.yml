@@ -17,7 +17,103 @@ intro:
   desc: Bluetooth Atmosphärendrucksensor
   device-list: Geräteliste
 
+catalog:
+  pitch-eyebrow: EIGENES GERÄT
+  pitch-title: BLE-Wearables, schlüsselfertig.
+  pitch-body: Dieselben Hände hinter FlyBeeper übernehmen Auftragsarbeit — nRF52-Firmware, BLE-Protokolle, KiCad-Platinen, Web-Backends.
+  pitch-cta: ALPISTO ↗
+
+home:
+  eyebrow: FlyBeeper · BLE-Konfigurator
+  title: Variometer direkt im Browser einstellen
+  subtitle: Web Bluetooth spricht mit FlyBeeper-Variometern, Trackern und Fernbedienungen. Einstellungen liegen zuerst auf diesem Telefon und werden auf das Gerät übertragen, wenn du bereit bist.
+  connected-title: Gerät verbunden
+  connected-body: Wähle, wohin als Nächstes.
+  link-settings: Einstellungen
+  link-cockpit: Cockpit
+  link-terminal: Terminal
+  link-update: Firmware-Update
+
 not-found: Nicht gefunden
+
+local:
+  disconnected-banner: Gerät getrennt — Einstellungen lokal gespeichert, Ton auf Browser umgeschaltet.
+  dismiss: Schließen
+  reconnect-diff-title: Lokale Einstellungen weichen vom Gerät ab
+  reconnect-diff-body: Deine lokalen Änderungen stimmen nicht mit dem Gerät überein. Anwenden oder verwerfen und Gerätewerte nutzen?
+  apply-local: Lokal anwenden
+  discard-local: Lokal verwerfen
+  decide-later: Später entscheiden
+  changes-count: '{count} Feld(er) geändert'
+
+pair:
+  step1-eyebrow: Pairing · Vorflug
+  step1-title-line1: Vier
+  step1-title-line2: Schritte.
+  step1-title-line3: Bereit.
+  step2-eyebrow: Verbinden
+  step2-title-line1: Einschalten.
+  step2-title-line2: Verbinden.
+  step2-sub: Chromium öffnet den System-Auswahldialog. Wähle ein Gerät mit dem Präfix FB-.
+  step2-cta: ⚡ Per Bluetooth verbinden
+  step2-meta-left: navigator.bluetooth · Präfix FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Geräte · gepaart
+  saved-count: '{count} in deinem Kit'
+  saved-scanning: 'Scannen · {count} in Reichweite'
+  in-range: ● IN REICHWEITE
+  pair-new: +  NEUES GERÄT PAAREN
+  retry: Wiederholen
+  auto: AUTO
+  last-ago: 'ZULETZT · {when}'
+  explainer-bullet-1-title: Browser-nativ
+  explainer-bullet-1-desc: Web Bluetooth spricht direkt mit deinem FlyBeeper.
+  explainer-bullet-2-title: Gerät einschalten
+  explainer-bullet-2-desc: Lange drücken, bis die LED orange atmet.
+  explainer-bullet-3-title: Aus dem Dialog wählen
+  explainer-bullet-3-desc: System-Picker. Dein Gerät wird als FB-… angezeigt.
+  explainer-bullet-4-title: Ein-Tipp-Reconnect
+  explainer-bullet-4-desc: Lokal gespeichert. Keine Cloud, kein Account.
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth nicht unterstützt
+  ios-sub: Mit Bluefy öffnen — fügt Web BLE unter iOS hinzu. Kostenlos.
+  open-bluefy: IN BLUEFY ÖFFNEN ↗
+  disc-eyebrow: Getrennt
+  disc-title: Einstellungen lokal gespeichert
+  disc-sub: Audio-Vorschau läuft im Browser. Jederzeit erneut verbinden.
+  disc-reconnect: NEU VERBINDEN
+  disc-work-offline: OFFLINE ARBEITEN
+  restart-eyebrow: Neustart nötig
+  restart-title: Gerät neu starten
+  restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
+  restart-ack: BESTÄTIGEN
+  sim-eyebrow: Simulator
+  sim-title: Vario-Simulation aktiv
+  sim-sub: '{value} m/s wird gesendet. Stoppen für echte Messwerte.'
+  sim-stop: STOPP
+  explainer-title: FlyBeeper-Gerät verbinden
+  explainer-body: Wir sprechen über Web Bluetooth mit deinem Variometer. Beim Tippen auf Verbinden fragt der Browser, welches FB-Gerät gekoppelt werden soll. Hier geänderte Einstellungen werden zuerst auf diesem Telefon gespeichert und beim Übernehmen an das Gerät gesendet.
+  explainer-supported: Funktioniert in Chrome / Edge unter Android, Windows, macOS, Linux. Auf dem iPhone den Browser Bluefy nutzen.
+  continue: Weiter →
+  skip-demo: Überspringen · Demo
+  connect: Verbinden →
+  connect-another: Weiteres verbinden →
+  saved-title: Deine Geräte
+  saved-empty: Noch keine gekoppelten Geräte — tippe auf Verbinden, um eines hinzuzufügen.
+  reconnect: Neu verbinden
+  autoconnect-label: Beim Start automatisch verbinden
+  last-seen: Zuletzt gesehen
+  firmware: Firmware
+  rename: Umbenennen
+  forget: Vergessen
+  forget-confirm: Dieses Gerät vergessen? Die Kopplung muss erneut erfolgen.
+  no-ble-eyebrow: Browser nicht unterstützt
+  unsupported-title: Web Bluetooth nicht verfügbar
+  unsupported-body: Dieser Browser kann nicht mit BLE-Geräten sprechen. Verwende Chrome oder Edge unter Android / Windows / macOS / Linux.
+  insecure-eyebrow: HTTPS erforderlich
+  insecure-title: Web Bluetooth braucht eine sichere Verbindung
+  insecure-body: Diese Seite wurde über reines HTTP geladen. Browser geben Bluetooth nur unter https:// oder localhost frei. Öffne die Seite über HTTPS, um ein Gerät zu koppeln.
+  ios-banner-body: iPhone oder iPad? Web Bluetooth gibt es in Safari nicht. Öffne die Seite in Bluefy, um zu verbinden.
 
 msg:
   disconnected: Gerät getrennt
@@ -72,13 +168,35 @@ about:
   install-app: Anwendung installieren
   p4: Eine ausführliche Projektbeschreibung finden Sie auf der Projektseite.
   link-description: Projektseite
-  link-blog: Projektseite
   link-market: FlyBeeper-Shop
+  alpisto-eyebrow: GEBAUT VON ALPISTO
+  alpisto-title: Working code, not slide decks.
+  alpisto-body: 'FlyBeeper-Hardware und -Firmware kommen von Alpisto — einer Ein-Personen-Ingenieurpraxis in Tolmin, Slowenien, geführt von Evgeny Istomin. Zwanzig Jahre nRF52-Firmware, BLE-Protokolle, KiCad-Platinen und Back-End-Arbeit — alles selbst gemacht. Kein Outsourcing, keine Folien.'
+  alpisto-services: 'Embedded BLE (nRF52, Zephyr, ESP32) · IoT-Back-Ends (FastAPI, NATS, MQTT) · MATLAB → Python-Migrationen · technische Due Diligence.'
+  alpisto-address: 'Rutarjeva ulica 15, 5220 Tolmin, Slowenien · USt-IdNr. SI91102227'
+  alpisto-cta: alpisto.eu öffnen
+  contact-eyebrow: KONTAKT
+  contact-title: Nachricht senden
+  contact-body: 'Fehlermeldungen, Hardware-Fragen, Kooperationsideen — schreib uns. Antwort innerhalb von zwei Werktagen.'
+  contact-name: Name
+  contact-name-ph: Optional
+  contact-email: E-Mail
+  contact-email-ph: 'du{''@''}beispiel.de'
+  contact-message: Nachricht
+  contact-message-ph: 'Worum geht''s?'
+  contact-send: Senden
+  contact-sending: Wird gesendet…
+  contact-success-eyebrow: GESENDET
+  contact-success-body: Danke — deine Nachricht ist angekommen. Du erhältst eine Antwort an die angegebene Adresse.
+  contact-error-eyebrow: SENDEN FEHLGESCHLAGEN
+  contact-error-body: 'Verbindung zum Formular-Endpoint nicht möglich. Prüfe deine Internetverbindung und versuche es erneut, oder schreibe direkt an hello{''@''}alpisto.eu.'
   fbtas-p1: Autonomer wahre Luftgeschwindigkeitssensor mit Bluetooth.
   fbminibt-p1: Variometer mit Bluetooth und drahtlosen Tasten. Hörbare Steigrate-Anzeige basierend auf benutzerdefinierten Kurven. Die Batterie ist kälteresistent.
   fbps1-p1: Immer verfügbar für Bluetooth-Verbindung externer Barometer. Hohe Empfindlichkeit und Stabilität mit minimalen Verzögerungen. Verwandeln Sie jedes Smartphone in einen zuverlässigen Variometer.
   fbrc4-p1: 4 externe Tasten sind immer für die Verbindung über Bluetooth verfügbar.
   fbfanet-p1: Externer Funksender mit Bluetooth-Steuerung zum Empfang von FANET-, ADS-L- oder ähnlichen Funkpaketen. Senden und empfangen Sie beliebige Daten ohne Internetverbindung.
+  fbfanetvario-p1: Externer FANET mit Bluetooth und Variometer in einem Gehäuse mit Solarpanel. Senden und Empfangen von FANET-Paketen ohne Internetverbindung. Verwenden Sie es als empfindliches Variometer und als Quelle für barometrische Höhenangaben für Smartphone-Apps.
+  fbsv-p1: Ein kleines Variometer mit Bluetooth, Solarpanel und Superkondensator. Funktioniert von -25 bis +65 °C. 500k Lade-/Entladezyklen. 60 Sekunden USB Type C Aufladung bis 100% oder 15 Minuten Sonne zum Einschalten. Immer bereit mit einer "ewigen" Batterie.
 
 sett:
   daadb8a9-a566-450e-97d0-990a0c8487dd: Lautlos am Boden
@@ -98,9 +216,18 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Vario simulieren, m/s (0-aus)
   904baf04-5814-11ee-8c99-0242ac120201: Pitot K-Faktor
   904baf04-5814-11ee-8c99-0242ac120202: Differenzialdruck-Offset, Pa
+  # FANET radio (Namen aus der Firmware FbFANET/src/settings/settings.h)
+  8d8e8809-4697-41fc-8ee2-ca0b999354ec: Funkfrequenz
+  f19422e2-982a-4954-9a75-b38927236a59: Funkbandbreite
+  108b855f-11cd-4bc5-adee-eafce49bc77a: Funkdatenrate
+  17a95752-3c12-438f-9244-4f4612a1ab49: Funkkodierungsrate
+  8ef0c42e-adb6-4897-b9c9-6fe93143faf4: Funksendeleistung
+  9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba: FANET UART-Protokoll (1-FNNGB, 2-FBFAN, 3-FNF)
   7e035080-7417-4393-959a-58505ef9cf4a: Vario Durchschnittszeit (sek)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Verzögerungszeit für automatische Abschaltung des Stroms (Stunden)
   113bb48c-7e3f-4580-a561-acf6c9eb42a5: Das Duplizieren von Daten im UART-Emulator
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: Sanfte Frequenzänderung
+  0e984fe9-534c-4f13-969c-58ce03d33527: Steigflug-Hysterese (m/s)
 
   silent: Lautlos am Boden
   bt-never-sleep: Bluetooth schläft nie
@@ -125,10 +252,177 @@ sett:
   sim-label1: Vario simulieren, cm/s
   sim-label2: (0 - Simulation aus)
   sim-label3: Bitte stellen Sie die Lautstärke auf mehr als 1 ein, um die Simulation zu hören.
+  restart-device: Nach dem Übernehmen der Änderungen muss das Gerät aus- und wieder eingeschaltet werden.
+  group-audio: Audio
+  group-curves: Kurven
+  group-behaviour: Verhalten
+  group-uart: UART
+  group-power: Energie
+  group-simulator: Simulator
+  group-fanet: FANET
+  group-tas: TAS
+  group-audio-desc: Summerlautstärke und die Schwellen, ab denen der Ton ein- und ausgeht.
+  group-curves-desc: 12 Stützstellen, die Steigrate auf Frequenz, Zyklus und Duty abbilden.
+  group-behaviour-desc: Lautlos am Boden, LED-Anzeige, HID-Tastatur.
+  group-uart-desc: Serielles Protokoll über den BLE-UART-Emulator.
+  group-power-desc: Bluetooth-Schlafverhalten.
+  group-simulator-desc: Einen künstlichen Vario-Wert einspeisen, um die Kurve ohne Sensor zu hören.
+  group-fanet-desc: FANET-Funkparameter und Gateway-UART-Protokoll.
+  group-tas-desc: TAS-Kalibrierung — Pitot-K-Faktor und Druckdifferenz-Offset.
+  slide-to-pan: ↔ ZUM PANNEN ZIEHEN
+  drag-point-edit: ● PUNKT ZIEHEN ZUM ÄNDERN
+  revert: Zurücksetzen
+  reset: Standard
+  reset-confirm: Diese Gruppe auf Werkseinstellungen zurücksetzen?
+  no-changes: Keine lokalen Änderungen
+  unsynced: '{count} lokale Änderung(en) ausstehend'
+
+audio:
+  source-label: Tonquelle
+  source-device: Gerät
+  source-browser: Browser
+  source-off: Aus
+  demo: ▶ Demo
+  demo-stop: ■ Stopp
+  silent-device-eyebrow: GERÄT STUMM
+  silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
+  silent-device-cta: Audio-Einstellungen öffnen
+  preset-strong-sink: −3 m/s
+  preset-zero: '0'
+  preset-weak-climb: +1 m/s
+  preset-strong-climb: +5 m/s
+  simulation-active: 'Simulation aktiv: {value} m/s'
+  stop-simulation: Simulation beenden
 
 update:
   how-to: Wie man aktualisiert
+  eyebrow: Firmware-Update
+  title-line1: Nutze nRF Connect.
+  title-line2: Es funktioniert einfach.
+  intro: 'Wir liefern kein In-Browser-OTA. Nordics kostenloses nRF Connect for Mobile ist das Standard-Tool für nRF52-Firmware-Updates — erprobt, mit Recovery, auf beiden Plattformen verfügbar. Nimm es.'
+  callout-eyebrow: Warum nicht im Browser?
+  callout-body: 'Ein fehlgeschlagenes OTA kann ein Vario unbrauchbar machen. Native MCUmgr-Clients beherrschen Retry, Recovery und Signaturprüfung. Eine Web-App über instabiles BLE kann das nicht sicher. Solange SMP-over-WebBLE keinen Recovery-Pfad hat — nimm das native Tool.'
+  step-1-title: nRF Connect Mobile installieren
+  step-1-desc: Kostenlos, offiziell von Nordic. iOS App Store + Google Play. Ohne Account.
+  step-2-title: mini BT einschalten
+  step-2-desc: Lange drücken, bis die LED orange atmet.
+  step-3-title: Device Manager öffnen
+  step-3-desc: Wähle dein mini BT aus der Scan-Liste. Die Device-Manager-Karte erscheint.
+  step-4-title: Firmware Upgrade tippen
+  step-4-desc: Wähle die .bin-Datei von flybeeper.com/firmware. Auf Start tippen.
+  step-5-title: 60–90 Sekunden warten
+  step-5-desc: Fortschrittsbalken läuft auf 100%. Gerät bootet einmal neu. nRF Connect zeigt „complete".
+  step-6-title: Konfigurator neu öffnen
+  step-6-desc: Erneut verbinden und prüfen, dass die Firmware-Version in der Statuszeile passt.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Firmware laden ↓
   changelog: Änderungsprotokoll
   firmware: Firmware
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.
+  descr2: Ab fw Version 0.21 können Sie eine einfachere und intuitivere Anwendung zum Aktualisieren der Firmware verwenden
   update-first: Bitte zuerst die Firmware aktualisieren.
+  available-eyebrow: UPDATE VERFÜGBAR
+  available-body: 'Ihr Gerät läuft auf FW {current}; FW {latest} ist veröffentlicht.'
+  firmware-list-title: 'Firmware-Historie für {model}'
+  no-public-firmware-eyebrow: NOCH KEIN BUILD
+  no-public-firmware: Für dieses Gerät gibt es noch keine öffentliche Firmware.
+  latest-badge: NEUESTE
+
+preset:
+  import-eyebrow: Preset-Import
+  import-default-name: Unbenanntes Preset
+  bytes: BYTES
+  fields: FELDER
+  via-url: via URL-Fragment
+  apply: ANWENDEN
+  discard: VERWERFEN
+  share-title: Einstellungen teilen
+  share-eyebrow: Preset exportieren · URL-Fragment
+  share-sub: Im URL-Hash kodiert · geht nicht an Server · statisch hostbar
+  scan-eyebrow: Mit Handy scannen
+  url-eyebrow: URL
+  copy-url: 📋 URL kopieren
+  download-json: ↓ JSON
+  preset-name: Preset-Name
+  preset-by: Autor
+  privacy-note: Datenschutz · URL-Fragment ist client-seitig · wird nie gesendet
+  share-cta: TEILEN ↗
+  share-strip-eyebrow: Export
+  share-strip-cta: Diese Einstellungen teilen →
+  share-strip-sub: Link oder QR-Code, den Freunde scannen können
+
+install:
+  eyebrow: Installation · offline
+  title: Für offline-Nutzung in den Bergen
+  cta: INSTALLIEREN
+  hub-row: APP INSTALLIEREN
+
+dashboard:
+  eyebrow: Dashboard · live
+  share: TEILEN
+  disconnect: ● TRENNEN
+  button-map: Tastenkarte
+  live: ● LIVE
+  hover-jump-hint: HOVER → SPRINGEN
+  manual-link: HANDBUCH ↗
+  manual-link-need-connect: Gerät verbinden, um das Handbuch zu öffnen
+  vario: Vario
+  alt: HÖHE
+  press: DRUCK
+  temp: TEMP
+  bat: AKKU
+  settings-title: Einstellungen
+  synced: ONLINE
+  dirty: ● UNSYNCED
+  hub-sound: KLANG
+  hub-sound-sub: Lautstärke · Schwellen · 12-Punkt-Kurve · Simulator
+  hub-curves: KURVEN
+  hub-curves-sub: Antwort · 12 Punkte
+  hub-behaviour: VERHALTEN
+  hub-behaviour-sub: still · LED · HID
+  hub-power: ENERGIE
+  hub-power-sub: Schlaf · Timeout
+  hub-uart: UART
+  hub-uart-sub: Protokoll
+  hub-simulator: SIMULATOR
+  hub-simulator-sub: Wert senden
+  hub-firmware: FIRMWARE
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: TERMINAL
+  hub-terminal-sub: BLE-Log
+  back-dashboard: ← DASHBOARD
+  offline-eyebrow: OFFLINE
+  offline-body: kein Gerät · lokal gespeichert · zum Sync verbinden
+  demo-device: DEMO-MODUS
+  demo-mode-eyebrow: DEMO
+  demo-mode-title: NICHT LIVE · VERBINDEN FÜR ECHTE WERTE
+  demo-mode-sub: Angezeigt werden Demo-Standardwerte — verbinde ein FlyBeeper-Gerät für Live-Daten.
+  connect-cta: ● VERBINDEN
+  cancel-cta: ● ABBRECHEN
+  connecting-cta: ● VERBINDEN
+  fetching-cta: 'LESEN {n}/{total}'
+  connect-error-eyebrow: VERBINDUNG FEHLGESCHLAGEN
+  connect-error-title: GERÄT NICHT ERREICHBAR
+  connecting-eyebrow: PAIRING
+  connecting-title: KANAL WIRD AUFGEBAUT
+  fetching-eyebrow: LESEN
+  fetching-title: 'LADE {n}/{total} CHARAKTERISTIKEN'
+  fw-update-warn: FW AKTUALISIEREN
+
+device:
+  firmware-eyebrow: FIRMWARE
+  firmware-title: 'FW {latest}'
+  firmware-body: '{count} öffentliche Builds — vollständige Historie unten.'
+  firmware-download: ↓ .bin herunterladen
+  firmware-all-builds: Alle Builds →
+  firmware-empty: Noch kein öffentlicher Firmware-Build.
+  changelog-title: Änderungsprotokoll
+  manual-title: Handbuch
+  manual-open-standalone: Im neuen Tab ↗
+
+footer:
+  about: Über FlyBeeper
+  devices: Geräte
+  firmware-update: Firmware-Update
+  alpisto: alpisto.eu ↗

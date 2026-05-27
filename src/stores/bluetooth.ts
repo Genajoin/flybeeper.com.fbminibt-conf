@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
+import { useSettingsStore } from '~/stores/settings'
+import type { SettingsLocal } from '~/stores/settings'
+import { useSavedDevicesStore } from '~/stores/saved-devices'
+import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
 interface BtCh {
   characteristic: object | null
@@ -13,61 +17,57 @@ interface iDIS {
   firmwareRevisionString: BtCh
 }
 
-interface iVarioCurves {
-  buzzer_vario_dots
-  buzzer_frequency_dots
-  buzzer_cycle_dots
-  buzzer_duty_dots
-}
-
-export interface iFbMiniBtSettings {
-  buzzer_volume: number
-  climb_tone_on_threshold_cm: number
-  climb_tone_off_threshold_cm: number
-  sink_tone_off_threshold_cm: number
-  sink_tone_on_threshold_cm: number
-  curves: iVarioCurves
-  buzzer_simulate_vario_value: number
-  uart_protocols: number
-  silent_on_ground: boolean
-  ble_never_sleep: boolean
-  led_blinky_by_vario: boolean
-  hid_keyboard_off: boolean
-}
-
-// Индекс начала чтения каждого значения в буфере данных
-const indexes = {
-  buzzer_volume: 0,
-  climb_tone_on_threshold_cm: 2,
-  climb_tone_off_threshold_cm: 4,
-  sink_tone_off_threshold_cm: 6,
-  sink_tone_on_threshold_cm: 8,
-  buzzer_vario_dots: 10,
-  buzzer_frequency_dots: 34,
-  buzzer_cycle_dots: 58,
-  buzzer_duty_dots: 82,
-  buzzer_simulate_vario_value: 106,
-  uart_protocols: 108,
-  feature_bits: 110,
-}
-
 export const useBluetoothStore = defineStore('bluetoothStore', {
   state: () => ({
     bleAvailable: 'bluetooth' in navigator,
+    /**
+     * Why Web Bluetooth is not available. Distinct cases drive distinct UI:
+     *   - 'insecure': page loaded over plain HTTP (and not localhost) — the
+     *     browser hides navigator.bluetooth on purpose. Fix: switch to
+     *     HTTPS / localhost. Affects e.g. Chrome on a LAN IP over HTTP.
+     *   - 'browser':  the browser itself has no Web Bluetooth (iOS Safari,
+     *     desktop Firefox). Fix: use Chrome/Edge, or Bluefy on iOS.
+     *   - null:       Web Bluetooth IS available (bleAvailable === true).
+     */
+    bleUnavailableReason: (
+      'bluetooth' in navigator
+        ? null
+        : typeof window !== 'undefined' && window.isSecureContext === false
+          ? 'insecure'
+          : 'browser'
+    ) as 'insecure' | 'browser' | null,
     device: null as BluetoothDevice,
     isConnected: false,
     isConnecting: false,
     isFetching: false,
+    /**
+     * Progress of the eager FSS initialize() pass. Used by PairingWizard /
+     * cockpit / terminal to surface "FETCHING 4 / 12" while the user waits.
+     * Reset to 0 / 0 before each connect attempt.
+     */
+    fetchProgress: 0,
+    fetchTotal: 0,
     isDisconnecting: false,
     isSubscribed: false,
+    /**
+     * True once this session has reached a successful connect. Used by
+     * DisconnectBanner to distinguish "you just lost the device" from
+     * "cold start with hydrated local settings".
+     */
+    hasConnectedThisSession: false,
+    /**
+     * Monotonic counter incremented on every connectToDevice call. The eager
+     * initialize() batch captures the value at start; when its .finally() runs,
+     * it bails if connectGen has moved on — that means cancelConnect or another
+     * connect has superseded this attempt, so orphan completions must not
+     * mutate isFetching / fetchProgress for the live attempt.
+     */
+    connectGen: 0,
     devName: '',
     errorMessage: '',
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
-    settings: {} as iFbMiniBtSettings,
-    devices: [],
-    devicesRssi: { },
 
     dis: {
       modelNumberString: { characteristic: null, value: null },
@@ -75,10 +75,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       firmwareRevisionString: { characteristic: null, value: null },
     } as iDIS,
     fss: {
-      miniBtSettings: { characteristic: null, value: null } as BtCh,
       miniBtSimulation: { characteristic: null, value: null } as BtCh,
     },
-
   }),
   actions: {
     async toggleConnectionBT() {
@@ -93,63 +91,119 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         return
 
       this.errorMessage = ''
+      this.fetchProgress = 0
+      this.fetchTotal = 0
       this.isConnecting = true
       this.device = device
       this.devName = this.device.name
+      const gen = ++this.connectGen
       log.info('Connecting to', this.devName)
 
-      const server = await this.device.gatt.connect()
+      // Swap the settings slot to this device's own IDB-persisted state
+      // BEFORE any CPF read happens. If we have a previous local for it,
+      // it survives — otherwise applyDeviceSnapshot below will seed local
+      // from what we read off the device.
+      if (this.device.id)
+        await useSettingsStore().loadSlot(this.device.id)
 
-      // Получение списка сервисов
-      const services = await server.getPrimaryServices()
-      this.isConnecting = false
-      this.isFetching = true
-      log.info('fetching')
-      // Проход по сервисам
-      for (const service of services) {
-        log.debug('SERVICE', service.uuid)
-        // Получение характеристик сервиса
-        const characteristics = await service.getCharacteristics()
-        // Проверка, есть ли подписка на изменение для каждой характеристики
-        for (const ch of characteristics) {
-          log.debug('characteristic', ch.uuid)
-          const bleCharacteristic = new BleCharacteristicImpl(ch)
-          // await bleCharacteristic.initialize()
-          // await bleCharacteristic.subscribeToNotifications()
-          this.bleCharacteristics.push(bleCharacteristic)
+      try {
+        const server = await this.device.gatt.connect()
+
+        const services = await server.getPrimaryServices()
+        this.isConnecting = false
+        this.isFetching = true
+        log.info('fetching')
+        for (const service of services) {
+          log.debug('SERVICE', service.uuid)
+          const characteristics = await service.getCharacteristics()
+          for (const ch of characteristics) {
+            log.debug('characteristic', ch.uuid)
+            const bleCharacteristic = new BleCharacteristicImpl(ch)
+            this.bleCharacteristics.push(bleCharacteristic)
+          }
+        }
+
+        this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
+          .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
+
+        // Device Information Service
+        const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
+        if (fwRev)
+          this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
+
+        const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
+        if (modNum)
+          this.dis.modelNumberString.value = await modNum.getFormattedValue()
+
+        const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
+        if (manName)
+          this.dis.manufacturerNameString.value = await manName.getFormattedValue()
+
+        // FlyBeeper Settings Service — pin the simulation characteristic so
+        // useSimulation() can write to it without re-scanning every time.
+        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
+        if (FSS) {
+          const characteristics = await FSS.getCharacteristics()
+          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+        }
+
+        this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
+        this.hasConnectedThisSession = true
+
+        // Eager-initialize every FlyBeeper Settings Service characteristic so
+        // panels render without lazy per-visit reads. Await the batch before
+        // flipping isConnected so PairingWizard / cockpit watchers don't race
+        // an empty bleCharacteristics list before CPF descriptors land.
+        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+        const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
+        this.fetchTotal = fssChars.length
+        await Promise.allSettled(
+          fssChars.map(c => c.initialize().finally(() => {
+            if (gen === this.connectGen)
+              this.fetchProgress++
+          })),
+        )
+        if (gen !== this.connectGen)
+          return
+        this.isFetching = false
+        this.isConnected = true
+
+        // Build a snapshot of what the device currently has and hand it to
+        // the settings store. applyDeviceSnapshot writes it into
+        // lastDeviceSnapshot (always) and into local (only if local was
+        // empty — preserves any pending preset / offline edits). The
+        // settings panel then renders local + lights Apply when it
+        // differs.
+        const deviceSnap: SettingsLocal = {}
+        for (const ch of fssChars) {
+          const v = ch.formattedValue
+          if (v !== null && v !== undefined)
+            deviceSnap[ch.characteristic.uuid] = JSON.parse(JSON.stringify(v))
+        }
+        useSettingsStore().applyDeviceSnapshot(deviceSnap)
+
+        if (this.device.id && this.device.name) {
+          useSavedDevicesStore().remember({
+            id: this.device.id,
+            name: this.device.name,
+            firmware: (this.dis.firmwareRevisionString.value as string | null) ?? null,
+          })
         }
       }
-
-      // Чтение данных после успешного подключения
-      this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
-        .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
-
-      // Device Information Service
-      const fwRev = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a26-0000-1000-8000-00805f9b34fb')
-      if (fwRev)
-        this.dis.firmwareRevisionString.value = await fwRev.getFormattedValue()
-
-      const modNum = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a24-0000-1000-8000-00805f9b34fb')
-      if (modNum)
-        this.dis.modelNumberString.value = await modNum.getFormattedValue()
-
-      const manName = this.bleCharacteristics.find(ch => ch.characteristic.uuid === '00002a29-0000-1000-8000-00805f9b34fb')
-      if (manName)
-        this.dis.manufacturerNameString.value = await manName.getFormattedValue()
-
-      // FlyBeeper settings service
-      const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000') // FlyBeeper settings service
-      if (FSS && Number.parseFloat(this.dis.firmwareRevisionString.value as string) <= 0.15) {
-        const characteristics = await FSS.getCharacteristics()
-
-        this.fss.miniBtSettings.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120001')
-        this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
-        await this.readSettings()
+      catch (error) {
+        log.error('Error during device connect:', error)
+        this.errorMessage = error instanceof Error ? error.message : String(error)
+        this.connectGen++
+        this.isConnecting = false
+        this.isFetching = false
+        try {
+          this.device?.gatt?.disconnect()
+        }
+        catch { /* device already gone */ }
+        this.bleCharacteristics = []
+        this.device = null as unknown as BluetoothDevice
+        this.isConnected = false
       }
-
-      this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-      this.isConnected = true
-      this.isFetching = false
     },
 
     async connectToRequestDevice() {
@@ -170,10 +224,14 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       })
         .then(device => this.connectToDevice(device))
         .catch((error) => {
+          if (error && (error as DOMException).name === 'NotFoundError') {
+            log.debug('Device chooser dismissed by user')
+            this.isConnecting = false
+            this.isFetching = false
+            return
+          }
           log.error('Error connecting to the device:', error)
-          this.errorMessage = error
-          this.isConnected = true
-          this.disconnectDevice()
+          this.errorMessage = error instanceof Error ? error.message : String(error)
           this.isConnecting = false
           this.isFetching = false
         })
@@ -182,7 +240,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       if (!this.isConnected || this.isDisconnecting)
         return
 
-      // Проход по характеристикам
       for (const ch of this.bleCharacteristics)
         await ch.unsubscribeFromNotifications()
 
@@ -190,136 +247,86 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         this.isDisconnecting = true
         this.isConnected = false
         await this.device.gatt.disconnect()
-        // this.device.removeEventListener('gattserverdisconnected', this.onDisconnected)
       }
       catch (error) {
         log.error('Error disconnecting from the device:', error)
       }
       this.isDisconnecting = false
     },
+
+    /**
+     * Abort an in-flight connect/fetch. The Chrome device-picker dialog
+     * itself can't be dismissed programmatically (user has to hit X), but
+     * once gatt.connect has returned we can tear down the link, clear flags,
+     * and let the UI revert to demo mode.
+     */
+    async cancelConnect() {
+      if (!this.isConnecting && !this.isFetching)
+        return
+      // Bump the generation so any in-flight initialize().finally() from the
+      // attempt we're aborting won't increment fetchProgress / flip flags on
+      // top of the next connectToDevice attempt.
+      this.connectGen++
+      try {
+        this.device?.gatt?.disconnect()
+      }
+      catch { /* device already gone or never paired */ }
+      this.bleCharacteristics = []
+      this.device = null as unknown as BluetoothDevice
+      this.isConnecting = false
+      this.isFetching = false
+      this.isConnected = false
+      this.fetchProgress = 0
+      this.fetchTotal = 0
+      void useSettingsStore().loadSlot('__demo__')
+    },
     onDisconnected() {
-      // Обработка отключения
+      // Detach BEFORE we null out this.device — otherwise the same listener
+      // accumulates per reconnect cycle (browser caches BluetoothDevice across
+      // getDevices()/requestDevice()), and a single RF blip later fires
+      // onDisconnected N times.
+      try {
+        this.device?.removeEventListener?.('gattserverdisconnected', this.onDisconnected)
+      }
+      catch { /* device already gone */ }
+
+      // Best-effort unsubscribe so the BleCharacteristicImpl notification
+      // callbacks don't fire against a torn-down GATT.
+      for (const ch of this.bleCharacteristics) {
+        try {
+          ch.unsubscribeFromNotifications()
+        }
+        catch { /* characteristic already invalid */ }
+      }
+
       this.isConnected = false
       this.isDisconnecting = false
-      this.device = {}
+      this.device = null as unknown as BluetoothDevice
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
-      this.fss.miniBtSettings = { characteristic: null, value: null }
       this.fss.miniBtSimulation = { characteristic: null, value: null }
-      this.settings = {} as iFbMiniBtSettings
       this.subscribedCharacteristics = []
       this.characteristicsData = {}
       this.bleCharacteristics = []
+
+      useSettingsStore().restartPending = false
+      // Swap back to demo slot so the panels (still mounted via virtual
+      // chars) show a sane offline state instead of stale device data.
+      void useSettingsStore().loadSlot('__demo__')
     },
 
-    async readSettings() {
-      if (!this.dis.manufacturerNameString.characteristic && this.dis.manufacturerNameString.value !== 'FlyBeeper')
+    /**
+     * Writes a single FSS characteristic. Convenience wrapper used by URL-share
+     * preset import: given a UUID and a formatted value, find the char, set the
+     * value through its codec, and (if a restart-required UUID) flag the banner.
+     */
+    async writeCharacteristic(uuid: string, value: unknown): Promise<void> {
+      const ch = this.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
+      if (!ch)
         return
-      if (!this.dis.modelNumberString.characteristic && !this.dis.modelNumberString.value)
-        return
-      switch (this.dis.modelNumberString.value) {
-        case 'FBminiBT':
-          await this.readMiniBtSettings()
-          break
-      }
-    },
-
-    async readMiniBtSettings() {
-      if (!this.fss.miniBtSettings.characteristic)
-        return
-      const data = await this.fss.miniBtSettings.characteristic.readValue()
-
-      // Распарсите каждое значение
-      const buzzer_volume = data.getInt16(indexes.buzzer_volume, true)
-      const climb_tone_on_threshold_cm = data.getInt16(indexes.climb_tone_on_threshold_cm, true)
-      const climb_tone_off_threshold_cm = data.getInt16(indexes.climb_tone_off_threshold_cm, true)
-      const sink_tone_off_threshold_cm = data.getInt16(indexes.sink_tone_off_threshold_cm, true)
-      const sink_tone_on_threshold_cm = data.getInt16(indexes.sink_tone_on_threshold_cm, true)
-
-      // Распарсите массивы значений
-      const buzzer_vario_dots = []
-      const buzzer_frequency_dots = []
-      const buzzer_cycle_dots = []
-      const buzzer_duty_dots = []
-
-      for (let i = 0; i < 12; i++) {
-        buzzer_vario_dots[i] = data.getInt16(indexes.buzzer_vario_dots + i * 2, true)
-        buzzer_frequency_dots[i] = data.getInt16(indexes.buzzer_frequency_dots + i * 2, true)
-        buzzer_cycle_dots[i] = data.getInt16(indexes.buzzer_cycle_dots + i * 2, true)
-        buzzer_duty_dots[i] = data.getInt16(indexes.buzzer_duty_dots + i * 2, true)
-      }
-
-      const buzzer_simulate_vario_value = data.getInt16(indexes.buzzer_simulate_vario_value, true)
-      const uart_protocols = data.getInt16(indexes.uart_protocols, true)
-
-      const feature_bits = this.dis.firmwareRevisionString.value > '0.13' ? data.getUint8(indexes.feature_bits) : 0
-
-      const silent_on_ground = feature_bits ? (feature_bits & 0b1) > 0 : false
-      const ble_never_sleep = feature_bits ? (feature_bits & 0b10) > 0 : false
-      const led_blinky_by_vario = feature_bits ? (feature_bits & 0b100) > 0 : false
-      const hid_keyboard_off = feature_bits ? (feature_bits & 0b1000) > 0 : false
-
-      const curves = {
-        buzzer_vario_dots,
-        buzzer_frequency_dots,
-        buzzer_cycle_dots,
-        buzzer_duty_dots,
-      } as iVarioCurves
-
-      // Создайте объект fb_settings
-      this.settings = {
-        buzzer_volume,
-        climb_tone_on_threshold_cm,
-        climb_tone_off_threshold_cm,
-        sink_tone_off_threshold_cm,
-        sink_tone_on_threshold_cm,
-        curves,
-        buzzer_simulate_vario_value,
-        uart_protocols,
-        silent_on_ground,
-        ble_never_sleep,
-        led_blinky_by_vario,
-        hid_keyboard_off,
-      } as iFbMiniBtSettings
-    },
-
-    async writeMiniBtSettings(settings: iFbMiniBtSettings) {
-      if (!this.fss.miniBtSettings.characteristic)
-        return
-
-      const bufferSize = this.dis.firmwareRevisionString.value > '0.13' ? 111 : 110
-      // новый ArrayBuffer для записи данных
-      const buffer = new ArrayBuffer(bufferSize) // Размер буфера зависит от структуры fb_settings
-
-      //  DataView для записи данных в буфер
-      const view = new DataView(buffer)
-
-      //  буфер данными из fbSettings
-      view.setInt16(indexes.buzzer_volume, settings.buzzer_volume, true)
-      view.setInt16(indexes.climb_tone_on_threshold_cm, settings.climb_tone_on_threshold_cm, true)
-      view.setInt16(indexes.climb_tone_off_threshold_cm, settings.climb_tone_off_threshold_cm, true)
-      view.setInt16(indexes.sink_tone_off_threshold_cm, settings.sink_tone_off_threshold_cm, true)
-      view.setInt16(indexes.sink_tone_on_threshold_cm, settings.sink_tone_on_threshold_cm, true)
-      // заполнять буфер для остальных значений
-      for (let i = 0; i < 12; i++) {
-        view.setInt16(indexes.buzzer_vario_dots + i * 2, settings.curves.buzzer_vario_dots[i], true)
-        view.setInt16(indexes.buzzer_frequency_dots + i * 2, settings.curves.buzzer_frequency_dots[i], true)
-        view.setInt16(indexes.buzzer_cycle_dots + i * 2, settings.curves.buzzer_cycle_dots[i], true)
-        view.setInt16(indexes.buzzer_duty_dots + i * 2, settings.curves.buzzer_duty_dots[i], true)
-      }
-      view.setInt16(indexes.buzzer_simulate_vario_value, settings.buzzer_simulate_vario_value, true)
-      view.setInt16(indexes.uart_protocols, settings.uart_protocols, true)
-
-      if (this.dis.firmwareRevisionString.value > '0.13') {
-        const feature_bits = settings.silent_on_ground
-          | this.settings.ble_never_sleep << 1
-          | this.settings.led_blinky_by_vario << 2
-          | settings.hid_keyboard_off << 3
-        view.setUint8(indexes.feature_bits, feature_bits)
-      }
-
-      //  буфер в характеристику
-      this.fss.miniBtSettings.characteristic.writeValue(buffer)
-        .then(() => this.settings = settings)
+      ch.formattedValue = value
+      await ch.setFormattedValue()
+      if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
+        useSettingsStore().restartPending = true
     },
 
     async SendSimulationVarioValue(value) {
@@ -330,33 +337,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       const view = new DataView(buffer)
       view.setInt16(0, value, true)
       this.fss.miniBtSimulation.characteristic.writeValue(buffer)
-    },
-    async getDevices() {
-      log.debug('Getting existing permitted Bluetooth devices...')
-      try {
-        const devices = await navigator.bluetooth.getDevices()
-        log.debug(`> Got ${devices.length} Bluetooth devices.`)
-        this.devices = devices
-
-        for (const device of devices) {
-          log.debug(`  > ${device.name} (${device.id})`)
-          log.debug(`    > add event`)
-          device.addEventListener('advertisementreceived', this.onAdvertisementReceived)
-          log.debug(`    > add watch`)
-          await device.watchAdvertisements()
-        }
-      }
-      catch (error) {
-        log.error(`Argh! ${error}`)
-      }
-    },
-    async onAdvertisementReceived(event) {
-      log.debug(`Advertisement received. ${event.device.name}  RSSI: ${event.rssi}  Device ID: ${event.device.id}`)
-      this.devicesRssi[event.device.id] = event.rssi
-    },
-
-    async stopAdvertisement() {
-
     },
   },
 })

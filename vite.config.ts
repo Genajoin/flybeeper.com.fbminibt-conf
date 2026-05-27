@@ -16,6 +16,7 @@ import Shiki from 'markdown-it-shikiji'
 import WebfontDownload from 'vite-plugin-webfont-dl'
 import VueRouter from 'unplugin-vue-router/vite'
 import { VueRouterAutoImports } from 'unplugin-vue-router'
+import { vitePluginFirmwareIndex } from './scripts/vite-firmware-index'
 
 export default defineConfig(({ command }) => {
   const config = {
@@ -29,6 +30,8 @@ export default defineConfig(({ command }) => {
     },
 
     plugins: [
+      vitePluginFirmwareIndex(),
+
       VueMacros({
         plugins: {
           vue: Vue({
@@ -110,7 +113,7 @@ export default defineConfig(({ command }) => {
 
       // https://github.com/antfu/vite-plugin-pwa
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: ['favicon.svg', 'safari-pinned-tab.svg'],
         manifest: {
           name: 'FlyBeeperMiniBT',

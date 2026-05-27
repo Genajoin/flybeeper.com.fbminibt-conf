@@ -435,7 +435,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     try {
       this.descriptors = await this.characteristic.getDescriptors()
     }
-    catch (error) {
+    catch {
       this.descriptors = []
       log.warn('Descriptors is missing')
     }

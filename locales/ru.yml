@@ -17,6 +17,195 @@ intro:
   desc: Вариометр с блютус
   device-list: Список устройств
 not-found: Не найден
+
+catalog:
+  pitch-eyebrow: СВОЁ УСТРОЙСТВО
+  pitch-title: BLE-носимка под ключ.
+  pitch-body: Та же команда, что делает FlyBeeper, берёт клиентские проекты — прошивка на nRF52, BLE-протоколы, KiCad-платы, веб-бэкенды.
+  pitch-cta: ALPISTO ↗
+
+home:
+  eyebrow: FlyBeeper · BLE конфигуратор
+  title: Настройте вариометр прямо в браузере
+  subtitle: Web Bluetooth подключает вариометры, трекеры и пульты FlyBeeper. Настройки сначала сохраняются здесь, на телефоне, а на устройство уходят, когда вы готовы.
+  connected-title: Устройство подключено
+  connected-body: Выберите, куда дальше.
+  link-settings: Настройки
+  link-cockpit: Кокпит
+  link-terminal: Терминал
+  link-update: Прошивка
+
+local:
+  disconnected-banner: Устройство отключено — настройки сохранены локально, звук переключён на браузер.
+  dismiss: Закрыть
+  reconnect-diff-title: Локальные настройки отличаются от устройства
+  reconnect-diff-body: Ваши локальные изменения не совпадают с тем, что записано на устройстве. Применить их или отбросить и использовать значения устройства?
+  apply-local: Применить локальные
+  discard-local: Отбросить локальные
+  decide-later: Решить позже
+  changes-count: 'Изменено полей: {count}'
+
+pair:
+  step1-eyebrow: Сопряжение · проверки
+  step1-title-line1: Четыре
+  step1-title-line2: шага.
+  step1-title-line3: Готово.
+  step2-eyebrow: Подключение
+  step2-title-line1: Включите.
+  step2-title-line2: Подключайтесь.
+  step2-sub: Chromium откроет системный селектор. Выберите устройство, имя которого начинается с FB-.
+  step2-cta: ⚡ Подключиться по Bluetooth
+  step2-meta-left: navigator.bluetooth · префикс FB
+  step2-meta-right: HTTPS
+  saved-eyebrow: Устройства · в памяти
+  saved-count: 'В вашем наборе: {count}'
+  saved-scanning: 'Поиск · в зоне: {count}'
+  in-range: ● В ЗОНЕ
+  pair-new: +  ДОБАВИТЬ УСТРОЙСТВО
+  retry: Повторить
+  auto: AUTO
+  last-ago: 'БЫЛО · {when}'
+  explainer-bullet-1-title: Браузер «из коробки»
+  explainer-bullet-1-desc: Web Bluetooth напрямую общается с вашим FlyBeeper.
+  explainer-bullet-2-title: Включите устройство
+  explainer-bullet-2-desc: Удерживайте кнопку, пока LED не задышит оранжевым.
+  explainer-bullet-3-title: Выберите в селекторе
+  explainer-bullet-3-desc: Системный селектор. Устройство называется FB-…
+  explainer-bullet-4-title: Подключение одним касанием
+  explainer-bullet-4-desc: Хранится локально. Без облака и аккаунта.
+  explainer-title: Подключение FlyBeeper-устройства
+  explainer-body: Связь с вариометром идёт по Web Bluetooth. Когда вы нажмёте Подключить, браузер покажет список устройств с префиксом FB. Изменения настроек сохраняются на этом телефоне сразу, а на устройство уходят по кнопке Применить.
+  explainer-supported: Работает в Chrome и Edge на Android, Windows, macOS, Linux. На iPhone используйте браузер Bluefy.
+  continue: Продолжить →
+  skip-demo: Пропустить · демо-режим
+  connect: Подключить →
+  connect-another: Подключить ещё →
+  saved-title: Ваши устройства
+  saved-empty: Сохранённых устройств пока нет — нажмите Подключить, чтобы добавить.
+  reconnect: Переподключить
+  autoconnect-label: Подключаться при запуске
+  last-seen: Последнее подключение
+  firmware: Прошивка
+  rename: Переименовать
+  forget: Забыть
+  forget-confirm: Удалить устройство из списка? Сопряжение придётся выполнить заново.
+  no-ble-eyebrow: Браузер не поддерживается
+  unsupported-title: Web Bluetooth недоступен
+  unsupported-body: Этот браузер не умеет работать с BLE. Используйте Chrome или Edge на Android / Windows / macOS / Linux.
+  insecure-eyebrow: Требуется HTTPS
+  insecure-title: Для Web Bluetooth нужно защищённое соединение
+  insecure-body: Страница загружена по обычному HTTP. Браузеры разрешают Bluetooth только на https:// и localhost. Откройте сайт по HTTPS, чтобы подключиться к устройству.
+  ios-banner-body: iPhone или iPad? В Safari нет Web Bluetooth. Откройте сайт в Bluefy, чтобы подключаться.
+  ios-eyebrow: iOS · Safari
+  ios-title: Bluetooth не поддерживается
+  ios-sub: Откройте в Bluefy — это даёт Web BLE на iOS. Бесплатно.
+  open-bluefy: ОТКРЫТЬ В BLUEFY ↗
+  disc-eyebrow: Отключено
+  disc-title: Настройки сохранены локально
+  disc-sub: Звук переключён на браузер. Подключитесь, когда будете готовы.
+  disc-reconnect: ПЕРЕПОДКЛЮЧИТЬ
+  disc-work-offline: РАБОТАТЬ ОФФЛАЙН
+  restart-eyebrow: Нужен перезапуск
+  restart-title: Перезагрузите устройство
+  restart-sub: Часть настроек применяется только после полной перезагрузки.
+  restart-ack: ПОНЯТНО
+  sim-eyebrow: Симулятор
+  sim-title: Симуляция вариометра активна
+  sim-sub: 'Подаётся {value} м/с. Остановите, чтобы вернуть реальные показания.'
+  sim-stop: ОСТАНОВИТЬ
+
+preset:
+  import-eyebrow: Импорт пресета
+  import-default-name: Безымянный пресет
+  bytes: БАЙТ
+  fields: ПОЛЕЙ
+  via-url: через URL фрагмент
+  apply: ПРИМЕНИТЬ
+  discard: ОТМЕНИТЬ
+  share-title: Поделиться настройками
+  share-eyebrow: Экспорт пресета · фрагмент URL
+  share-sub: Кодируется в хеш URL · не уходит на сервер · работает на статическом хостинге
+  scan-eyebrow: Сканируйте телефоном
+  url-eyebrow: URL
+  copy-url: 📋 Скопировать URL
+  download-json: ↓ JSON
+  preset-name: Название пресета
+  preset-by: Автор
+  privacy-note: Приватность · фрагмент URL остаётся в клиенте · никогда не отправляется
+  share-cta: ПОДЕЛИТЬСЯ ↗
+  share-strip-eyebrow: Экспорт
+  share-strip-cta: Поделиться этими настройками →
+  share-strip-sub: Ссылка или QR-код, который друзья смогут отсканировать
+
+install:
+  eyebrow: Установка · оффлайн
+  title: Для использования без интернета в горах
+  cta: УСТАНОВИТЬ
+  hub-row: УСТАНОВИТЬ ПРИЛОЖЕНИЕ
+
+dashboard:
+  eyebrow: Дашборд · live
+  share: ПОДЕЛИТЬСЯ
+  disconnect: ● ОТКЛЮЧИТЬ
+  button-map: Карта кнопок
+  live: ● LIVE
+  hover-jump-hint: НАВЕДИ → ПЕРЕЙТИ
+  manual-link: ИНСТРУКЦИЯ ↗
+  manual-link-need-connect: Подключите устройство, чтобы открыть инструкцию
+  vario: Варио
+  alt: ВЫС
+  press: ДАВЛ
+  temp: ТЕМП
+  bat: БАТ
+  settings-title: Настройки
+  synced: ОНЛАЙН
+  dirty: ● НЕ СИНХР
+  hub-sound: ЗВУК
+  hub-sound-sub: громкость · пороги · 12-точечная кривая · симулятор
+  hub-curves: КРИВЫЕ
+  hub-curves-sub: отклик · 12 точек
+  hub-behaviour: ПОВЕДЕНИЕ
+  hub-behaviour-sub: тишина · LED · HID
+  hub-power: ПИТАНИЕ
+  hub-power-sub: сон · таймаут
+  hub-uart: UART
+  hub-uart-sub: протокол
+  hub-simulator: СИМУЛЯТОР
+  hub-simulator-sub: задать значение
+  hub-firmware: ПРОШИВКА
+  hub-firmware-sub: 'fw {v}'
+  hub-terminal: ТЕРМИНАЛ
+  hub-terminal-sub: лог BLE
+  back-dashboard: ← ДАШБОРД
+  offline-eyebrow: ОФФЛАЙН
+  offline-body: нет устройства · изменения сохраняются локально · подключитесь для синхронизации
+  demo-device: ДЕМО-РЕЖИМ
+  demo-mode-eyebrow: ДЕМО
+  demo-mode-title: НЕ LIVE · ПОДКЛЮЧИТЕСЬ ДЛЯ РЕАЛЬНЫХ ДАННЫХ
+  demo-mode-sub: Показаны демо-настройки — подключите устройство FlyBeeper, чтобы увидеть реальные значения.
+  connect-cta: ● ПОДКЛЮЧИТЬ
+  cancel-cta: ● ОТМЕНА
+  connecting-cta: ● ПОДКЛЮЧЕНИЕ
+  fetching-cta: 'ЧТЕНИЕ {n}/{total}'
+  connect-error-eyebrow: СБОЙ ПОДКЛЮЧЕНИЯ
+  connect-error-title: НЕ УДАЁТСЯ ДОСТУЧАТЬСЯ ДО УСТРОЙСТВА
+  connecting-eyebrow: СОЕДИНЕНИЕ
+  connecting-title: УСТАНАВЛИВАЕМ КАНАЛ
+  fetching-eyebrow: ЧТЕНИЕ
+  fetching-title: 'ЗАГРУЖАЕМ {n}/{total} ХАРАКТЕРИСТИК'
+  fw-update-warn: ОБНОВИТЬ FW
+
+device:
+  firmware-eyebrow: ПРОШИВКА
+  firmware-title: 'FW {latest}'
+  firmware-body: '{count} публичных сборок — полная история ниже.'
+  firmware-download: ↓ Скачать .bin
+  firmware-all-builds: Все сборки →
+  firmware-empty: Публичных сборок прошивки пока нет.
+  changelog-title: История изменений
+  manual-title: Инструкция
+  manual-open-standalone: Открыть отдельно ↗
+
 msg:
   disconnected: Устройство отключено
   connected: устройство подключено
@@ -69,13 +258,35 @@ about:
   p3: Приложение можно установить и использовать оффлайн.
   install-app: Установить приложение
   p4: Подробное описание проекта можно найти на странице проекта или в магазине.
-  link-blog: Страница проекта
   link-market: Магазин FlyBeeper
+  alpisto-eyebrow: РАЗРАБОТАНО ALPISTO
+  alpisto-title: Working code, not slide decks.
+  alpisto-body: 'Железо и прошивки FlyBeeper делаются в Alpisto — инженерной практике одного человека в Тольмине (Словения), которую ведёт Евгений Истомин. Двадцать лет nRF52, BLE-протоколов, KiCad-плат и бэкендов — всё руками, без аутсорса и без слайдов.'
+  alpisto-services: 'Embedded BLE (nRF52, Zephyr, ESP32) · IoT-бэкенды (FastAPI, NATS, MQTT) · миграции MATLAB → Python · техническая экспертиза.'
+  alpisto-address: 'Rutarjeva ulica 15, 5220 Tolmin, Slovenia · VAT SI91102227'
+  alpisto-cta: Открыть alpisto.eu
+  contact-eyebrow: НАПИСАТЬ
+  contact-title: Отправить сообщение
+  contact-body: 'Баги, вопросы по железу, идеи сотрудничества — пиши. Ответ приходит в течение двух рабочих дней.'
+  contact-name: Имя
+  contact-name-ph: Необязательно
+  contact-email: Почта
+  contact-email-ph: 'вы{''@''}пример.ru'
+  contact-message: Сообщение
+  contact-message-ph: О чём речь?
+  contact-send: Отправить
+  contact-sending: Отправка…
+  contact-success-eyebrow: ОТПРАВЛЕНО
+  contact-success-body: Спасибо — сообщение ушло. Ответ придёт на указанный адрес.
+  contact-error-eyebrow: НЕ УДАЛОСЬ ОТПРАВИТЬ
+  contact-error-body: 'Не удалось достучаться до сервера формы. Проверь интернет и попробуй ещё раз, или напиши на hello{''@''}alpisto.eu напрямую.'
   fbtas-p1: Датчик истинной воздушной скорости с блютус.
   fbminibt-p1: Вариометр с Bluetooth и беспроводными кнопками. Звуковая индикация скорости подъема на основе пользовательских кривых. Батарея устойчива к холоду.
   fbps1-p1: Внешний барометр. Всегда доступен для Bluetooth-подключения. Высокая чувствительность и стабильность с минимальными задержками. Превратите любой смартфон в надежный вариометр.
   fbrc4-p1: 4 внешние кнопки всегда доступны для подключения по Bluetooth.
   fbfanet-p1: Внейшний радиопередатчик с управлением по блютус для приема FANET, ADS-L или подобных радиопакетов. Отправляй и получай любые данные без интернет соединения.
+  fbfanetvario-p1: Внешний FANET по Bluetooth и вариометр в одном корпусе с солнечной панелью. Отправляй и получай FANET пакеты без интернет соединения. Используй как чувствительный вариометр и источник барометрической высоты для приложений на смартфоне.
+  fbsv-p1: Суперлегкий вариометр с Bluetooth, солнечной панелькой и ионистром. Работает от -25 до +65 °C. 500 тыс. циклов заряд/разряд. 60 секунд зарядки через USB Type C до 100% или 15 минут солнца для включения. Всегда готов с "вечной" батареей.
 
 sett:
   silent: Беззвучный на земле
@@ -109,9 +320,18 @@ sett:
   904baf04-5814-11ee-8c99-0242ac120002: Симуляция варио, м/с (0-выкл)
   904baf04-5814-11ee-8c99-0242ac120201: Коэффициент K трубки Пито (o.e.)
   904baf04-5814-11ee-8c99-0242ac120202: Смещение дифференциального давления, Па
+  # FANET radio (имена из прошивки FbFANET/src/settings/settings.h)
+  8d8e8809-4697-41fc-8ee2-ca0b999354ec: Частота радио
+  f19422e2-982a-4954-9a75-b38927236a59: Полоса радио
+  108b855f-11cd-4bc5-adee-eafce49bc77a: Скорость передачи
+  17a95752-3c12-438f-9244-4f4612a1ab49: Коэффициент кодирования
+  8ef0c42e-adb6-4897-b9c9-6fe93143faf4: Мощность передачи
+  9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba: Протокол FANET UART (1-FNNGB, 2-FBFAN, 3-FNF)
   7e035080-7417-4393-959a-58505ef9cf4a: Время усреднения варио (сек)
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Время задержки авто-выключения питания (час)
   113bb48c-7e3f-4580-a561-acf6c9eb42a5: Дублирование данных в эмуляторе UART
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: Плавное изменение частоты
+  0e984fe9-534c-4f13-969c-58ce03d33527: Гистерезис окончания подъема (м/c)
   apply: Применить
   upload: Загрузить
   download: Скачать
@@ -122,9 +342,83 @@ sett:
   sim-label2: (0 - моделирование отключено)
   sim-label3: Пожалуйста, установите уровень громкости выше 0 и нажмите Применить, чтобы услышать моделирование.
   restart-device: После применения изменений необходимо выключить и снова включить устройство.
+  group-audio: Звук
+  group-curves: Кривые
+  group-behaviour: Поведение
+  group-uart: UART
+  group-power: Питание
+  group-simulator: Симулятор
+  group-fanet: FANET
+  group-tas: TAS
+  group-audio-desc: Громкость зумера и пороги, при которых тон начинается и заканчивается.
+  group-curves-desc: 12 точек, задающих зависимость частоты, цикла и заполнения от скороподъёмности.
+  group-behaviour-desc: Беззвучный на земле, индикация светодиодом, HID-клавиатура.
+  group-uart-desc: Протокол на BLE UART-эмуляторе.
+  group-power-desc: Поведение Bluetooth-сна.
+  group-simulator-desc: Подайте искусственное значение варио, чтобы услышать кривую без датчика.
+  group-fanet-desc: Параметры радио FANET и протокол UART-шлюза.
+  group-tas-desc: Калибровка истинной воздушной скорости — коэффициент трубки Пито и смещение дифференциального давления.
+  slide-to-pan: ↔ ВЛЕВО/ВПРАВО — ПРОКРУТКА
+  drag-point-edit: ● ТЯНИ ЗА ТОЧКУ
+  revert: Откатить
+  reset: По умолчанию
+  reset-confirm: Сбросить эту группу к заводским значениям?
+  no-changes: Локальных изменений нет
+  unsynced: 'Локальных изменений: {count}'
+
+audio:
+  source-label: Источник звука
+  source-device: Устройство
+  source-browser: Браузер
+  source-off: Выкл
+  demo: ▶ Демо
+  demo-stop: ■ Стоп
+  silent-device-eyebrow: ЗВУК УСТРОЙСТВА ВЫКЛЮЧЕН
+  silent-device-body: Громкость зумера на устройстве выставлена в 0 — симулятор играть не будет, пока не увеличите её.
+  silent-device-cta: Открыть настройки звука
+  preset-strong-sink: −3 м/с
+  preset-zero: '0'
+  preset-weak-climb: +1 м/с
+  preset-strong-climb: +5 м/с
+  simulation-active: 'Симуляция: {value} м/с'
+  stop-simulation: Выйти из симуляции
 update:
   how-to: Как обновить
+  eyebrow: Обновление прошивки
+  title-line1: Используйте nRF Connect.
+  title-line2: Это работает.
+  intro: 'Мы не делаем in-browser OTA. Бесплатное Nordic nRF Connect для мобильных — индустриальный стандарт для прошивки nRF52 — обкатан, поддерживает восстановление и работает на обеих платформах. Пользуйтесь им.'
+  callout-eyebrow: Почему не в браузере?
+  callout-body: 'Неудачная OTA на вариометре может его «окирпичить». Нативные MCUmgr-клиенты умеют retry, восстановление и проверку подписи. Веб-приложение через нестабильный BLE так не может. Пока SMP-over-WebBLE не получит путь восстановления — пользуйтесь нативным инструментом.'
+  step-1-title: Установите nRF Connect Mobile
+  step-1-desc: Бесплатно, от Nordic. iOS App Store + Google Play. Работает без аккаунта.
+  step-2-title: Включите ваш mini BT
+  step-2-desc: Долгое нажатие, пока LED не задышит оранжевым.
+  step-3-title: Откройте Device Manager
+  step-3-desc: Выберите ваш mini BT из списка. Откроется карточка Device Manager.
+  step-4-title: Нажмите Firmware Upgrade
+  step-4-desc: Выберите .bin-файл, скачанный с flybeeper.com/firmware. Нажмите Start.
+  step-5-title: Подождите 60–90 секунд
+  step-5-desc: Прогресс-бар дойдёт до 100%. Устройство перезагрузится. nRF Connect покажет «complete».
+  step-6-title: Откройте этот конфигуратор
+  step-6-desc: Подключитесь и проверьте, что версия прошивки в статус-баре совпадает.
+  cta-ios: nRF · iOS ↗
+  cta-android: nRF · Android ↗
+  cta-firmware: Скачать прошивку ↓
   changelog: Протокол изменений
   firmware: Прошивка
   descr: лучшее решение для обновления прошивки. Установите и запустите приложение. На вкладке `Scan` найдите устройство и нажмите кнопку `connect`. На открывшейся вкладке, рядом с кнопкой `disconnect`, нажмите на значок `DFU`. Выберите ранее загруженный файл прошивки `app_update.bin` в файловой системе. Выберите `Test and Confirm` и нажмите `Ok`. Через 15 секунд файл будет передан, проверен, и устройство перезагрузится. Батарея должна быть новой.
+  descr2: Начиная с версии прошивки 0.21 вы можете использовать более простое и интуитивно понятное приложение для обновления прошивки
   update-first: Пожалуйста сначала обновите прошивку
+  available-eyebrow: ДОСТУПНО ОБНОВЛЕНИЕ
+  available-body: 'На устройстве FW {current}; опубликована FW {latest}.'
+  firmware-list-title: 'История прошивок для {model}'
+  no-public-firmware-eyebrow: ПУБЛИЧНЫХ СБОРОК НЕТ
+  no-public-firmware: Публичной прошивки для этого устройства пока нет.
+  latest-badge: ПОСЛЕДНЯЯ
+
+footer:
+  about: О FlyBeeper
+  devices: Устройства
+  firmware-update: Обновление прошивки
+  alpisto: alpisto.eu ↗

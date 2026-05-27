@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.flybeeper.fbminibt_conf.twa",
+    "sha256_cert_fingerprints": ["C2:44:64:59:AF:9C:70:7B:D3:A2:83:AC:74:0D:89:EF:30:B8:86:26:F2:1E:1D:04:63:AF:FD:38:55:B7:40:8A"]
+  }
+}]

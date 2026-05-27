@@ -1,0 +1,373 @@
+<script setup lang="ts">
+import cloneDeep from 'lodash/cloneDeep'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
+import {
+  CPF_RESTART_REQUIRED_UUIDS,
+  CPF_UUID_TO_GROUP,
+  SETTINGS_GROUP_NAV,
+} from '~/composables/useSettingsGroups'
+import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+
+const props = defineProps<{
+  group: SettingsGroupKey
+  cpfChars: BleCharacteristic[]
+}>()
+
+const settings = useSettingsStore()
+const bt = useBluetoothStore()
+const { t, te } = useI18n()
+
+/**
+ * Which groups the live device exposes (offline = all). Drives the
+ * accordion header list — hides FANET/TAS on hardware that doesn't have
+ * them so the section list isn't a confusing wall of dead links.
+ */
+const presentGroups = computed<Set<SettingsGroupKey>>(() => {
+  if (!bt.isConnected)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
+  const out = new Set<SettingsGroupKey>()
+  for (const ch of bt.bleCharacteristics) {
+    const g = CPF_UUID_TO_GROUP[ch.characteristic.uuid]
+    if (g)
+      out.add(g)
+  }
+  return out
+})
+
+// i18n labels live under `sett.group-<key>` / `sett.group-<key>-desc`
+// — these exist for every group key the v2 accordion shows. Using
+// `te()` before `t()` keeps vue-i18n from logging missing-key warnings
+// for groups that lack a description (legacy ones).
+function groupLabel(key: SettingsGroupKey): string {
+  const settKey = `sett.group-${key}`
+  return te(settKey) ? t(settKey) : key.toUpperCase()
+}
+
+function groupSub(key: SettingsGroupKey): string {
+  const descKey = `sett.group-${key}-desc`
+  return te(descKey) ? t(descKey) : ''
+}
+
+/**
+ * Section list shown as accordion headers. Routing handled inline so
+ * the parent page only renders content for its own group.
+ */
+const accordionSections = computed(() => {
+  return SETTINGS_GROUP_NAV
+    // 'curves' is folded into 'audio' on /settings/audio; skip it as a
+    // separate accordion header.
+    .filter(g => g.key !== 'curves' && presentGroups.value.has(g.key))
+    .map(g => ({
+      key: g.key,
+      route: g.route,
+      label: groupLabel(g.key),
+      sub: groupSub(g.key),
+    }))
+})
+
+// Dirty-check now compares the live local value (from settings.local, via the
+// virtual char's getter) against the device snapshot. The snapshot is the
+// authoritative "what's on the wire" reference: cancel-to-snapshot semantics
+// across reconnects, no per-component init state to drift.
+function snapshotValue(uuid: string): unknown {
+  return settings.lastDeviceSnapshot?.[uuid]
+}
+
+function cpfIsCharDirty(ch: BleCharacteristic): boolean {
+  const uuid = ch.characteristic.uuid
+  const live = ch.formattedValue
+  const snap = snapshotValue(uuid)
+  if (snap === undefined)
+    return false
+  return JSON.stringify(live) !== JSON.stringify(snap)
+}
+
+const cpfDirtyChars = computed(() =>
+  (props.cpfChars ?? []).filter(cpfIsCharDirty),
+)
+
+const dirtyCount = computed(() => cpfDirtyChars.value.length)
+const isDirty = computed(() => dirtyCount.value > 0)
+const isBusy = ref(false)
+const isOffline = computed(() => !bt.isConnected)
+
+async function apply() {
+  if (!isDirty.value || !bt.isConnected)
+    return
+  isBusy.value = true
+  try {
+    let restartNeeded = false
+    for (const ch of cpfDirtyChars.value) {
+      const uuid = ch.characteristic.uuid
+      if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
+        restartNeeded = true
+      // Source of truth lives in settings.local (via the virtual char
+      // getter). Route the actual GATT write through writeCharacteristic
+      // — which finds the real BLE char and calls setFormattedValue on it
+      // — instead of the virtual char's setFormattedValue no-op.
+      await bt.writeCharacteristic(uuid, ch.formattedValue)
+    }
+    if (restartNeeded)
+      settings.restartPending = true
+    settings.markSynced()
+  }
+  finally {
+    isBusy.value = false
+  }
+}
+
+function revert() {
+  for (const ch of cpfDirtyChars.value) {
+    const snap = snapshotValue(ch.characteristic.uuid)
+    if (snap !== undefined)
+      ch.formattedValue = cloneDeep(snap)
+  }
+}
+
+function resetGroupToDefaults() {
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(t('sett.reset-confirm')))
+    return
+  for (const ch of props.cpfChars ?? []) {
+    const def = DEMO_SETTINGS[ch.characteristic.uuid]
+    if (def !== undefined)
+      ch.formattedValue = cloneDeep(def)
+  }
+}
+</script>
+
+<template>
+  <section class="panel">
+    <PageHeader
+      breadcrumb-to="/cockpit"
+      :breadcrumb-label="t('dashboard.back-dashboard')"
+    >
+      <template #right>
+        <ConnectionPill />
+      </template>
+    </PageHeader>
+
+    <ShareSettingsStrip />
+
+    <div v-if="isOffline" class="panel__offline">
+      <StateCell label="OFFLINE">
+        <span class="panel__offline-text">{{ t('dashboard.offline-body') }}</span>
+      </StateCell>
+    </div>
+
+    <!-- Accordion: every group the device exposes is a header. Active one
+         renders its content via the slot; the rest are router-linked so
+         clicking them swaps the page (URL changes, panel content swaps)
+         without bouncing back to /settings hub. -->
+    <ul class="acc">
+      <li
+        v-for="section in accordionSections"
+        :key="section.key"
+        class="acc__row"
+        :class="{ 'acc__row--active': section.key === group }"
+      >
+        <RouterLink
+          v-if="section.key !== group"
+          class="acc__head"
+          :to="section.route"
+        >
+          <span class="acc__head-eyebrow">{{ section.key.toUpperCase() }}</span>
+          <span class="acc__head-label">{{ section.label }}</span>
+          <span class="acc__head-chev">›</span>
+        </RouterLink>
+        <template v-else>
+          <div class="acc__head acc__head--active">
+            <span class="acc__head-eyebrow">{{ section.key.toUpperCase() }}</span>
+            <span class="acc__head-label">{{ section.label }}</span>
+            <span class="acc__head-chev acc__head-chev--open">▾</span>
+          </div>
+          <div class="acc__body">
+            <slot />
+            <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
+              <button
+                class="panel__btn"
+                :disabled="isBusy"
+                type="button"
+                @click="resetGroupToDefaults"
+              >
+                {{ t('sett.reset') }}
+              </button>
+              <button
+                class="panel__btn"
+                :disabled="!isDirty || isBusy"
+                type="button"
+                @click="revert"
+              >
+                {{ t('sett.revert') }}
+              </button>
+              <button
+                class="panel__btn panel__btn--signal"
+                :disabled="!isDirty || isBusy || isOffline"
+                type="button"
+                @click="apply"
+              >
+                {{ t('sett.apply') }}
+              </button>
+            </footer>
+          </div>
+        </template>
+      </li>
+    </ul>
+  </section>
+</template>
+
+<style scoped>
+.panel {
+  background: var(--ck-bg);
+  color: var(--ck-ink);
+  font-family: var(--ck-font-body);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel__offline {
+  padding: 14px 22px;
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.panel__offline-text {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  color: var(--ck-dim);
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+}
+
+.acc {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--ck-paper);
+}
+
+.acc__row {
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.acc__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 22px;
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  text-decoration: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--ck-font-body);
+  border-radius: 0;
+}
+
+.acc__head:hover {
+  background: var(--ck-bg-deep);
+}
+
+.acc__head--active {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
+  cursor: default;
+}
+
+.acc__head--active:hover {
+  background: var(--ck-ink);
+}
+
+.acc__head-eyebrow {
+  font-family: var(--ck-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  opacity: 0.55;
+  min-width: 76px;
+}
+
+.acc__head-label {
+  flex: 1;
+  font-family: var(--ck-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.acc__head-chev {
+  font-family: var(--ck-font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.acc__head-chev--open {
+  opacity: 1;
+}
+
+.acc__body {
+  display: flex;
+  flex-direction: column;
+  background: var(--ck-bg);
+  border-top: var(--ck-stroke-hair) solid var(--ck-grid);
+}
+
+.panel__footer {
+  display: flex;
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--ck-paper);
+}
+
+.panel__btn {
+  flex: 1;
+  font-family: var(--ck-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  padding: 16px;
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  border: none;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.panel__btn:first-child {
+  border-left: none;
+}
+
+.panel__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.panel__btn:hover:not(:disabled) {
+  background: var(--ck-bg-deep);
+}
+
+.panel__btn--signal {
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+}
+
+.panel__btn--signal:hover:not(:disabled) {
+  background: var(--ck-signal);
+  filter: brightness(1.05);
+}
+
+.panel__btn--signal:disabled {
+  background: var(--ck-paper);
+  color: var(--ck-dim);
+}
+</style>

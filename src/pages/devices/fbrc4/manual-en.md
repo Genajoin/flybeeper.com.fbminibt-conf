@@ -26,7 +26,7 @@ When the battery is removed, the paired device information in HID keyboard mode 
 
 ### Configuration
 
-You can test the device through the graphical interface of the [configurator](https://fbminibt-conf.flybeeper.com/settings). You need a Bluetooth-enabled device, such as a smartphone, laptop, or PC with a Bluetooth module. Click `Connect` and select `FBRC4` from the list. Keep the devices as close to each other as possible. On the `cockpit` page, you can see changes when pressing the FBRC4 buttons. On the `settings` page, you can find and modify the following settings:
+You need a Bluetooth-enabled device, such as a smartphone, laptop, or PC with a Bluetooth module. Click `Connect` and select `FBRC4` from the list. Keep the devices as close to each other as possible. On the `cockpit` page, you can see changes when pressing the FBRC4 buttons. On the `settings` page, you can find and modify the following settings:
 
 - `hid_keyboard_off`: This is the external HID keyboard mode. After changing this setting and pressing `Apply`, you need to remove and reinsert the battery. If this flag is not set, HID will be activated, and the connection will require the standard device pairing procedure through the operating system interface. Remember, the device never turns off. You need to manually disconnect through the operating system interface after use. Otherwise, the operating system will keep the connection open and reconnect if it is lost, gradually draining the battery. If your application supports reading button states through the AIOS service, HID should be disabled by activating this setting. This will extend battery life.
 
@@ -76,4 +76,7 @@ The device settings are available for reading and writing in the service 904baf0
 | char_button3     | 46cbd27b-57d8-421c-8ff6-9ec75e3515d4 | UINT8 | 0x3C  | keychar |
 | char_button4     | 5b975063-9256-4bdf-bd8c-d6c1688902d2 | UINT8 | 0x3D  | keychar |
 
-<router-link to="/devices/fbrc4">BACK</router-link>
+<route lang="yaml">
+meta:
+  layout: manual
+</route>

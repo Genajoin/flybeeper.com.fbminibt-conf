@@ -1,12 +1,25 @@
-<script>
+<script setup lang="ts">
 </script>
 
 <template>
-  <main
-    px-4 py-1
-    text="center gray-700 dark:gray-200"
-  >
-    <TheFooter />
+  <UpdateBanner />
+  <BluefyBanner />
+  <DisconnectBanner />
+  <RestartDeviceBanner />
+  <SimulationBanner />
+  <PresetImportBanner />
+  <main class="page page--home">
     <RouterView />
   </main>
+  <TheFooter />
+  <ReconnectDiffDialog />
+  <InstallToast />
 </template>
+
+<style scoped>
+.page {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+</style>

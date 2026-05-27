@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { readPresetFromUrl } from '~/utils/preset-share'
+import { useSharedPresetStore } from '~/stores/shared-preset'
+
 useHead({
   title: 'FlyBeeper Configurator',
   meta: [
@@ -18,6 +22,16 @@ useHead({
       href: () => preferredDark.value ? '/favicon-dark.svg' : '/favicon.svg',
     },
   ],
+})
+
+const shared = useSharedPresetStore()
+
+onMounted(() => {
+  if (typeof window === 'undefined')
+    return
+  const preset = readPresetFromUrl(window.location.hash)
+  if (preset)
+    shared.stage(preset)
 })
 </script>
 
