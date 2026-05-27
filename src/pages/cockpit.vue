@@ -4,8 +4,19 @@ import type { Hotspot } from '~/components/DeviceTopdown.vue'
 import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSettingsGroups'
 
 const bt = useBluetoothStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
+const fwUpdate = useFirmwareUpdate()
+
+const manualLink = computed(() => {
+  if (!bt.isConnected)
+    return null
+  const sku = fwUpdate.sku.value
+  if (!sku)
+    return null
+  const lang = ['ru', 'de'].includes(locale.value) ? locale.value : 'en'
+  return `/devices/${sku}/manual-${lang}`
+})
 
 const presentGroups = computed<Set<SettingsGroupKey>>(() => {
   if (!bt.isConnected)
@@ -118,7 +129,21 @@ const banner = computed(() => {
           <DeviceTopdown :scale="1" :led-on="ledOn" :hotspots="hotspots" @jump="onJump" />
         </div>
         <div class="dash__hint">
-          {{ t('dashboard.hover-jump-hint') }}
+          <span>{{ t('dashboard.hover-jump-hint') }}</span>
+          <RouterLink
+            v-if="manualLink"
+            :to="manualLink"
+            class="dash__hint-link"
+          >
+            {{ t('dashboard.manual-link') }}
+          </RouterLink>
+          <span
+            v-else-if="!bt.isConnected"
+            class="dash__hint-link dash__hint-link--disabled"
+            :title="t('dashboard.manual-link-need-connect')"
+          >
+            {{ t('dashboard.manual-link') }}
+          </span>
         </div>
       </div>
 
@@ -266,6 +291,24 @@ const banner = computed(() => {
   letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash__hint-link {
+  color: var(--ck-ink);
+  text-decoration: none;
+}
+
+.dash__hint-link:hover {
+  color: var(--ck-signal);
+}
+
+.dash__hint-link--disabled {
+  color: var(--ck-dim);
+  cursor: not-allowed;
 }
 
 .dash__col--stack {

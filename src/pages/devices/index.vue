@@ -31,6 +31,21 @@ const { devices } = useDeviceCatalog()
         </RouterLink>
       </li>
     </ul>
+
+    <aside class="catalog__pitch">
+      <CkEyebrow color="var(--ck-signal)" block>
+        {{ t('catalog.pitch-eyebrow') }}
+      </CkEyebrow>
+      <h2 class="catalog__pitch-title">
+        {{ t('catalog.pitch-title') }}
+      </h2>
+      <p class="catalog__pitch-body">
+        {{ t('catalog.pitch-body') }}
+      </p>
+      <a class="catalog__pitch-cta" href="https://alpisto.eu/flybeeper/" target="_blank" rel="noopener">
+        {{ t('catalog.pitch-cta') }}
+      </a>
+    </aside>
   </section>
 </template>
 
@@ -117,12 +132,63 @@ const { devices } = useDeviceCatalog()
   color: var(--ck-ink);
 }
 
+.catalog__pitch {
+  padding: 32px 22px 36px;
+  background: var(--ck-paper);
+  border-left: 8px solid var(--ck-signal);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.catalog__pitch-title {
+  font-family: var(--ck-font-display);
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin: 10px 0 12px;
+  text-transform: uppercase;
+  color: var(--ck-ink);
+}
+
+.catalog__pitch-body {
+  font-size: 13px;
+  color: var(--ck-dim);
+  line-height: 1.55;
+  margin: 0 0 20px;
+  max-width: 540px;
+}
+
+.catalog__pitch-cta {
+  display: inline-block;
+  padding: 12px 18px;
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+  text-decoration: none;
+  font-family: var(--ck-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+}
+
+.catalog__pitch-cta:hover {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
+}
+
 @media (min-width: 720px) {
   .catalog__grid {
     grid-template-columns: 1fr 1fr;
   }
   .card:nth-child(odd) {
     border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  }
+  .catalog__pitch {
+    padding: 48px 64px 56px;
+  }
+  .catalog__pitch-title {
+    font-size: 44px;
+    letter-spacing: -1.4px;
   }
 }
 </style>

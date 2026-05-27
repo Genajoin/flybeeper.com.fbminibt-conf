@@ -22,7 +22,7 @@ const { t } = useI18n()
       :title="t('update.update-first')"
     />
     <div class="needs-fw__cta">
-      <CkCTA kind="signal" to="/devices/fbminibt/changelog">
+      <CkCTA kind="signal" to="/devices/fbminibt">
         {{ t('update.update-first') }}
       </CkCTA>
     </div>

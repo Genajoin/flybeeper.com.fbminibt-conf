@@ -14,7 +14,6 @@ export interface DeviceEntry {
   stlPos: { x: number, y: number, z: number }
   marketUrl?: string
   buyUrl?: string
-  blogUrl?: string
   /** Glyph name from the cockpit icon set (see src/components/Icon.vue). */
   iconName: IconName
 }
@@ -27,7 +26,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPath: '/fbminibt-model.stl',
     stlPos: { x: -20, y: -30, z: 60 },
     marketUrl: 'https://market.flybeeper.com/device/mini-bt',
-    blogUrl: 'https://blog.regimov.net/flybeeper-mini-bt/',
     iconName: 'pressure',
   },
   {
@@ -38,7 +36,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPos: { x: -40, y: -20, z: 60 },
     marketUrl: 'https://market.flybeeper.com/device/ps1',
     buyUrl: 'https://buy.stripe.com/dR6cPZ52vfxgdzifZ0',
-    blogUrl: 'https://blog.regimov.net/flybeeper-pressure-sensor',
     iconName: 'pressure-filled',
   },
   {
@@ -49,7 +46,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPos: { x: -20, y: -20, z: 40 },
     marketUrl: 'https://market.flybeeper.com/device/rc4',
     buyUrl: 'https://buy.stripe.com/aEUeY7dz1etcan628b',
-    blogUrl: 'https://blog.regimov.net/flybeeper-remote-control-4',
     iconName: 'game-console',
   },
   {
@@ -59,7 +55,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPath: '/fbtas-model.stl',
     stlPos: { x: 100, y: 100, z: 100 },
     marketUrl: 'https://market.flybeeper.com/device/tas',
-    blogUrl: 'https://blog.regimov.net/flybeeper-tas',
     iconName: 'wind',
   },
   {
@@ -68,7 +63,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     aboutKey: 'about.fbsv-p1',
     stlPath: '/fbsv-model.stl',
     stlPos: { x: -30, y: -30, z: 60 },
-    blogUrl: 'https://blog.regimov.net/flybeeper-sun-vario/',
     iconName: 'sun',
   },
   {
@@ -78,7 +72,6 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPath: '/fbfanet-model.stl',
     stlPos: { x: -30, y: -50, z: 130 },
     marketUrl: 'https://market.flybeeper.com/device/fbfanet',
-    blogUrl: 'https://blog.regimov.net/flybeeper-fanet',
     iconName: 'radio',
   },
   {
