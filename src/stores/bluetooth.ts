@@ -20,6 +20,22 @@ interface iDIS {
 export const useBluetoothStore = defineStore('bluetoothStore', {
   state: () => ({
     bleAvailable: 'bluetooth' in navigator,
+    /**
+     * Why Web Bluetooth is not available. Distinct cases drive distinct UI:
+     *   - 'insecure': page loaded over plain HTTP (and not localhost) — the
+     *     browser hides navigator.bluetooth on purpose. Fix: switch to
+     *     HTTPS / localhost. Affects e.g. Chrome on a LAN IP over HTTP.
+     *   - 'browser':  the browser itself has no Web Bluetooth (iOS Safari,
+     *     desktop Firefox). Fix: use Chrome/Edge, or Bluefy on iOS.
+     *   - null:       Web Bluetooth IS available (bleAvailable === true).
+     */
+    bleUnavailableReason: (
+      'bluetooth' in navigator
+        ? null
+        : typeof window !== 'undefined' && window.isSecureContext === false
+          ? 'insecure'
+          : 'browser'
+    ) as 'insecure' | 'browser' | null,
     device: null as BluetoothDevice,
     isConnected: false,
     isConnecting: false,

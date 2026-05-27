@@ -89,8 +89,12 @@ pair:
   rename: Rename
   forget: Forget
   forget-confirm: Forget this device? You'll need to pair it again.
+  no-ble-eyebrow: Browser unsupported
   unsupported-title: Web Bluetooth not available
   unsupported-body: This browser can't talk to BLE devices. Use Chrome or Edge on Android / Windows / macOS / Linux.
+  insecure-eyebrow: HTTPS required
+  insecure-title: Web Bluetooth needs a secure connection
+  insecure-body: This page is loaded over plain HTTP. Browsers only expose Bluetooth on https:// or localhost. Open this site over HTTPS to pair a device.
   ios-banner-body: iPhone / iPad? Web Bluetooth isn't in Safari. Open this site in Bluefy to connect.
   ios-eyebrow: iOS · Safari
   ios-title: Bluetooth not supported

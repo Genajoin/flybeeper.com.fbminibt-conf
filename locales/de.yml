@@ -107,8 +107,12 @@ pair:
   rename: Umbenennen
   forget: Vergessen
   forget-confirm: Dieses Gerät vergessen? Die Kopplung muss erneut erfolgen.
+  no-ble-eyebrow: Browser nicht unterstützt
   unsupported-title: Web Bluetooth nicht verfügbar
   unsupported-body: Dieser Browser kann nicht mit BLE-Geräten sprechen. Verwende Chrome oder Edge unter Android / Windows / macOS / Linux.
+  insecure-eyebrow: HTTPS erforderlich
+  insecure-title: Web Bluetooth braucht eine sichere Verbindung
+  insecure-body: Diese Seite wurde über reines HTTP geladen. Browser geben Bluetooth nur unter https:// oder localhost frei. Öffne die Seite über HTTPS, um ein Gerät zu koppeln.
   ios-banner-body: iPhone oder iPad? Web Bluetooth gibt es in Safari nicht. Öffne die Seite in Bluefy, um zu verbinden.
 
 msg:

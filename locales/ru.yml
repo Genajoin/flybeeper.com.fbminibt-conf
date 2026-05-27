@@ -89,8 +89,12 @@ pair:
   rename: Переименовать
   forget: Забыть
   forget-confirm: Удалить устройство из списка? Сопряжение придётся выполнить заново.
+  no-ble-eyebrow: Браузер не поддерживается
   unsupported-title: Web Bluetooth недоступен
   unsupported-body: Этот браузер не умеет работать с BLE. Используйте Chrome или Edge на Android / Windows / macOS / Linux.
+  insecure-eyebrow: Требуется HTTPS
+  insecure-title: Для Web Bluetooth нужно защищённое соединение
+  insecure-body: Страница загружена по обычному HTTP. Браузеры разрешают Bluetooth только на https:// и localhost. Откройте сайт по HTTPS, чтобы подключиться к устройству.
   ios-banner-body: iPhone или iPad? В Safari нет Web Bluetooth. Откройте сайт в Bluefy, чтобы подключаться.
   ios-eyebrow: iOS · Safari
   ios-title: Bluetooth не поддерживается

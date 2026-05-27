@@ -47,11 +47,21 @@ const step2CtaLabel = computed(() => {
 </script>
 
 <template>
-  <!-- iOS / Firefox / unsupported browser -->
-  <section v-if="!bt.bleAvailable" class="wizard">
+  <!-- Page loaded over HTTP (not localhost) — browser hides navigator.bluetooth -->
+  <section v-if="bt.bleUnavailableReason === 'insecure'" class="wizard">
     <PageHeader
       hide-utils
-      :eyebrow="t('pair.ios-eyebrow')"
+      :eyebrow="t('pair.insecure-eyebrow')"
+      :title="t('pair.insecure-title')"
+      :sub="t('pair.insecure-body')"
+    />
+  </section>
+
+  <!-- Browser itself doesn't expose Web Bluetooth (iOS Safari, Firefox) -->
+  <section v-else-if="!bt.bleAvailable" class="wizard">
+    <PageHeader
+      hide-utils
+      :eyebrow="t('pair.no-ble-eyebrow')"
       :title="t('pair.unsupported-title')"
       :sub="t('pair.unsupported-body')"
     />
