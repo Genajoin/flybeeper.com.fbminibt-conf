@@ -10,7 +10,8 @@
  * Anchored to current pathname, so a code generated from /settings/audio
  * carries that path — the recipient lands on the same panel.
  */
-import { SETTINGS_GROUP_NAV, type SettingsGroupKey } from '~/composables/useSettingsGroups'
+import { CPF_UUID_TO_GROUP, SETTINGS_GROUP_NAV, type SettingsGroupKey } from '~/composables/useSettingsGroups'
+import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
 
 const route = useRoute()
 const settings = useSettingsStore()
@@ -36,7 +37,32 @@ watch(() => route.path, () => {
 const sharePreset = useSharePreset(activeGroups)
 const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, presetName } = sharePreset
 
-const hasChanges = computed(() => settings.hasUnsyncedChanges)
+/**
+ * True when local has at least one value that differs from factory
+ * defaults (DEMO_SETTINGS). In demo mode there's no lastDeviceSnapshot
+ * to diff against, so falling back to defaults gives the hint a real
+ * signal — it lights up the moment the user actually customises
+ * something worth sharing. Scoped by activeGroups when present.
+ */
+const hasChanges = computed(() => {
+  const local = settings.local
+  if (!local)
+    return false
+  const allowed = activeGroups.value ? new Set(activeGroups.value) : null
+  for (const [uuid, value] of Object.entries(local)) {
+    if (allowed) {
+      const g = CPF_UUID_TO_GROUP[uuid]
+      if (!g || !allowed.has(g))
+        continue
+    }
+    const def = DEMO_SETTINGS[uuid]
+    if (def === undefined)
+      continue
+    if (JSON.stringify(value) !== JSON.stringify(def))
+      return true
+  }
+  return false
+})
 
 function toggle() {
   expanded.value = !expanded.value
@@ -55,7 +81,7 @@ const urlTail = computed(() => {
 </script>
 
 <template>
-  <section v-if="activeGroups" class="share-strip">
+  <section class="share-strip">
     <button
       type="button"
       class="share-strip__bar"

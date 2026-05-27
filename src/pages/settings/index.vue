@@ -72,6 +72,8 @@ const rows = computed<Row[]>(() => {
       </template>
     </PageHeader>
 
+    <ShareSettingsStrip />
+
     <ul class="hub__list">
       <li v-for="(row, i) in rows" :key="i" class="hub__row">
         <component
