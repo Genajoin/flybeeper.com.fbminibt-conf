@@ -25,7 +25,14 @@ const qrSvg = ref<string>('')
 
 async function regenQr() {
   try {
-    qrSvg.value = await QRCode.toString(url.value, { type: 'svg', margin: 1, color: { dark: '#0a0a08', light: '#ffffff' } })
+    qrSvg.value = await QRCode.toString(url.value, {
+      type: 'svg',
+      margin: 1,
+      // Drop EC from default 'M' to 'L' — at ~580 bytes that's QR version
+      // 13 vs 15, gives noticeably bigger modules at the same render size.
+      errorCorrectionLevel: 'L',
+      color: { dark: '#0a0a08', light: '#ffffff' },
+    })
   }
   catch {
     qrSvg.value = ''
@@ -183,17 +190,21 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
   background: var(--ck-paper);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   display: flex;
-  gap: 18px;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .share__qr-box {
-  width: 132px;
-  height: 132px;
+  /* Mobile: take the full available width up to a sensible cap; on a 360px
+   * viewport that gives a ~316px QR — modules end up around 4-5px wide,
+   * well into the comfort zone for any phone camera. */
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
   padding: 6px;
   background: var(--ck-paper);
   border: var(--ck-stroke-rule) solid var(--ck-ink);
-  flex-shrink: 0;
 }
 
 .share__qr-box :deep(svg) {
@@ -203,7 +214,8 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
 }
 
 .share__qr-meta {
-  flex: 1;
+  width: 100%;
+  max-width: 420px;
 }
 
 .share__qr-name {
@@ -343,11 +355,14 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
 @media (min-width: 960px) {
   .share__grid {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 420px 1fr;
   }
   .share__qr {
     border-right: 1.5px solid var(--ck-ink);
     border-bottom: none;
+    /* Anchor QR + meta to the top of the left column so the right column
+     * (taller — url-box + form) doesn't stretch the QR-box. */
+    justify-content: flex-start;
   }
   .share__right .share__url,
   .share__right .share__form {
