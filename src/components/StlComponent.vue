@@ -17,10 +17,12 @@ const pos = props.pos
 // near-black inside onSceneLoad. Light rig keeps a single key + a
 // signal-orange rim so the silhouette reads against ck-bg.
 const light = [
-  { type: 'AmbientLight', color: '#8a8a82', intensity: 0.55 },
-  { type: 'DirectionalLight', position: { x: 30, y: 25, z: 60 }, color: '#ffffff', intensity: 0.65 },
-  { type: 'DirectionalLight', position: { x: -30, y: -10, z: -40 }, color: '#ff6a00', intensity: 0.3 },
-  { type: 'PointLight', position: { x: -20, y: -90, z: -20 }, color: '#ece9dd', intensity: 0.15 },
+  { type: 'AmbientLight', color: '#9a9890', intensity: 0.5 },
+  { type: 'HemisphereLight', skyColor: '#f5f4ee', groundColor: '#3a3a36', intensity: 0.55 },
+  { type: 'DirectionalLight', position: { x: 30, y: 25, z: 60 }, color: '#ffffff', intensity: 0.55 },
+  { type: 'DirectionalLight', position: { x: -30, y: -10, z: -40 }, color: '#ff6a00', intensity: 0.35 },
+  { type: 'PointLight', position: { x: -20, y: -90, z: -20 }, color: '#ece9dd', intensity: 0.3 },
+  { type: 'PointLight', position: { x: 0, y: 40, z: -70 }, color: '#ece9dd', intensity: 0.3 },
 ]
 
 function onSceneLoad(scene) {
@@ -29,7 +31,7 @@ function onSceneLoad(scene) {
       return
     const m = node.material
     if (m.color)
-      m.color.set('#2a2724')
+      m.color.set('#33302c')
     if (m.specular)
       m.specular.set('#3a3835')
     if ('shininess' in m)
