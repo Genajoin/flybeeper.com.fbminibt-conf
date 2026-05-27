@@ -1,13 +1,20 @@
 <script setup lang="ts">
+import { compareFwVersions, stripGitDescribe } from '~/utils/firmwareVersion'
+import { resolveSku } from '~/composables/useFirmwareUpdate'
+
 const bt = useBluetoothStore()
 
-const fwRev = computed(() =>
-  Number.parseFloat((bt.dis.firmwareRevisionString.value as string) || '0'),
-)
-const model = computed(() => bt.dis.modelNumberString.value)
+/**
+ * The legacy 110/111-byte struct codec (read/writeMiniBtSettings) was
+ * removed in the v2 rewrite. Until firmware exposes CPF characteristics —
+ * which landed in 0.16 for FBminiBT — the configurator has no way to
+ * read or write settings. Gate access and point the user at /update.
+ */
+const sku = computed(() => resolveSku(bt.dis.modelNumberString.value as string | null))
+const fwClean = computed(() => stripGitDescribe(bt.dis.firmwareRevisionString.value as string | null))
 
 const needsFirmwareUpdate = computed(() =>
-  model.value === 'FBminiBT' && fwRev.value > 0 && fwRev.value <= 0.11,
+  sku.value === 'fbminibt' && fwClean.value !== '' && compareFwVersions(fwClean.value, '0.16.0') < 0,
 )
 
 const { t } = useI18n()
