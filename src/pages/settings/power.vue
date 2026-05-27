@@ -12,16 +12,19 @@ function labelFor(uuid: string): string {
 <template>
   <SettingsPanel group="power" :cpf-chars="cpfChars">
     <ul v-if="cpfChars.length" class="b-list">
-      <li v-for="ch in cpfChars" :key="ch.characteristic.uuid" class="b-row">
-        <span v-if="typeof ch.formattedValue === 'boolean'" class="b-row__label">{{ labelFor(ch.characteristic.uuid) }}</span>
-        <CkSquareToggle
-          v-if="typeof ch.formattedValue === 'boolean'"
-          :model-value="Boolean(ch.formattedValue)"
-          :aria-label="labelFor(ch.characteristic.uuid)"
-          @update:model-value="ch.formattedValue = $event"
-        />
-        <TheSetting v-else :cha="ch" />
-      </li>
+      <template v-for="ch in cpfChars" :key="ch.characteristic.uuid">
+        <li v-if="typeof ch.formattedValue === 'boolean'" class="b-row">
+          <span class="b-row__label">{{ labelFor(ch.characteristic.uuid) }}</span>
+          <CkSquareToggle
+            :model-value="Boolean(ch.formattedValue)"
+            :aria-label="labelFor(ch.characteristic.uuid)"
+            @update:model-value="ch.formattedValue = $event"
+          />
+        </li>
+        <li v-else class="b-row b-row--full">
+          <TheSetting :cha="ch" />
+        </li>
+      </template>
     </ul>
     <p v-else class="empty">
       {{ t('msg.fetching') }}…
@@ -31,21 +34,25 @@ function labelFor(uuid: string): string {
 
 <style scoped>
 .b-list {
-  list-style: none;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: 16px 28px;
   margin: 0;
-  padding: 0;
+  padding: 22px;
+  list-style: none;
 }
 
 .b-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 22px;
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  display: contents;
 }
 
-.b-row:last-child {
-  border-bottom: none;
+.b-row--full > * {
+  /* TheSetting brings its own internal grid + max-width — let it span the
+   * whole two-column row instead of trying to splice into the parent grid. */
+  grid-column: 1 / -1;
+  min-width: 320px;
 }
 
 .b-row__label {
@@ -54,6 +61,7 @@ function labelFor(uuid: string): string {
   font-size: 15px;
   text-transform: uppercase;
   letter-spacing: -0.2px;
+  text-align: right;
 }
 
 .empty {

@@ -20,8 +20,12 @@ const cpfChars = useCpfGroup('fanet')
 
 <style scoped>
 .f-list {
+  /* TheSetting brings a max-width:480px centred grid for each row;
+   * keep the wrapping list as a simple vertical stack with spacing. */
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  padding: 22px;
 }
 
 .empty {

@@ -74,17 +74,23 @@ const inputType = computed(() => getTypeFromPresentationFormat())
 
 <style scoped>
 .row {
-  display: flex;
-  justify-content: space-between;
+  /* Two centred columns anchored to a middle seam, instead of stretched
+   * full-width with a yawning gap on desktop. Label right-aligned, input
+   * left-aligned, both meet at the gap. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--ck-s-md);
+  gap: 16px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .row__label {
   font-family: var(--ck-font-body);
   font-size: var(--ck-fs-body);
   color: var(--ck-ink);
-  flex: 1 1 auto;
+  text-align: right;
 }
 
 .row__input {

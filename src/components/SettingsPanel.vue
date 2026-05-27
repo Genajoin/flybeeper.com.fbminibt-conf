@@ -158,6 +158,8 @@ function resetGroupToDefaults() {
       </template>
     </PageHeader>
 
+    <ShareSettingsStrip />
+
     <div v-if="isOffline" class="panel__offline">
       <StateCell label="OFFLINE">
         <span class="panel__offline-text">{{ t('dashboard.offline-body') }}</span>

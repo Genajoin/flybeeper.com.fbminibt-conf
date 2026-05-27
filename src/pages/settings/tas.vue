@@ -22,6 +22,8 @@ const cpfChars = useCpfGroup('tas')
 .t-list {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  padding: 22px;
 }
 
 .empty {

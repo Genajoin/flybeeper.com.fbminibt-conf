@@ -1,29 +1,25 @@
 <script setup lang="ts">
 /**
- * Inline accordion for sharing the current local settings as a QR /
- * URL / JSON. Mounts as a second header line on /settings/* (NOT on
- * /share — the standalone page exists as a fallback for hand-typed
- * URLs and direct links). Click the strip to expand the QR + actions
- * underneath without leaving the panel the user is reading.
+ * Second header line on settings panels. Compact, page-header-height
+ * bar with a quiet 'SHARE' chip on the right; when the user has unsaved
+ * local changes, a contextual hint slides in immediately to the left of
+ * SHARE drawing attention to the action. Click expands an inline panel
+ * with QR + URL + copy/download under the bar so the user never leaves
+ * the settings page.
  *
- * The QR URL is anchored to the **current pathname** (see
- * useSharePreset.baseUrl), so a code generated from /settings/audio
- * carries that path — the scanner lands on the same view.
+ * Anchored to current pathname, so a code generated from /settings/audio
+ * carries that path — the recipient lands on the same panel.
  */
 import { SETTINGS_GROUP_NAV, type SettingsGroupKey } from '~/composables/useSettingsGroups'
 
 const route = useRoute()
+const settings = useSettingsStore()
 const { t } = useI18n()
-
-const visible = computed(() => {
-  const p = route.path || ''
-  return p.startsWith('/settings') && p !== '/share'
-})
 
 /**
  * Scope the share payload to the groups that the current /settings/<x>
- * page covers. /settings/audio bundles 'audio' + 'curves' (curves was
- * folded into the sound page); other groups are 1:1.
+ * page covers. /settings/audio bundles 'audio' + 'curves'; the rest 1:1.
+ * Smaller payload → lower-density QR → better camera recognition.
  */
 const activeGroups = computed<SettingsGroupKey[] | null>(() => {
   const p = route.path || ''
@@ -32,8 +28,15 @@ const activeGroups = computed<SettingsGroupKey[] | null>(() => {
 })
 
 const expanded = ref(false)
+// Auto-collapse the QR panel when the user navigates between settings
+// tabs so it doesn't stay open with a stale (other-group) payload.
+watch(() => route.path, () => {
+  expanded.value = false
+})
 const sharePreset = useSharePreset(activeGroups)
 const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, presetName } = sharePreset
+
+const hasChanges = computed(() => settings.hasUnsyncedChanges)
 
 function toggle() {
   expanded.value = !expanded.value
@@ -52,7 +55,7 @@ const urlTail = computed(() => {
 </script>
 
 <template>
-  <section v-if="visible" class="share-strip">
+  <section v-if="activeGroups" class="share-strip">
     <button
       type="button"
       class="share-strip__bar"
@@ -60,15 +63,12 @@ const urlTail = computed(() => {
       aria-controls="share-strip-body"
       @click="toggle"
     >
-      <span class="share-strip__icon" aria-hidden="true">
-        <Icon name="share" :size="20" />
-      </span>
-      <span class="share-strip__copy">
-        <span class="share-strip__eyebrow">{{ t('preset.share-strip-eyebrow') }}</span>
-        <span class="share-strip__cta">{{ t('preset.share-strip-cta') }}</span>
-        <span class="share-strip__sub">{{ t('preset.share-strip-sub') }}</span>
-      </span>
-      <span class="share-strip__chev" :class="{ 'share-strip__chev--open': expanded }" aria-hidden="true">▾</span>
+      <Transition name="share-hint">
+        <span v-if="hasChanges && !expanded" class="share-strip__hint">
+          {{ t('preset.share-strip-sub') }} <span class="share-strip__hint-arrow">→</span>
+        </span>
+      </Transition>
+      <span class="share-strip__cta">{{ t('dashboard.share') }}</span>
     </button>
 
     <Transition name="share-strip-body">
@@ -125,21 +125,26 @@ const urlTail = computed(() => {
 .share-strip {
   background: var(--ck-paper);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-left: 8px solid var(--ck-signal);
 }
 
 .share-strip__bar {
+  /* Match PageHeader strip height (10px + 11px font ≈ 36px) so the bar
+   * reads as a second line of the same chrome, not a free-floating
+   * banner. Right-aligned content; hint slides in next to SHARE when
+   * there's something worth sharing. */
   display: flex;
-  width: 100%;
   align-items: center;
-  gap: 14px;
-  padding: 12px 22px;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 22px;
   background: var(--ck-paper);
   color: var(--ck-ink);
-  text-align: left;
+  text-align: right;
   border: none;
   cursor: pointer;
-  font-family: var(--ck-font-body);
+  font-family: var(--ck-font-mono);
   border-radius: 0;
 }
 
@@ -147,62 +152,37 @@ const urlTail = computed(() => {
   background: var(--ck-bg-deep);
 }
 
-.share-strip__icon {
+.share-strip__bar:hover .share-strip__cta {
+  text-decoration: underline;
+}
+
+.share-strip__hint {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  background: var(--ck-bg);
-  color: var(--ck-signal);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-}
-
-.share-strip__copy {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-  min-width: 0;
-  flex: 1;
-}
-
-.share-strip__eyebrow {
-  font-family: var(--ck-font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-}
-
-.share-strip__cta {
-  font-family: var(--ck-font-display);
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -0.4px;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.share-strip__sub {
+  gap: 6px;
   font-family: var(--ck-font-mono);
   font-size: 10px;
   letter-spacing: 0.5px;
   color: var(--ck-dim);
-  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.share-strip__chev {
+.share-strip__hint-arrow {
+  color: var(--ck-signal);
+  font-weight: 700;
+}
+
+.share-strip__cta {
   font-family: var(--ck-font-mono);
-  font-size: 14px;
-  color: var(--ck-dim);
-  margin-left: auto;
-  transition: transform var(--ck-dur-panel) var(--ck-ease);
-}
-
-.share-strip__chev--open {
-  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+  white-space: nowrap;
 }
 
 .share-strip__body {
@@ -339,6 +319,19 @@ const urlTail = computed(() => {
   color: var(--ck-paper);
 }
 
+.share-hint-enter-active,
+.share-hint-leave-active {
+  transition:
+    opacity var(--ck-dur-panel) var(--ck-ease),
+    transform var(--ck-dur-panel) var(--ck-ease);
+}
+
+.share-hint-enter-from,
+.share-hint-leave-to {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
 .share-strip-body-enter-active,
 .share-strip-body-leave-active {
   transition:
@@ -355,11 +348,7 @@ const urlTail = computed(() => {
 
 @media (min-width: 720px) {
   .share-strip__bar {
-    padding: 14px 28px;
-    gap: 16px;
-  }
-  .share-strip__cta {
-    font-size: 18px;
+    padding: 0 28px;
   }
   .share-strip__body {
     padding: 22px 28px 26px;

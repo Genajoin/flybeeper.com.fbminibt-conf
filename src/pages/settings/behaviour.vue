@@ -34,21 +34,24 @@ const list = computed(() => cpfChars.value)
 
 <style scoped>
 .b-list {
-  list-style: none;
+  /* Two-column grid that hugs the centre seam: labels right-aligned in
+   * the left column, controls left-aligned in the right. On desktop the
+   * whole thing centres on the page so the eye doesn't have to span a
+   * full-width row to pair a setting with its toggle. */
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  gap: 16px 28px;
   margin: 0;
-  padding: 0;
+  padding: 22px;
+  list-style: none;
 }
 
 .b-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 22px;
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
-}
-
-.b-row:last-child {
-  border-bottom: none;
+  /* Each row's two children fall straight into the parent grid so labels
+   * line up across rows. */
+  display: contents;
 }
 
 .b-row__label {
@@ -57,6 +60,7 @@ const list = computed(() => cpfChars.value)
   font-size: 15px;
   text-transform: uppercase;
   letter-spacing: -0.2px;
+  text-align: right;
 }
 
 .empty {
