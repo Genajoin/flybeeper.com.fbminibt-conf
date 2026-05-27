@@ -38,6 +38,14 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      * "cold start with hydrated local settings".
      */
     hasConnectedThisSession: false,
+    /**
+     * Monotonic counter incremented on every connectToDevice call. The eager
+     * initialize() batch captures the value at start; when its .finally() runs,
+     * it bails if connectGen has moved on — that means cancelConnect or another
+     * connect has superseded this attempt, so orphan completions must not
+     * mutate isFetching / fetchProgress for the live attempt.
+     */
+    connectGen: 0,
     devName: '',
     errorMessage: '',
     characteristicsData: {},
@@ -71,6 +79,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.isConnecting = true
       this.device = device
       this.devName = this.device.name
+      const gen = ++this.connectGen
       log.info('Connecting to', this.devName)
 
       try {
@@ -115,20 +124,25 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-        this.isConnected = true
         this.hasConnectedThisSession = true
 
         // Eager-initialize every FlyBeeper Settings Service characteristic so
-        // panels render without lazy per-visit reads. We stay in isFetching
-        // until the whole batch settles so the UI can show progress N/total.
+        // panels render without lazy per-visit reads. Await the batch before
+        // flipping isConnected so PairingWizard / cockpit watchers don't race
+        // an empty bleCharacteristics list before CPF descriptors land.
         const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
         const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
         this.fetchTotal = fssChars.length
-        Promise.allSettled(
-          fssChars.map(c => c.initialize().finally(() => { this.fetchProgress++ })),
-        ).finally(() => {
-          this.isFetching = false
-        })
+        await Promise.allSettled(
+          fssChars.map(c => c.initialize().finally(() => {
+            if (gen === this.connectGen)
+              this.fetchProgress++
+          })),
+        )
+        if (gen !== this.connectGen)
+          return
+        this.isFetching = false
+        this.isConnected = true
 
         if (this.device.id && this.device.name) {
           useSavedDevicesStore().remember({
@@ -141,6 +155,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       catch (error) {
         log.error('Error during device connect:', error)
         this.errorMessage = error instanceof Error ? error.message : String(error)
+        this.connectGen++
         this.isConnecting = false
         this.isFetching = false
         try {
@@ -148,7 +163,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
         catch { /* device already gone */ }
         this.bleCharacteristics = []
-        this.device = null as BluetoothDevice
+        this.device = null as unknown as BluetoothDevice
         this.isConnected = false
       }
     },
@@ -210,12 +225,16 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     async cancelConnect() {
       if (!this.isConnecting && !this.isFetching)
         return
+      // Bump the generation so any in-flight initialize().finally() from the
+      // attempt we're aborting won't increment fetchProgress / flip flags on
+      // top of the next connectToDevice attempt.
+      this.connectGen++
       try {
         this.device?.gatt?.disconnect()
       }
       catch { /* device already gone or never paired */ }
       this.bleCharacteristics = []
-      this.device = null as BluetoothDevice
+      this.device = null as unknown as BluetoothDevice
       this.isConnecting = false
       this.isFetching = false
       this.isConnected = false
@@ -223,9 +242,27 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.fetchTotal = 0
     },
     onDisconnected() {
+      // Detach BEFORE we null out this.device — otherwise the same listener
+      // accumulates per reconnect cycle (browser caches BluetoothDevice across
+      // getDevices()/requestDevice()), and a single RF blip later fires
+      // onDisconnected N times.
+      try {
+        this.device?.removeEventListener?.('gattserverdisconnected', this.onDisconnected)
+      }
+      catch { /* device already gone */ }
+
+      // Best-effort unsubscribe so the BleCharacteristicImpl notification
+      // callbacks don't fire against a torn-down GATT.
+      for (const ch of this.bleCharacteristics) {
+        try {
+          ch.unsubscribeFromNotifications()
+        }
+        catch { /* characteristic already invalid */ }
+      }
+
       this.isConnected = false
       this.isDisconnecting = false
-      this.device = {}
+      this.device = null as unknown as BluetoothDevice
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
       this.fss.miniBtSimulation = { characteristic: null, value: null }
       this.subscribedCharacteristics = []
