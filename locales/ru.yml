@@ -114,6 +114,7 @@ preset:
   import-eyebrow: Импорт пресета
   import-default-name: Безымянный пресет
   bytes: БАЙТ
+  fields: ПОЛЕЙ
   via-url: через URL фрагмент
   apply: ПРИМЕНИТЬ
   discard: ОТМЕНИТЬ

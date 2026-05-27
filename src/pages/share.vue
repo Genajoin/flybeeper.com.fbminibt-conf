@@ -1,83 +1,19 @@
 <script setup lang="ts">
-import QRCode from 'qrcode'
-import { buildShareUrl } from '~/utils/preset-share'
-import { useSharedPresetStore } from '~/stores/shared-preset'
-
-const settings = useSettingsStore()
-const shared = useSharedPresetStore()
 const { t } = useI18n()
 
-const baseUrl = computed(() => {
-  if (typeof window === 'undefined')
-    return 'https://config.flybeeper.com/'
-  return window.location.origin + window.location.pathname
-})
-
-const localBag = computed(() => settings.local ?? {})
-
-const url = computed(() =>
-  buildShareUrl(baseUrl.value, localBag.value, shared.exportName),
-)
-
-const fragment = computed(() => url.value.split('#preset=')[1] ?? '')
-
-const qrSvg = ref<string>('')
-
-async function regenQr() {
-  try {
-    qrSvg.value = await QRCode.toString(url.value, {
-      type: 'svg',
-      margin: 1,
-      // Drop EC from default 'M' to 'L' — at ~580 bytes that's QR version
-      // 13 vs 15, gives noticeably bigger modules at the same render size.
-      errorCorrectionLevel: 'L',
-      color: { dark: '#0a0a08', light: '#ffffff' },
-    })
-  }
-  catch {
-    qrSvg.value = ''
-  }
-}
-
-watch(url, () => {
-  void regenQr()
-}, { immediate: true })
-
-const presetName = computed({
-  get: () => shared.exportName,
-  set: (v: string) => { shared.exportName = v },
-})
-const presetBy = computed({
-  get: () => shared.exportBy,
-  set: (v: string) => { shared.exportBy = v },
-})
-
-const byteSize = computed(() => new Blob([url.value]).size)
-
-async function copyUrl() {
-  if (typeof navigator === 'undefined' || !navigator.clipboard)
-    return
-  try {
-    await navigator.clipboard.writeText(url.value)
-  }
-  catch { /* no-op */ }
-}
-
-function downloadJson() {
-  if (typeof window === 'undefined')
-    return
-  const payload = JSON.stringify({ name: shared.exportName, by: shared.exportBy, settings: localBag.value }, null, 2)
-  const blob = new Blob([payload], { type: 'application/json' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `${(shared.exportName || 'preset').replace(/\s+/g, '-')}.json`
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
+const sharePreset = useSharePreset()
+const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, presetName, presetBy } = sharePreset
 
 // Truncated URL preview (mono block keeps it ergonomic at 420+ chars).
-const urlHead = computed(() => `${baseUrl.value}#preset=`)
-const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.slice(0, 120)}...` : fragment.value)
+const urlHead = computed(() => {
+  const idx = url.value.indexOf('#preset=')
+  return idx >= 0 ? url.value.slice(0, idx + 8) : url.value
+})
+const urlTail = computed(() => {
+  const idx = url.value.indexOf('#preset=')
+  const tail = idx >= 0 ? url.value.slice(idx + 8) : ''
+  return tail.length > 120 ? `${tail.slice(0, 120)}…` : tail
+})
 </script>
 
 <template>
@@ -110,7 +46,7 @@ const urlTail = computed(() => fragment.value.length > 120 ? `${fragment.value.s
             {{ presetName || t('preset.import-default-name') }}
           </div>
           <div class="share__qr-stats">
-            <div>{{ Object.keys(localBag).length }} FIELDS</div>
+            <div>{{ fieldCount }} {{ t('preset.fields') }}</div>
             <div class="share__qr-signal">
               {{ byteSize }} {{ t('preset.bytes') }}
             </div>

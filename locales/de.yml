@@ -322,6 +322,7 @@ preset:
   import-eyebrow: Preset-Import
   import-default-name: Unbenanntes Preset
   bytes: BYTES
+  fields: FELDER
   via-url: via URL-Fragment
   apply: ANWENDEN
   discard: VERWERFEN

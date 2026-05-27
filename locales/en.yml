@@ -114,6 +114,7 @@ preset:
   import-eyebrow: Preset import
   import-default-name: Untitled preset
   bytes: BYTES
+  fields: FIELDS
   via-url: via URL fragment
   apply: APPLY
   discard: DISCARD

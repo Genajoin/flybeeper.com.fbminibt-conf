@@ -2,7 +2,11 @@
 import cloneDeep from 'lodash/cloneDeep'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
-import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
+import {
+  CPF_RESTART_REQUIRED_UUIDS,
+  CPF_UUID_TO_GROUP,
+  SETTINGS_GROUP_NAV,
+} from '~/composables/useSettingsGroups'
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
 
 const props = defineProps<{
@@ -13,6 +17,64 @@ const props = defineProps<{
 const settings = useSettingsStore()
 const bt = useBluetoothStore()
 const { t } = useI18n()
+
+/**
+ * Which groups the live device exposes (offline = all). Drives the
+ * accordion header list — hides FANET/TAS on hardware that doesn't have
+ * them so the section list isn't a confusing wall of dead links.
+ */
+const presentGroups = computed<Set<SettingsGroupKey>>(() => {
+  if (!bt.isConnected)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
+  const out = new Set<SettingsGroupKey>()
+  for (const ch of bt.bleCharacteristics) {
+    const g = CPF_UUID_TO_GROUP[ch.characteristic.uuid]
+    if (g)
+      out.add(g)
+  }
+  return out
+})
+
+/**
+ * Per-key i18n label, falling back to the raw key for groups that
+ * predate dashboard.hub-* keys.
+ */
+function groupLabel(key: SettingsGroupKey): string {
+  const hubKey = `dashboard.hub-${key === 'fanet' || key === 'tas' || key === 'curves' ? key : key}`
+  const fb = t(hubKey)
+  if (fb !== hubKey)
+    return fb
+  const settKey = `sett.group-${key}`
+  const fb2 = t(settKey)
+  return fb2 === settKey ? key.toUpperCase() : fb2
+}
+
+function groupSub(key: SettingsGroupKey): string {
+  const hubSubKey = `dashboard.hub-${key}-sub`
+  const fb = t(hubSubKey)
+  if (fb !== hubSubKey)
+    return fb
+  const descKey = `sett.group-${key}-desc`
+  const fb2 = t(descKey)
+  return fb2 === descKey ? '' : fb2
+}
+
+/**
+ * Section list shown as accordion headers. Routing handled inline so
+ * the parent page only renders content for its own group.
+ */
+const accordionSections = computed(() => {
+  return SETTINGS_GROUP_NAV
+    // 'curves' is folded into 'audio' on /settings/audio; skip it as a
+    // separate accordion header.
+    .filter(g => g.key !== 'curves' && presentGroups.value.has(g.key))
+    .map(g => ({
+      key: g.key,
+      route: g.route,
+      label: groupLabel(g.key),
+      sub: groupSub(g.key),
+    }))
+})
 
 // Dirty-check now compares the live local value (from settings.local, via the
 // virtual char's getter) against the device snapshot. The snapshot is the
@@ -88,7 +150,7 @@ function resetGroupToDefaults() {
 <template>
   <section class="panel">
     <PageHeader
-      breadcrumb-to="/settings"
+      breadcrumb-to="/cockpit"
       :breadcrumb-label="t('dashboard.back-dashboard')"
     >
       <template #right>
@@ -102,36 +164,64 @@ function resetGroupToDefaults() {
       </StateCell>
     </div>
 
-    <div class="panel__body">
-      <slot />
-    </div>
-
-    <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
-      <button
-        class="panel__btn"
-        :disabled="isBusy"
-        type="button"
-        @click="resetGroupToDefaults"
+    <!-- Accordion: every group the device exposes is a header. Active one
+         renders its content via the slot; the rest are router-linked so
+         clicking them swaps the page (URL changes, panel content swaps)
+         without bouncing back to /settings hub. -->
+    <ul class="acc">
+      <li
+        v-for="section in accordionSections"
+        :key="section.key"
+        class="acc__row"
+        :class="{ 'acc__row--active': section.key === group }"
       >
-        {{ t('sett.reset') }}
-      </button>
-      <button
-        class="panel__btn"
-        :disabled="!isDirty || isBusy"
-        type="button"
-        @click="revert"
-      >
-        {{ t('sett.revert') }}
-      </button>
-      <button
-        class="panel__btn panel__btn--signal"
-        :disabled="!isDirty || isBusy || isOffline"
-        type="button"
-        @click="apply"
-      >
-        {{ t('sett.apply') }}
-      </button>
-    </footer>
+        <RouterLink
+          v-if="section.key !== group"
+          class="acc__head"
+          :to="section.route"
+        >
+          <span class="acc__head-eyebrow">{{ section.key.toUpperCase() }}</span>
+          <span class="acc__head-label">{{ section.label }}</span>
+          <span class="acc__head-chev">›</span>
+        </RouterLink>
+        <template v-else>
+          <div class="acc__head acc__head--active">
+            <span class="acc__head-eyebrow">{{ section.key.toUpperCase() }}</span>
+            <span class="acc__head-label">{{ section.label }}</span>
+            <span class="acc__head-chev acc__head-chev--open">▾</span>
+          </div>
+          <div class="acc__body">
+            <slot />
+            <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
+              <button
+                class="panel__btn"
+                :disabled="isBusy"
+                type="button"
+                @click="resetGroupToDefaults"
+              >
+                {{ t('sett.reset') }}
+              </button>
+              <button
+                class="panel__btn"
+                :disabled="!isDirty || isBusy"
+                type="button"
+                @click="revert"
+              >
+                {{ t('sett.revert') }}
+              </button>
+              <button
+                class="panel__btn panel__btn--signal"
+                :disabled="!isDirty || isBusy || isOffline"
+                type="button"
+                @click="apply"
+              >
+                {{ t('sett.apply') }}
+              </button>
+            </footer>
+          </div>
+        </template>
+      </li>
+    </ul>
   </section>
 </template>
 
@@ -158,11 +248,82 @@ function resetGroupToDefaults() {
   text-transform: uppercase;
 }
 
-.panel__body {
+.acc {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--ck-paper);
+}
+
+.acc__row {
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.acc__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 22px;
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  text-decoration: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--ck-font-body);
+  border-radius: 0;
+}
+
+.acc__head:hover {
+  background: var(--ck-bg-deep);
+}
+
+.acc__head--active {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
+  cursor: default;
+}
+
+.acc__head--active:hover {
+  background: var(--ck-ink);
+}
+
+.acc__head-eyebrow {
+  font-family: var(--ck-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  opacity: 0.55;
+  min-width: 76px;
+}
+
+.acc__head-label {
+  flex: 1;
+  font-family: var(--ck-font-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.acc__head-chev {
+  font-family: var(--ck-font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.acc__head-chev--open {
+  opacity: 1;
+}
+
+.acc__body {
   display: flex;
   flex-direction: column;
-  background: var(--ck-paper);
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  background: var(--ck-bg);
+  border-top: var(--ck-stroke-hair) solid var(--ck-grid);
 }
 
 .panel__footer {
