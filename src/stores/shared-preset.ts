@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { iFbMiniBtSettings } from '~/stores/bluetooth'
+import type { SettingsLocal } from '~/stores/settings'
 
 /**
  * Staged URL-fragment preset import (Phase G).
@@ -12,7 +12,7 @@ import type { iFbMiniBtSettings } from '~/stores/bluetooth'
 export interface StagedPreset {
   name: string
   bytes: number
-  settings: iFbMiniBtSettings
+  settings: SettingsLocal
 }
 
 export const useSharedPresetStore = defineStore('sharedPresetStore', {

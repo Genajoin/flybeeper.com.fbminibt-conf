@@ -48,7 +48,7 @@ const isBusy = ref(false)
 const isOffline = computed(() => !bt.isConnected)
 
 async function apply() {
-  if (!isDirty.value)
+  if (!isDirty.value || !bt.isConnected)
     return
   isBusy.value = true
   try {
@@ -56,8 +56,7 @@ async function apply() {
     for (const ch of cpfDirtyChars.value) {
       if (CPF_RESTART_REQUIRED_UUIDS.includes(ch.characteristic.uuid))
         restartNeeded = true
-      if (bt.isConnected)
-        await ch.setFormattedValue()
+      await ch.setFormattedValue()
       cpfInitial.value[ch.characteristic.uuid] = cloneDeep(ch.formattedValue)
     }
     if (restartNeeded)
@@ -107,7 +106,7 @@ function revert() {
       </button>
       <button
         class="panel__btn panel__btn--signal"
-        :disabled="!isDirty || isBusy"
+        :disabled="!isDirty || isBusy || isOffline"
         type="button"
         @click="apply"
       >

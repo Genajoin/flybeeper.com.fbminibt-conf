@@ -34,11 +34,21 @@ function formatValue(v: unknown): string {
   return String(v)
 }
 
+const isApplying = ref(false)
+
 async function applyLocal() {
-  if (!settings.local)
+  if (!settings.local || !bt.isConnected)
     return
-  await bt.writeMiniBtSettings(settings.local)
-  open.value = false
+  isApplying.value = true
+  try {
+    for (const entry of diffEntries.value)
+      await bt.writeCharacteristic(entry.key, entry.local)
+    settings.markSynced()
+    open.value = false
+  }
+  finally {
+    isApplying.value = false
+  }
 }
 
 function discardLocal() {
@@ -96,7 +106,7 @@ function dismiss() {
           </ul>
 
           <div class="modal-actions">
-            <button class="modal-btn modal-btn--signal" type="button" @click="applyLocal">
+            <button class="modal-btn modal-btn--signal" type="button" :disabled="isApplying || !bt.isConnected" @click="applyLocal">
               {{ t('local.apply-local') }}
             </button>
             <button class="modal-btn" type="button" @click="discardLocal">
