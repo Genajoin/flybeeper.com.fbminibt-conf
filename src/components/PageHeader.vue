@@ -8,9 +8,16 @@ withDefaults(defineProps<{
   sub?: string
   right?: string
   rightSignal?: boolean
+  /**
+   * Suppress the global theme/language toggles in the strip. Set `true`
+   * when this header is nested inside another PageHeader (e.g. the step
+   * strips inside PairingWizard) so the toggles aren't duplicated.
+   */
+  hideUtils?: boolean
 }>(), {
   eyebrowSignal: true,
   rightSignal: false,
+  hideUtils: false,
 })
 </script>
 
@@ -22,6 +29,12 @@ withDefaults(defineProps<{
       </RouterLink>
       <span v-else-if="breadcrumbLabel" class="page-head__crumb">{{ breadcrumbLabel }}</span>
       <span class="page-head__spacer" />
+      <!-- Global utility toggles (theme + language) live in every page's
+           header strip so the user can always change them. Sits before the
+           per-page right content so app-level controls stay in a stable
+           place across screens. Suppressed via hide-utils when this header
+           is nested inside another (e.g. PairingWizard step strips). -->
+      <UtilityToggles v-if="!hideUtils" class="page-head__utils" />
       <span v-if="right" class="page-head__right" :class="{ 'page-head__right--signal': rightSignal }">{{ right }}</span>
       <slot name="right" />
     </div>
@@ -86,6 +99,12 @@ withDefaults(defineProps<{
 
 .page-head__right--signal {
   color: var(--ck-signal);
+}
+
+.page-head__utils {
+  /* match the height of breadcrumb / right segments (the utils buttons
+     paint their own borders via UtilityToggles' .utils__btn border-left). */
+  display: inline-flex;
 }
 
 .page-head__body {

@@ -62,13 +62,15 @@ const rows = computed<Row[]>(() => {
 <template>
   <section class="hub">
     <PageHeader
-      breadcrumb-to="/cockpit"
+      :breadcrumb-to="bt.isConnected ? '/cockpit' : '/'"
       :breadcrumb-label="bt.isConnected ? t('dashboard.back-dashboard') : '← HOME'"
       :eyebrow="t('sett.group-audio')"
       :title="t('dashboard.settings-title')"
-      :right="bt.isConnected ? t('dashboard.synced') : t('dashboard.offline-eyebrow')"
-      :right-signal="!bt.isConnected"
-    />
+    >
+      <template #right>
+        <ConnectionPill />
+      </template>
+    </PageHeader>
 
     <ul class="hub__list">
       <li v-for="(row, i) in rows" :key="i" class="hub__row">

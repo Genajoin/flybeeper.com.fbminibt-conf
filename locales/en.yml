@@ -144,7 +144,7 @@ dashboard:
   temp: TEMP
   bat: BAT
   settings-title: Settings
-  synced: ● SYNCED
+  synced: ONLINE
   dirty: ● UNSYNCED
   hub-sound: SOUND
   hub-sound-sub: volume · thresholds · 12-pt curve · simulator
@@ -301,7 +301,8 @@ sett:
   group-tas: TAS
   group-fanet-desc: FANET radio parameters and gateway UART protocol.
   group-tas-desc: True Air Speed calibration — Pitot K factor and differential pressure offset.
-  drag-to-hear: ● DRAG TO HEAR
+  slide-to-pan: ↔ SLIDE TO PAN
+  drag-point-edit: ● DRAG DOTS TO EDIT
   group-audio-desc: Buzzer volume and the climb / sink thresholds that decide when the tone starts and stops.
   group-curves-desc: Twelve breakpoints mapping vario rate to frequency, cycle and duty.
   group-behaviour-desc: Silent-on-ground, LED indication, HID keyboard.

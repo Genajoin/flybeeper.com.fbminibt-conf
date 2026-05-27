@@ -21,6 +21,18 @@ const SIM_UUID = '904baf04-5814-11ee-8c99-0242ac120002'
 let writeInFlight = false
 let pendingCmS: number | null = null
 
+/**
+ * Module-scope reactive ref tracking the simulator's "currently auditioned"
+ * position in cm/s — regardless of whether the audio source is the device
+ * or the in-browser synth. Set by SimulatorControls whenever the slider
+ * moves; consumed by CurveEditor to draw the live position cursor across
+ * the chart.
+ *
+ * Distinct from `valueMs` (which reflects what the device's sim characteristic
+ * is set to and stays at 0 in browser mode). 0 means "no simulation".
+ */
+const previewCmS = ref(0)
+
 export function useSimulation() {
   const bt = useBluetoothStore()
   const settings = useSettingsStore()
@@ -103,5 +115,6 @@ export function useSimulation() {
     isActive,
     setValueCmS,
     stop,
+    previewCmS,
   }
 }

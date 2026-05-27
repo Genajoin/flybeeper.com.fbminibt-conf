@@ -2,7 +2,6 @@
 import { availableLocales, loadLanguageAsync } from '~/modules/i18n'
 
 const { t, locale } = useI18n()
-const bt = useBluetoothStore()
 
 async function toggleLocales() {
   const locales = availableLocales
@@ -10,14 +9,6 @@ async function toggleLocales() {
   await loadLanguageAsync(next)
   locale.value = next
 }
-
-const btState = computed<'connecting' | 'connected' | 'idle'>(() => {
-  if (bt.isConnecting || bt.isDisconnecting)
-    return 'connecting'
-  if (bt.isConnected)
-    return 'connected'
-  return 'idle'
-})
 </script>
 
 <template>
@@ -28,19 +19,6 @@ const btState = computed<'connecting' | 'connected' | 'idle'>(() => {
     <button class="utils__btn" :title="t('button.toggle_langs')" type="button" @click="toggleLocales">
       <Icon name="language" :size="16" />
       <span class="utils__label">{{ locale }}</span>
-    </button>
-    <button
-      v-if="bt.bleAvailable"
-      class="utils__btn"
-      :class="{ 'utils__btn--bt-on': btState === 'connected' }"
-      :title="t('button.bluetooth')"
-      type="button"
-      @click="bt.toggleConnectionBT()"
-    >
-      <Icon
-        :name="btState === 'connected' ? 'bluetooth' : 'bluetooth-off'"
-        :size="16"
-      />
     </button>
   </div>
 </template>

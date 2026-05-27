@@ -15,6 +15,10 @@ export type AudioSource = 'device' | 'browser' | 'off'
 const STORAGE_KEY = 'fb:audio-source-v1'
 
 export function useAudioSource() {
-  const source = useStorage<AudioSource>(STORAGE_KEY, 'device')
+  // Default to `browser`: works offline, gives instant feedback for curve
+  // editing, and avoids surprising the user with silence if they happen to
+  // open the page before pairing. If they explicitly switch to `device` it
+  // gets persisted and survives reloads.
+  const source = useStorage<AudioSource>(STORAGE_KEY, 'browser')
   return { source }
 }

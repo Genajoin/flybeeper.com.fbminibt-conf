@@ -51,14 +51,6 @@ const headerSub = computed(() => {
   return `${bt.dis.manufacturerNameString.value} · fw ${fwLabel.value}`
 })
 
-const isBusyConnecting = computed(() => bt.isConnecting || bt.isFetching)
-
-const connectLabel = computed(() => {
-  if (isBusyConnecting.value)
-    return t('dashboard.cancel-cta')
-  return t('dashboard.connect-cta')
-})
-
 // Banner state priority: connect-error → connecting/fetching progress → demo.
 const banner = computed(() => {
   if (bt.errorMessage) {
@@ -99,47 +91,19 @@ const banner = computed(() => {
   }
   return null
 })
-
-function disconnect() {
-  bt.disconnectDevice()
-}
-
-function connectOrDisconnect() {
-  if (isBusyConnecting.value) {
-    bt.cancelConnect()
-    return
-  }
-  if (bt.isConnected)
-    disconnect()
-  else
-    bt.connectToRequestDevice()
-}
 </script>
 
 <template>
   <section class="dash">
     <PageHeader
+      breadcrumb-to="/"
+      breadcrumb-label="← HOME"
       :eyebrow="isOffline ? t('dashboard.demo-mode-eyebrow') : t('dashboard.eyebrow')"
       :title="headerTitle"
       :sub="headerSub"
     >
       <template #right>
-        <RouterLink to="/share" class="dash__hdr-btn">
-          {{ t('dashboard.share') }}
-        </RouterLink>
-        <button
-          type="button"
-          class="dash__hdr-btn dash__hdr-btn--signal"
-          :disabled="isOffline && !bt.bleAvailable"
-          @click="connectOrDisconnect"
-        >
-          <template v-if="isOffline">
-            <span>{{ connectLabel }}</span><CkDots v-if="isBusyConnecting" />
-          </template>
-          <template v-else>
-            {{ t('dashboard.disconnect') }}
-          </template>
-        </button>
+        <ConnectionPill />
       </template>
     </PageHeader>
 
@@ -274,30 +238,6 @@ function connectOrDisconnect() {
   background: var(--ck-bg);
   color: var(--ck-ink);
   font-family: var(--ck-font-body);
-}
-
-.dash__hdr-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
-  font-family: var(--ck-font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-ink);
-  text-decoration: none;
-  background: var(--ck-paper);
-  border-radius: 0;
-  border-top: none;
-  border-right: none;
-  border-bottom: none;
-  cursor: pointer;
-}
-
-.dash__hdr-btn--signal {
-  color: var(--ck-signal);
 }
 
 .dash__grid {

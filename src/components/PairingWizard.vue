@@ -50,6 +50,7 @@ const step2CtaLabel = computed(() => {
   <!-- iOS / Firefox / unsupported browser -->
   <section v-if="!bt.bleAvailable" class="wizard">
     <PageHeader
+      hide-utils
       :eyebrow="t('pair.ios-eyebrow')"
       :title="t('pair.unsupported-title')"
       :sub="t('pair.unsupported-body')"
@@ -58,7 +59,7 @@ const step2CtaLabel = computed(() => {
 
   <!-- Step 1: 4-bullet explainer (first-ever visit) -->
   <section v-else-if="showExplainer" class="wizard">
-    <PageHeader breadcrumb-label="FB · MINI-BT" right="01 / 02">
+    <PageHeader hide-utils breadcrumb-label="FB · MINI-BT" right="01 / 02">
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('pair.step1-eyebrow') }}
@@ -95,7 +96,7 @@ const step2CtaLabel = computed(() => {
 
   <!-- Step 2: power-on + connect (explainer dismissed, no saved devices) -->
   <section v-else-if="showConnect" class="wizard">
-    <PageHeader breadcrumb-label="← BACK" right="02 / 02">
+    <PageHeader hide-utils breadcrumb-label="← BACK" right="02 / 02">
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('pair.step2-eyebrow') }}
@@ -133,7 +134,7 @@ const step2CtaLabel = computed(() => {
 
   <!-- Step 3: list of saved devices -->
   <section v-else class="wizard">
-    <PageHeader breadcrumb-label="SAVED" :right="`${saved.devices.length} PAIRED`">
+    <PageHeader hide-utils breadcrumb-label="SAVED" :right="`${saved.devices.length} PAIRED`">
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('pair.saved-eyebrow') }}

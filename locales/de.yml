@@ -234,7 +234,8 @@ sett:
   group-simulator-desc: Einen künstlichen Vario-Wert einspeisen, um die Kurve ohne Sensor zu hören.
   group-fanet-desc: FANET-Funkparameter und Gateway-UART-Protokoll.
   group-tas-desc: TAS-Kalibrierung — Pitot-K-Faktor und Druckdifferenz-Offset.
-  drag-to-hear: ● ZIEHEN ZUM HÖREN
+  slide-to-pan: ↔ ZUM PANNEN ZIEHEN
+  drag-point-edit: ● PUNKT ZIEHEN ZUM ÄNDERN
   revert: Zurücksetzen
   no-changes: Keine lokalen Änderungen
   unsynced: '{count} lokale Änderung(en) ausstehend'
@@ -323,7 +324,7 @@ dashboard:
   temp: TEMP
   bat: AKKU
   settings-title: Einstellungen
-  synced: ● SYNCED
+  synced: ONLINE
   dirty: ● UNSYNCED
   hub-sound: KLANG
   hub-sound-sub: Lautstärke · Schwellen · 12-Punkt-Kurve · Simulator

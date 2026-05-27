@@ -1,5 +1,4 @@
 <script setup lang="ts">
-const bt = useBluetoothStore()
 </script>
 
 <template>
@@ -9,7 +8,6 @@ const bt = useBluetoothStore()
   <RestartDeviceBanner />
   <SimulationBanner />
   <PresetImportBanner />
-  <StatusLine v-if="bt.isConnected" />
   <main class="page page--home">
     <RouterView />
   </main>

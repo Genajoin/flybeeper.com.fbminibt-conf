@@ -57,12 +57,37 @@ export interface UseToneSynth {
    * Returns the resolved ToneParams (for UI display / debug).
    */
   playForVario: (varioCmS: number, curves: VarioCurvesShape, volume: number) => ToneParams | null
+
+  /**
+   * Install a provider that is consulted at every scheduled cycle boundary
+   * to compute the next cycle's params. Used to model the device's
+   * "smooth frequency change = OFF" mode: params are locked for the duration
+   * of the current cycle and only refreshed at the next cycle's start, so
+   * moving the slider produces a step in the audible frequency at the cycle
+   * boundary instead of a continuous glide.
+   *
+   * Pass `null` to revert to the continuous (smooth=ON) behaviour where the
+   * cached params are used until `play()` is called again.
+   */
+  setParamsProvider: (provider: (() => ToneParams | null) | null) => void
 }
 
-/** How many seconds of cycles to schedule ahead of `currentTime`. */
-const SCHEDULE_HORIZON_S = 2
-/** How often to top up the schedule (ms). */
-const SCHEDULE_INTERVAL_MS = 500
+/**
+ * How many seconds of cycles to schedule ahead in smooth=ON mode.
+ * Bigger horizon = fewer scheduling ticks, smoother under CPU pressure.
+ */
+const SCHEDULE_HORIZON_SMOOTH_S = 2
+const SCHEDULE_INTERVAL_SMOOTH_MS = 500
+
+/**
+ * In smooth=OFF mode (paramsProvider set) we want snapshots to be taken as
+ * close to actual playback time as possible — so we pre-schedule only a
+ * short window ahead and refresh frequently. The trade-off is more timer
+ * work for ~400 ms of latency between slider move and audible step.
+ */
+const SCHEDULE_HORIZON_STEP_S = 0.4
+const SCHEDULE_INTERVAL_STEP_MS = 120
+
 /** Smallest sensible cycle (ms) — avoids runaway scheduling. */
 const MIN_CYCLE_MS = 10
 
@@ -107,6 +132,13 @@ export function useToneSynth(): UseToneSynth {
   let nextScheduleTime = 0
   /** Currently-playing params (or null if stopped). */
   let current: ToneParams | null = null
+  /**
+   * Optional cycle-boundary provider — when set, the scheduler asks it for
+   * fresh params at the start of every scheduled cycle (firmware-equivalent
+   * "smooth frequency change = OFF": params don't glide, they step at the
+   * cycle boundary).
+   */
+  let paramsProvider: (() => ToneParams | null) | null = null
 
   function clearScheduleTimer(): void {
     if (scheduleTimer !== null) {
@@ -115,22 +147,56 @@ export function useToneSynth(): UseToneSynth {
     }
   }
 
-  /** Append on/off gain steps from `nextScheduleTime` until we reach the horizon. */
+  /**
+   * Append on/off gain steps from `nextScheduleTime` until we reach the
+   * horizon.
+   *
+   * In smooth=OFF mode the provider is consulted at every phase transition,
+   * not just at the cycle start: the silence following each tone phase is
+   * computed from the LATEST slider position at the moment the tone ends,
+   * and the next tone's frequency + on-duration are computed from the LATEST
+   * slider position at the moment the silence ends. So a slider move during
+   * the silence phase lands an audible step the instant the next tone starts,
+   * not at the next full-cycle boundary.
+   */
   function fillSchedule(): void {
-    if (!ctx || !gain || !current)
+    if (!ctx || !gain || !osc || !current)
       return
-    const cycleS = Math.max(current.cycleMs, MIN_CYCLE_MS) / 1000
-    const onS = cycleS * Math.min(Math.max(current.dutyPercent, 0), 100) / 100
-    const horizon = ctx.currentTime + SCHEDULE_HORIZON_S
-    const vol = Math.min(Math.max(current.volume, 0), 1)
+    const horizonS = paramsProvider ? SCHEDULE_HORIZON_STEP_S : SCHEDULE_HORIZON_SMOOTH_S
+    const horizon = ctx.currentTime + horizonS
     let t = Math.max(nextScheduleTime, ctx.currentTime)
     // Safety cap to avoid scheduling millions of events on absurd inputs.
     let guard = 0
     while (t < horizon && guard++ < 2000) {
+      // 1. Tone-start snapshot. Determines this cycle's freq + on-duration.
+      if (paramsProvider) {
+        const fresh = paramsProvider()
+        if (fresh)
+          current = fresh
+      }
+      const cycleMsA = Math.max(current.cycleMs, MIN_CYCLE_MS)
+      const dutyA = Math.min(Math.max(current.dutyPercent, 0), 100)
+      const onS = (cycleMsA * dutyA) / 100 / 1000
+      const vol = Math.min(Math.max(current.volume, 0), 1)
+      osc.frequency.setValueAtTime(Math.max(current.frequencyHz, 1), t)
       gain.gain.setValueAtTime(vol, t)
-      if (onS < cycleS)
+      if (onS > 0)
         gain.gain.setValueAtTime(0, t + onS)
-      t += cycleS
+
+      // 2. Silence-start snapshot. The silence's duration is recomputed from
+      // whatever the slider says AT THE MOMENT the tone ends, not from the
+      // tone-start snapshot. With smooth=OFF this lets the user nudge the
+      // slider mid-cycle and hear the result on the next tone phase rather
+      // than waiting for the next full cycle.
+      if (paramsProvider) {
+        const fresh = paramsProvider()
+        if (fresh)
+          current = fresh
+      }
+      const cycleMsB = Math.max(current.cycleMs, MIN_CYCLE_MS)
+      const dutyB = Math.min(Math.max(current.dutyPercent, 0), 100)
+      const offS = (cycleMsB * (100 - dutyB)) / 100 / 1000
+      t += onS + offS
     }
     nextScheduleTime = t
   }
@@ -145,7 +211,8 @@ export function useToneSynth(): UseToneSynth {
     nextScheduleTime = ctx.currentTime
     fillSchedule()
     clearScheduleTimer()
-    scheduleTimer = setInterval(fillSchedule, SCHEDULE_INTERVAL_MS)
+    const intervalMs = paramsProvider ? SCHEDULE_INTERVAL_STEP_MS : SCHEDULE_INTERVAL_SMOOTH_MS
+    scheduleTimer = setInterval(fillSchedule, intervalMs)
   }
 
   async function ensureContext(): Promise<void> {
@@ -275,6 +342,19 @@ export function useToneSynth(): UseToneSynth {
     isReady.value = false
   })
 
+  function setParamsProvider(provider: (() => ToneParams | null) | null): void {
+    const wasActive = paramsProvider !== null
+    paramsProvider = provider
+    const nowActive = provider !== null
+    // Reset the scheduler tick to the new mode's interval. Skip when nothing
+    // is currently playing — the next play() will pick the right interval.
+    if (scheduleTimer && wasActive !== nowActive) {
+      clearScheduleTimer()
+      const intervalMs = nowActive ? SCHEDULE_INTERVAL_STEP_MS : SCHEDULE_INTERVAL_SMOOTH_MS
+      scheduleTimer = setInterval(fillSchedule, intervalMs)
+    }
+  }
+
   return {
     isReady: readonly(isReady),
     isPlaying: readonly(isPlaying),
@@ -283,5 +363,6 @@ export function useToneSynth(): UseToneSynth {
     play,
     stop,
     playForVario,
+    setParamsProvider,
   }
 }

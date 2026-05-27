@@ -45,9 +45,7 @@ const cpfCurves = computed<iVarioCurves | null>(() => {
 })
 
 const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
-const CPF_CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
 const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
-const CPF_SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
 
 function audioThreshold(uuid: string): number | undefined {
   const ch = audioChars.value.find(c => c.characteristic.uuid === uuid)
@@ -56,9 +54,16 @@ function audioThreshold(uuid: string): number | undefined {
 }
 
 const climbOn = computed(() => audioThreshold(CPF_CLIMB_ON_UUID))
-const climbOff = computed(() => audioThreshold(CPF_CLIMB_OFF_UUID))
 const sinkOn = computed(() => audioThreshold(CPF_SINK_ON_UUID))
-const sinkOff = computed(() => audioThreshold(CPF_SINK_OFF_UUID))
+
+// The chart emits cm/s; underlying BLE char stores m/s, so divide by 100
+// when writing back. SettingsPanel picks up the dirty bit via the BleChar's
+// formattedValue setter — no extra plumbing needed.
+function writeThreshold(uuid: string, valueCmS: number) {
+  const ch = audioChars.value.find(c => c.characteristic.uuid === uuid)
+  if (ch)
+    ch.formattedValue = valueCmS / 100
+}
 
 const presets = {
   'sensitive': {
@@ -118,15 +123,16 @@ function selectPreset(v: 'sensitive' | 'aggressive' | 'silent-gnd' | 'custom') {
         <div v-if="curveChars.length" class="sound__curves">
           <div class="sound__curves-head">
             <CkEyebrow>{{ t('sett.group-curves') }} · 12 PTS</CkEyebrow>
+            <span class="sound__curves-hint">{{ t('sett.drag-point-edit') }}</span>
           </div>
           <div class="sound__curves-chart">
             <CurveEditor
               v-if="cpfReady"
               :curves-override="cpfCurves"
               :climb-on="climbOn"
-              :climb-off="climbOff"
               :sink-on="sinkOn"
-              :sink-off="sinkOff"
+              @update:climb-on="writeThreshold(CPF_CLIMB_ON_UUID, $event)"
+              @update:sink-on="writeThreshold(CPF_SINK_ON_UUID, $event)"
             />
             <p v-else class="empty">
               {{ t('msg.fetching') }}…
@@ -169,26 +175,40 @@ function selectPreset(v: 'sensitive' | 'aggressive' | 'silent-gnd' | 'custom') {
 }
 
 .sound__curves {
-  padding: 18px 22px;
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  /* Header/footer get padding; the chart itself goes edge-to-edge so the
+     SVG eats the full mobile screen width — every pixel matters at 360 px. */
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .sound__curves-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 12px;
+  gap: var(--ck-s-sm);
+  margin: 0 14px 12px;
+  flex-wrap: wrap;
+}
+
+.sound__curves-hint {
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+  font-weight: 700;
 }
 
 .sound__curves-chart {
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  padding: 6px;
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   background: var(--ck-paper);
 }
 
 .sound__presets {
   display: flex;
-  margin-top: 12px;
+  margin: 12px 14px 0;
 }
 
 .sound__sim {

@@ -89,7 +89,11 @@ const resolvedSub = computed(() => props.sub ?? t(`sett.group-${props.group}-des
       :breadcrumb-label="t('dashboard.back-dashboard')"
       :eyebrow="resolvedTitle"
       :title="resolvedSub"
-    />
+    >
+      <template #right>
+        <ConnectionPill />
+      </template>
+    </PageHeader>
 
     <div v-if="isOffline" class="panel__offline">
       <StateCell label="OFFLINE">
