@@ -12,12 +12,18 @@ const props = defineProps<{
   chars: BleCharacteristic[]
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
 
 const volumeChar = computed(() => props.chars.find(c => c.characteristic.uuid === VOLUME_UUID))
 const otherChars = computed(() => props.chars.filter(c => c.characteristic.uuid !== VOLUME_UUID))
+function labelFor(ch: BleCharacteristic): string {
+  const k = `sett.${ch.characteristic.uuid}`
+  if (te(k))
+    return t(k)
+  return ch.userFormatDescriptor || ch.characteristic.uuid
+}
 
 const volumeValue = computed<number>(() => {
   const v = volumeChar.value?.formattedValue
@@ -55,11 +61,18 @@ function setVolume(v: number) {
         {{ t('sett.group-audio') }}
       </CkEyebrow>
       <div class="vt__list">
-        <TheSetting
-          v-for="ch in otherChars"
-          :key="ch.characteristic.uuid"
-          :cha="ch"
-        />
+        <template v-for="ch in otherChars" :key="ch.characteristic.uuid">
+          <template v-if="typeof ch.formattedValue === 'boolean'">
+            <CkSquareToggle
+              :model-value="Boolean(ch.formattedValue)"
+              :aria-label="labelFor(ch)"
+              class="vt__toggle"
+              @update:model-value="ch.formattedValue = $event"
+            />
+            <span class="vt__toggle-label">{{ labelFor(ch) }}</span>
+          </template>
+          <TheSetting v-else :cha="ch" />
+        </template>
       </div>
     </div>
   </div>
@@ -110,9 +123,10 @@ function setVolume(v: number) {
 }
 
 .vt__list {
-  /* Shared 2-column grid for TheSetting rows so input seams align.
-   * Left-aligned on mobile (the audio block already sits in a narrow
-   * column on desktop too, so we don't auto-centre here). */
+  /* Shared 2-column grid for TheSetting rows AND toggle rows so the
+   * value/label seam aligns regardless of widget type. Left-aligned on
+   * mobile (the audio block already sits in a narrow column on desktop
+   * too, so no auto-centring). */
   display: grid;
   grid-template-columns: max-content max-content;
   align-items: center;
@@ -120,5 +134,17 @@ function setVolume(v: number) {
   column-gap: 16px;
   row-gap: 14px;
   margin-top: 12px;
+}
+
+/* Hug the seam so a 28px toggle and a 10ch input share the same right
+ * edge in col 1. */
+.vt__toggle {
+  justify-self: end;
+}
+
+.vt__toggle-label {
+  font-family: var(--ck-font-body);
+  font-size: var(--ck-fs-body);
+  color: var(--ck-ink);
 }
 </style>
