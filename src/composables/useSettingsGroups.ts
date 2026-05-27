@@ -13,7 +13,6 @@ export type SettingsGroupKey =
   | 'behaviour'
   | 'uart'
   | 'power'
-  | 'simulator'
   | 'fanet'
   | 'tas'
 
@@ -23,12 +22,13 @@ export interface SettingsGroupNav {
 }
 
 export const SETTINGS_GROUP_NAV: SettingsGroupNav[] = [
-  // Audio is the combined Sound page — volume, thresholds, 12-pt curves and
-  // simulator all live there now, so the curves and simulator groups route
-  // back to /settings/audio (no standalone pages for them).
+  // Audio is the combined Sound page — volume, thresholds and 12-pt curves
+  // both live there, so the curves group routes back to /settings/audio
+  // (no standalone page for it). The simulator characteristic (…0002) is
+  // write-only and driven by useSimulation directly — it is NOT a settings
+  // field and intentionally not in CPF_UUID_TO_GROUP.
   { key: 'audio', route: '/settings/audio' },
   { key: 'curves', route: '/settings/audio' },
-  { key: 'simulator', route: '/settings/audio' },
   { key: 'behaviour', route: '/settings/behaviour' },
   { key: 'fanet', route: '/settings/fanet' },
   { key: 'tas', route: '/settings/tas' },
@@ -70,11 +70,8 @@ export const CPF_UUID_TO_GROUP: Record<string, SettingsGroupKey> = {
   '113bb48c-7e3f-4580-a561-acf6c9eb42a5': 'uart', // UART duplication
 
   // power
-  '3c844ac9-87fb-42aa-b28e-00e8b71b6126': 'power', // ble_never_sleep (firmware UUID)
+  'd9eec180-344e-41e3-8c18-adf312dce8bb': 'power', // ble_never_sleep
   '9a560750-0bca-4d0c-a1fc-21bbc574d5a6': 'power', // power off timeout
-
-  // simulator
-  '904baf04-5814-11ee-8c99-0242ac120002': 'simulator',
 
   // fanet (only present on FANET-equipped hardware — fbfanet, fbfanetvario)
   '8d8e8809-4697-41fc-8ee2-ca0b999354ec': 'fanet', // radio frequency
