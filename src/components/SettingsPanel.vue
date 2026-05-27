@@ -16,7 +16,7 @@ const props = defineProps<{
 
 const settings = useSettingsStore()
 const bt = useBluetoothStore()
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 /**
  * Which groups the live device exposes (offline = all). Drives the
@@ -35,28 +35,18 @@ const presentGroups = computed<Set<SettingsGroupKey>>(() => {
   return out
 })
 
-/**
- * Per-key i18n label, falling back to the raw key for groups that
- * predate dashboard.hub-* keys.
- */
+// i18n labels live under `sett.group-<key>` / `sett.group-<key>-desc`
+// — these exist for every group key the v2 accordion shows. Using
+// `te()` before `t()` keeps vue-i18n from logging missing-key warnings
+// for groups that lack a description (legacy ones).
 function groupLabel(key: SettingsGroupKey): string {
-  const hubKey = `dashboard.hub-${key === 'fanet' || key === 'tas' || key === 'curves' ? key : key}`
-  const fb = t(hubKey)
-  if (fb !== hubKey)
-    return fb
   const settKey = `sett.group-${key}`
-  const fb2 = t(settKey)
-  return fb2 === settKey ? key.toUpperCase() : fb2
+  return te(settKey) ? t(settKey) : key.toUpperCase()
 }
 
 function groupSub(key: SettingsGroupKey): string {
-  const hubSubKey = `dashboard.hub-${key}-sub`
-  const fb = t(hubSubKey)
-  if (fb !== hubSubKey)
-    return fb
   const descKey = `sett.group-${key}-desc`
-  const fb2 = t(descKey)
-  return fb2 === descKey ? '' : fb2
+  return te(descKey) ? t(descKey) : ''
 }
 
 /**
