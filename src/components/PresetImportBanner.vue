@@ -4,13 +4,22 @@ import { useSettingsStore } from '~/stores/settings'
 
 const shared = useSharedPresetStore()
 const settings = useSettingsStore()
+const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
-function apply() {
+async function apply() {
   if (!shared.pending)
     return
   settings.replaceLocal(shared.pending.settings)
   shared.clear()
+  // The QR-scan landing is /share, which is the *export* page — staying
+  // there hides the change. Jump to the most visual settings page so the
+  // user immediately sees what was applied (volume, thresholds, curves).
+  // Skip the navigation if we're already inside /settings/* so we don't
+  // bounce the user away from a panel they're already reading.
+  if (!route.path.startsWith('/settings'))
+    await router.push('/settings/audio')
 }
 
 function discard() {
