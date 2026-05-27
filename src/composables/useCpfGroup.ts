@@ -3,14 +3,21 @@ import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSetti
 import { DEMO_SETTINGS, VIRTUAL_CPF_FORMAT } from '~/composables/useDemoSnapshot'
 
 /**
- * Module-level cache of virtual chars by UUID. A page may re-mount or two
+ * Module-level cache of virtual chars by UUID. A page may remount or two
  * pages may consume the same UUID (curves <-> audio cross-binding); we must
- * return the same instance so SettingsPanel's cpfInitial snapshot tracks
- * dirty state across renders.
+ * return the same instance so SettingsPanel's dirty-check sees a stable
+ * identity across renders.
+ *
+ * The virtual char ALWAYS owns the value (reads/writes settingsStore.local),
+ * regardless of whether a device is connected. When a real BLE characteristic
+ * for the same UUID exists (i.e. fw exposes it), we splice its CPF
+ * presentation descriptor onto the virtual so widgets pick up the device's
+ * actual format/exponent/unit instead of the static VIRTUAL_CPF_FORMAT
+ * fallback. The real char is otherwise only used by writeCharacteristic()
+ * in bluetoothStore for the actual GATT write on Apply.
  */
 const virtualByUuid = new Map<string, BleCharacteristic>()
 
-/** Build a virtual BleCharacteristic backed by settingsStore.local[uuid]. */
 function createVirtualChar(uuid: string): BleCharacteristic | null {
   const fmt = VIRTUAL_CPF_FORMAT[uuid]
   if (!fmt)
@@ -33,24 +40,25 @@ function createVirtualChar(uuid: string): BleCharacteristic | null {
     },
     get formattedValue() {
       // Three-tier fallback: live local value → DEMO snapshot → null.
-      // Without the demo fallback, a UUID missing from settings.local (e.g.
-      // after disconnect when local was never seeded for that key, or for a
-      // CPF char the device never exposed) renders an empty widget and
-      // cpfReady on /curves stays false. DEMO_SETTINGS keeps the UI alive.
+      // DEMO_SETTINGS keeps the UI alive for UUIDs that haven't been
+      // touched yet (e.g. a CPF char the device never wrote to local
+      // because applyDeviceSnapshot ran with local already populated).
       return settings.local?.[uuid] ?? DEMO_SETTINGS[uuid] ?? null
     },
     set formattedValue(v: unknown) {
+      // Single source of truth: edits go to settings.local. The actual
+      // GATT write happens later via bt.writeCharacteristic on Apply.
       if (!settings.local)
         settings.local = {}
       settings.local[uuid] = v as never
     },
     async getValue() { return null },
-    async subscribeToNotifications() { /* offline no-op */ },
-    async unsubscribeFromNotifications() { /* offline no-op */ },
-    async setFormattedValue() { /* offline no-op */ },
+    async subscribeToNotifications() { /* virtual: no-op */ },
+    async unsubscribeFromNotifications() { /* virtual: no-op */ },
+    async setFormattedValue() { /* writes routed via bt.writeCharacteristic */ },
     async initialize() { /* presentationFormatDescriptor is preset */ },
-    subscribe() { /* offline no-op */ },
-    unsubscribe() { /* offline no-op */ },
+    subscribe() { /* virtual: no-op */ },
+    unsubscribe() { /* virtual: no-op */ },
   }
   return ch
 }
@@ -75,61 +83,48 @@ const UUIDS_BY_GROUP: Record<SettingsGroupKey, string[]> = (() => {
 })()
 
 /**
- * Collects CPF characteristics belonging to a settings group. When a real
- * BleCharacteristic is present (live connection), it's used directly. When
- * absent (offline / pre-pair / unsupported browser), a memoised virtual char
- * backed by settingsStore.local[uuid] takes its place so SettingsPanel,
- * TheSetting, and CurveEditor work identically in demo mode.
+ * Returns the virtual chars for `group`. Always virtual — they read/write
+ * `settings.local` so the user's intent stays put across BLE connects.
  *
- * Real chars get .initialize() called once to populate CPF descriptors.
- * Virtual chars are pre-initialised (their descriptors come from
- * VIRTUAL_CPF_FORMAT).
+ * On a real device we still hide UUIDs the firmware doesn't expose (e.g.
+ * fbfanetvario lacks hid_keyboard_off — showing it as an editable toggle
+ * would be a lie). Offline we surface every UUID in the group so demo
+ * mode + URL-share import are exercise-able without hardware.
+ *
+ * As a side effect, when a connected device exposes a real char, we copy
+ * its `presentationFormatDescriptor` onto the cached virtual char so
+ * widget format/exponent/unit reflect the actual firmware, not the
+ * VIRTUAL_CPF_FORMAT fallback.
  */
 export function useCpfGroup(group: SettingsGroupKey) {
   const bt = useBluetoothStore()
-  const initialized = new WeakSet<BleCharacteristic>()
 
   const chars = computed<BleCharacteristic[]>(() => {
-    const real = (bt.bleCharacteristics as BleCharacteristic[]).filter(
-      ch => CPF_UUID_TO_GROUP[ch.characteristic.uuid] === group,
+    const realByUuid = new Map(
+      (bt.bleCharacteristics as BleCharacteristic[])
+        .filter(ch => CPF_UUID_TO_GROUP[ch.characteristic.uuid] === group)
+        .map(ch => [ch.characteristic.uuid, ch]),
     )
-    // On a real device, surface ONLY the characteristics the firmware
-    // actually exports. Padding with virtual chars from VIRTUAL_CPF_FORMAT
-    // would inject settings the hardware doesn't support (e.g. fbfanetvario
-    // has no hid_keyboard_off / led_blinky_by_vario — the UI must hide them,
-    // not show greyed-out toggles).
-    //
-    // Demo mode (offline AND not in the middle of a connect/fetch) is the
-    // only case we backfill virtual chars so the configurator stays usable
-    // without hardware.
-    if (bt.isConnected || bt.isConnecting || bt.isFetching)
-      return real
 
-    const realUuids = new Set(real.map(c => c.characteristic.uuid))
-    const virtual: BleCharacteristic[] = []
-    for (const uuid of UUIDS_BY_GROUP[group] ?? []) {
-      if (realUuids.has(uuid))
-        continue
+    // Connected: only UUIDs the firmware exports (real char present).
+    // Offline / pre-pair: every UUID known for this group, so demo mode +
+    // preset-import work without hardware.
+    const surfaceUuids = bt.isConnected
+      ? Array.from(realByUuid.keys())
+      : (UUIDS_BY_GROUP[group] ?? [])
+
+    const out: BleCharacteristic[] = []
+    for (const uuid of surfaceUuids) {
       const v = getOrCreateVirtualChar(uuid)
-      if (v)
-        virtual.push(v)
-    }
-    return [...real, ...virtual]
-  })
-
-  watch(chars, async (list) => {
-    for (const ch of list) {
-      if (initialized.has(ch))
+      if (!v)
         continue
-      try {
-        await ch.initialize()
-        initialized.add(ch)
-      }
-      catch {
-        // CPF descriptors absent on this characteristic — it just stays hidden.
-      }
+      const real = realByUuid.get(uuid)
+      if (real?.presentationFormatDescriptor)
+        v.presentationFormatDescriptor = real.presentationFormatDescriptor
+      out.push(v)
     }
-  }, { immediate: true })
+    return out
+  })
 
   return chars
 }

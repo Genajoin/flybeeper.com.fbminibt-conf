@@ -261,6 +261,8 @@ sett:
   slide-to-pan: ↔ ZUM PANNEN ZIEHEN
   drag-point-edit: ● PUNKT ZIEHEN ZUM ÄNDERN
   revert: Zurücksetzen
+  reset: Standard
+  reset-confirm: Diese Gruppe auf Werkseinstellungen zurücksetzen?
   no-changes: Keine lokalen Änderungen
   unsynced: '{count} lokale Änderung(en) ausstehend'
 

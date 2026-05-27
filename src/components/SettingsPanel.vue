@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
+import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
 
 const props = defineProps<{
   group: SettingsGroupKey
@@ -13,29 +14,21 @@ const settings = useSettingsStore()
 const bt = useBluetoothStore()
 const { t } = useI18n()
 
-// Snapshot each CPF characteristic's initial value once it's read, so we can
-// compute a per-characteristic dirty state independent of the parent store.
-const cpfInitial = ref<Record<string, unknown>>({})
-
-watch(
-  () => props.cpfChars,
-  (chars) => {
-    if (!chars)
-      return
-    for (const ch of chars) {
-      const uuid = ch.characteristic.uuid
-      if (cpfInitial.value[uuid] === undefined && ch.formattedValue !== null && ch.formattedValue !== undefined)
-        cpfInitial.value[uuid] = cloneDeep(ch.formattedValue)
-    }
-  },
-  { immediate: true, deep: true },
-)
+// Dirty-check now compares the live local value (from settings.local, via the
+// virtual char's getter) against the device snapshot. The snapshot is the
+// authoritative "what's on the wire" reference: cancel-to-snapshot semantics
+// across reconnects, no per-component init state to drift.
+function snapshotValue(uuid: string): unknown {
+  return settings.lastDeviceSnapshot?.[uuid]
+}
 
 function cpfIsCharDirty(ch: BleCharacteristic): boolean {
-  const init = cpfInitial.value[ch.characteristic.uuid]
-  if (init === undefined)
+  const uuid = ch.characteristic.uuid
+  const live = ch.formattedValue
+  const snap = snapshotValue(uuid)
+  if (snap === undefined)
     return false
-  return JSON.stringify(ch.formattedValue) !== JSON.stringify(init)
+  return JSON.stringify(live) !== JSON.stringify(snap)
 }
 
 const cpfDirtyChars = computed(() =>
@@ -54,10 +47,14 @@ async function apply() {
   try {
     let restartNeeded = false
     for (const ch of cpfDirtyChars.value) {
-      if (CPF_RESTART_REQUIRED_UUIDS.includes(ch.characteristic.uuid))
+      const uuid = ch.characteristic.uuid
+      if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
         restartNeeded = true
-      await ch.setFormattedValue()
-      cpfInitial.value[ch.characteristic.uuid] = cloneDeep(ch.formattedValue)
+      // Source of truth lives in settings.local (via the virtual char
+      // getter). Route the actual GATT write through writeCharacteristic
+      // — which finds the real BLE char and calls setFormattedValue on it
+      // — instead of the virtual char's setFormattedValue no-op.
+      await bt.writeCharacteristic(uuid, ch.formattedValue)
     }
     if (restartNeeded)
       settings.restartPending = true
@@ -69,8 +66,22 @@ async function apply() {
 }
 
 function revert() {
-  for (const ch of cpfDirtyChars.value)
-    ch.formattedValue = cloneDeep(cpfInitial.value[ch.characteristic.uuid])
+  for (const ch of cpfDirtyChars.value) {
+    const snap = snapshotValue(ch.characteristic.uuid)
+    if (snap !== undefined)
+      ch.formattedValue = cloneDeep(snap)
+  }
+}
+
+function resetGroupToDefaults() {
+  // eslint-disable-next-line no-alert
+  if (!window.confirm(t('sett.reset-confirm')))
+    return
+  for (const ch of props.cpfChars ?? []) {
+    const def = DEMO_SETTINGS[ch.characteristic.uuid]
+    if (def !== undefined)
+      ch.formattedValue = cloneDeep(def)
+  }
 }
 </script>
 
@@ -96,6 +107,14 @@ function revert() {
     </div>
 
     <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
+      <button
+        class="panel__btn"
+        :disabled="isBusy"
+        type="button"
+        @click="resetGroupToDefaults"
+      >
+        {{ t('sett.reset') }}
+      </button>
       <button
         class="panel__btn"
         :disabled="!isDirty || isBusy"

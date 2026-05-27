@@ -351,6 +351,8 @@ sett:
   group-power-desc: Bluetooth sleep behaviour.
   group-simulator-desc: Inject a fake vario value to preview the audio curve without the sensor.
   revert: Revert
+  reset: Defaults
+  reset-confirm: Reset this group to factory defaults?
   no-changes: No local changes
   unsynced: '{count} local change(s) pending'
 

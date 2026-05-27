@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import log from 'loglevel'
 import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
+import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
@@ -82,6 +83,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       const gen = ++this.connectGen
       log.info('Connecting to', this.devName)
 
+      // Swap the settings slot to this device's own IDB-persisted state
+      // BEFORE any CPF read happens. If we have a previous local for it,
+      // it survives — otherwise applyDeviceSnapshot below will seed local
+      // from what we read off the device.
+      if (this.device.id)
+        await useSettingsStore().loadSlot(this.device.id)
+
       try {
         const server = await this.device.gatt.connect()
 
@@ -143,6 +151,20 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           return
         this.isFetching = false
         this.isConnected = true
+
+        // Build a snapshot of what the device currently has and hand it to
+        // the settings store. applyDeviceSnapshot writes it into
+        // lastDeviceSnapshot (always) and into local (only if local was
+        // empty — preserves any pending preset / offline edits). The
+        // settings panel then renders local + lights Apply when it
+        // differs.
+        const deviceSnap: SettingsLocal = {}
+        for (const ch of fssChars) {
+          const v = ch.formattedValue
+          if (v !== null && v !== undefined)
+            deviceSnap[ch.characteristic.uuid] = JSON.parse(JSON.stringify(v))
+        }
+        useSettingsStore().applyDeviceSnapshot(deviceSnap)
 
         if (this.device.id && this.device.name) {
           useSavedDevicesStore().remember({
@@ -240,6 +262,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.isConnected = false
       this.fetchProgress = 0
       this.fetchTotal = 0
+      void useSettingsStore().loadSlot('__demo__')
     },
     onDisconnected() {
       // Detach BEFORE we null out this.device — otherwise the same listener
@@ -270,6 +293,9 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.bleCharacteristics = []
 
       useSettingsStore().restartPending = false
+      // Swap back to demo slot so the panels (still mounted via virtual
+      // chars) show a sane offline state instead of stale device data.
+      void useSettingsStore().loadSlot('__demo__')
     },
 
     /**

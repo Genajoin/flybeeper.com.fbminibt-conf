@@ -10,22 +10,39 @@ function cloneJson<T>(v: T): T {
 }
 
 /**
- * Local-first settings store.
+ * Local-first, per-device settings store.
  *
- * After the legacy ≤0.15 codec was removed, `local` is a loose
- * `Record<string, unknown>` keyed by FlyBeeper Settings Service
- * characteristic UUID. The CPF panel layer owns the source-of-truth
- * (via `BleCharacteristic.formattedValue`); this store is the durable
- * mirror for offline editing and URL-share preset import.
+ * `local` is a loose `Record<string, unknown>` keyed by FlyBeeper Settings
+ * Service characteristic UUID. This store is the durable mirror for
+ * offline editing and URL-share preset import; `useCpfGroup` reads/writes
+ * `local` so the UI shows the user's intent even after the device is
+ * connected (BLE writes don't auto-overwrite local — Apply does).
  *
- * IDB key is bumped to `:v2` so stale legacy struct payloads don't get
- * misread as UUID-keyed records.
+ * IDB storage is keyed by **slot** (typically a `BluetoothDevice.id`), so
+ * two physically different devices keep two independent edit histories
+ * even within the same SKU. The `__demo__` slot holds the offline /
+ * pre-pair scratch state.
+ *
+ * v3 key bump: v2 was a single global slot — values from a previously
+ * paired device would leak onto the next one. v3 entries are slot-keyed
+ * and old v2 keys are intentionally left unread.
  */
 
-const IDB_KEY_SETTINGS = 'fb:settings:v2'
-const IDB_KEY_HISTORY = 'fb:settings:history:v2'
-const IDB_KEY_SNAPSHOT = 'fb:settings:device-snapshot:v2'
+const SETTINGS_KEY_PREFIX = 'fb:settings:v3:'
+const SNAPSHOT_KEY_PREFIX = 'fb:settings:snapshot:v3:'
+const HISTORY_KEY_PREFIX = 'fb:settings:history:v3:'
+const DEFAULT_SLOT = '__demo__'
 const HISTORY_LIMIT = 50
+
+function settingsKey(slot: string) {
+  return SETTINGS_KEY_PREFIX + slot
+}
+function snapshotKey(slot: string) {
+  return SNAPSHOT_KEY_PREFIX + slot
+}
+function historyKey(slot: string) {
+  return HISTORY_KEY_PREFIX + slot
+}
 
 export type SettingsLocal = Record<string, unknown>
 
@@ -49,6 +66,12 @@ export const useSettingsStore = defineStore('settingsStore', {
     history: [] as SettingsHistoryEntry[],
     hydrated: false,
     /**
+     * Active IDB slot key. `__demo__` covers offline / pre-pair state;
+     * BLE connect calls `loadSlot(device.id)` to swap to the device's
+     * own persisted local + snapshot + history.
+     */
+    currentSlot: DEFAULT_SLOT,
+    /**
      * Set true after writing a CPF characteristic listed in
      * CPF_RESTART_REQUIRED_UUIDS. Drives RestartDeviceBanner. Cleared on
      * disconnect (assumed power-cycle). Not persisted.
@@ -68,26 +91,43 @@ export const useSettingsStore = defineStore('settingsStore', {
     async hydrate(): Promise<void> {
       if (this.hydrated)
         return
-      const [stored, snapshot, history] = await Promise.all([
-        idbGet<SettingsLocal | null>(IDB_KEY_SETTINGS),
-        idbGet<SettingsLocal | null>(IDB_KEY_SNAPSHOT),
-        idbGet<SettingsHistoryEntry[]>(IDB_KEY_HISTORY),
-      ])
-      if (stored)
-        this.local = stored
-      if (snapshot)
-        this.lastDeviceSnapshot = snapshot
-      if (history)
-        this.history = history
+      await this.loadSlot(DEFAULT_SLOT, { skipPersist: true })
       this.hydrated = true
     },
 
     async persist(): Promise<void> {
+      const slot = this.currentSlot
       await Promise.all([
-        idbSet(IDB_KEY_SETTINGS, cloneJson(this.local)),
-        idbSet(IDB_KEY_SNAPSHOT, cloneJson(this.lastDeviceSnapshot)),
-        idbSet(IDB_KEY_HISTORY, cloneJson(this.history)),
+        idbSet(settingsKey(slot), cloneJson(this.local)),
+        idbSet(snapshotKey(slot), cloneJson(this.lastDeviceSnapshot)),
+        idbSet(historyKey(slot), cloneJson(this.history)),
       ])
+    },
+
+    /**
+     * Swap the active slot. Persists the outgoing slot first, then loads
+     * the incoming one from IDB. Pass `__demo__` for offline / pre-pair.
+     *
+     * Called from bluetoothStore on connect (with `device.id`) and on
+     * disconnect/cancel (back to `__demo__`). UI components don't need
+     * to be aware — they read `local` reactively.
+     */
+    async loadSlot(slot: string, opts: { skipPersist?: boolean } = {}): Promise<void> {
+      if (slot === this.currentSlot && this.hydrated)
+        return
+      if (!opts.skipPersist && this.hydrated)
+        await this.persist()
+      const [stored, snapshot, history] = await Promise.all([
+        idbGet<SettingsLocal | null>(settingsKey(slot)),
+        idbGet<SettingsLocal | null>(snapshotKey(slot)),
+        idbGet<SettingsHistoryEntry[]>(historyKey(slot)),
+      ])
+      this.currentSlot = slot
+      this.local = stored ?? null
+      this.lastDeviceSnapshot = snapshot ?? null
+      this.history = history ?? []
+      this.lastSyncedAt = null
+      this.restartPending = false
     },
 
     pushHistory(source: 'local' | 'device', settings?: SettingsLocal): void {
