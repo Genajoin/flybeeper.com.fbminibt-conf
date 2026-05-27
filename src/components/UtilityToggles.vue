@@ -13,9 +13,6 @@ async function toggleLocales() {
 
 <template>
   <div class="utils">
-    <RouterLink class="utils__btn" :title="t('dashboard.share')" to="/share">
-      <Icon name="share" :size="16" />
-    </RouterLink>
     <button class="utils__btn" :title="t('button.toggle_dark')" type="button" @click="toggleDark()">
       <Icon :name="isDark ? 'moon' : 'sun'" :size="16" />
     </button>
@@ -48,7 +45,6 @@ async function toggleLocales() {
   text-transform: uppercase;
   font-weight: 700;
   border-radius: 0;
-  text-decoration: none;
 }
 
 .utils__btn:hover {

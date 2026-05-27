@@ -8,6 +8,7 @@
   <RestartDeviceBanner />
   <SimulationBanner />
   <PresetImportBanner />
+  <ShareSettingsStrip />
   <main class="page">
     <RouterView />
   </main>

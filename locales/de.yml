@@ -334,6 +334,9 @@ preset:
   preset-by: Autor
   privacy-note: Datenschutz · URL-Fragment ist client-seitig · wird nie gesendet
   share-cta: TEILEN ↗
+  share-strip-eyebrow: Export
+  share-strip-cta: Diese Einstellungen teilen →
+  share-strip-sub: Link oder QR-Code, den Freunde scannen können
 
 install:
   eyebrow: Installation · offline

@@ -128,6 +128,9 @@ preset:
   preset-by: Автор
   privacy-note: Приватность · фрагмент URL остаётся в клиенте · никогда не отправляется
   share-cta: ПОДЕЛИТЬСЯ ↗
+  share-strip-eyebrow: Экспорт
+  share-strip-cta: Поделиться этими настройками →
+  share-strip-sub: Ссылка или QR-код, который друзья смогут отсканировать
 
 install:
   eyebrow: Установка · оффлайн
