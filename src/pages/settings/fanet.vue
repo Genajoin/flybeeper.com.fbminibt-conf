@@ -30,9 +30,10 @@ const freqMHz = computed<string>({
 
 function freqLabel(): string {
   const k = `sett.${FREQ_UUID}`
-  if (te(k))
-    return t(k)
-  return freqChar.value?.userFormatDescriptor || FREQ_UUID
+  const base = te(k) ? t(k) : (freqChar.value?.userFormatDescriptor || FREQ_UUID)
+  // Append the unit to the label instead of carrying a separate MHz chip
+  // next to the input — keeps the value column compact.
+  return `${base}, MHz`
 }
 </script>
 
@@ -40,17 +41,14 @@ function freqLabel(): string {
   <SettingsPanel group="fanet" :cpf-chars="cpfChars">
     <div v-if="cpfChars.length" class="f-list">
       <template v-if="freqChar">
-        <span class="f-input-wrap">
-          <input
-            :id="FREQ_UUID"
-            v-model="freqMHz"
-            class="f-input"
-            type="number"
-            step="0.01"
-            inputmode="decimal"
-          >
-          <span class="f-unit">MHz</span>
-        </span>
+        <input
+          :id="FREQ_UUID"
+          v-model="freqMHz"
+          class="f-input"
+          type="number"
+          step="0.01"
+          inputmode="decimal"
+        >
         <label class="f-label" :for="FREQ_UUID">{{ freqLabel() }}</label>
       </template>
       <TheSetting
@@ -99,13 +97,6 @@ function freqLabel(): string {
   }
 }
 
-.f-input-wrap {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  justify-self: end;
-}
-
 .f-input {
   font-family: var(--ck-font-mono);
   font-size: var(--ck-fs-body);
@@ -114,21 +105,13 @@ function freqLabel(): string {
   border-radius: var(--ck-radius-soft);
   background: var(--ck-paper);
   color: var(--ck-ink);
-  width: 8ch;
+  width: 10ch;
   text-align: right;
 }
 
 .f-input:focus {
   outline: none;
   border-color: var(--ck-signal);
-}
-
-.f-unit {
-  font-family: var(--ck-font-mono);
-  font-size: 11px;
-  color: var(--ck-dim);
-  text-transform: uppercase;
-  letter-spacing: var(--ck-track-data);
 }
 
 .f-label {
