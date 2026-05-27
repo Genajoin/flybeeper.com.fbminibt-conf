@@ -12,3 +12,7 @@ pnpm-lock.yaml
 *.d.ts
 /.env
 /.vscode/extensions.json
+
+# Local-only scratch directories (formerly tracked, moved out of the repo)
+/.claude/
+/.design/

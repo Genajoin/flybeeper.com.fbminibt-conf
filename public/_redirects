@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA fallback — every unmatched path serves index.html with
+# a 200 so the Vue client router can resolve the route on hydration.
+/*  /index.html  200
