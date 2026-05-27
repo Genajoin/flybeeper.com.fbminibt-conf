@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 
 const { t } = useI18n()
+const route = useRoute()
+const bt = useBluetoothStore()
+const fwUpdate = useFirmwareUpdate()
 
 const steps = computed(() => [
   { t: t('update.step-1-title'), d: t('update.step-1-desc') },
@@ -11,10 +14,44 @@ const steps = computed(() => [
   { t: t('update.step-5-title'), d: t('update.step-5-desc') },
   { t: t('update.step-6-title'), d: t('update.step-6-desc') },
 ])
+
+const target = computed(() => (fwUpdate.sku.value
+  ? `/update/firmware/${fwUpdate.sku.value}`
+  : '/devices'))
+
+// If the current page is scoped to a specific device (e.g.
+// /update/firmware/<sku> or /devices/<sku>/…), only surface the
+// "update available" callout when the connected device matches that
+// page. Avoids advertising an FBfanet update on the FBTAS page.
+const pageSku = computed<string | null>(() => {
+  const raw = route.params.sku
+  if (typeof raw === 'string' && raw)
+    return raw.toLowerCase()
+  const m = route.path.match(/^\/devices\/([^/]+)/)
+  return m ? m[1].toLowerCase() : null
+})
+
+const showAvailable = computed(() => {
+  if (!bt.isConnected || !fwUpdate.sku.value || !fwUpdate.hasUpdate.value)
+    return false
+  if (pageSku.value && pageSku.value !== fwUpdate.sku.value.toLowerCase())
+    return false
+  return true
+})
 </script>
 
 <template>
   <div class="upd">
+    <RouterLink v-if="showAvailable" class="upd__avail" :to="target">
+      <CkEyebrow color="var(--ck-signal)">
+        {{ t('update.available-eyebrow') }}
+      </CkEyebrow>
+      <p class="upd__avail-body">
+        {{ t('update.available-body', { current: fwUpdate.current.value, latest: fwUpdate.latest.value }) }}
+      </p>
+      <span class="upd__avail-cta">{{ t('update.cta-firmware') }}</span>
+    </RouterLink>
+
     <div class="upd__callout">
       <CkEyebrow color="var(--ck-signal)">
         {{ t('update.callout-eyebrow') }}
@@ -43,7 +80,9 @@ const steps = computed(() => [
     <div class="upd__ctas">
       <a class="upd__cta" href="https://apps.apple.com/app/nrf-connect-for-mobile/id1054362403" target="_blank" rel="noopener">{{ t('update.cta-ios') }}</a>
       <a class="upd__cta" href="https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp" target="_blank" rel="noopener">{{ t('update.cta-android') }}</a>
-      <a class="upd__cta upd__cta--signal" href="https://flybeeper.com/firmware" target="_blank" rel="noopener">{{ t('update.cta-firmware') }}</a>
+      <RouterLink class="upd__cta upd__cta--signal" :to="target">
+        {{ t('update.cta-firmware') }}
+      </RouterLink>
     </div>
   </div>
 </template>
@@ -52,6 +91,37 @@ const steps = computed(() => [
 .upd {
   background: var(--ck-paper);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.upd__avail {
+  display: block;
+  padding: 14px 22px;
+  background: var(--ck-paper);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-left: 8px solid var(--ck-signal);
+  color: var(--ck-ink);
+  text-decoration: none;
+}
+
+.upd__avail:hover {
+  background: var(--ck-bg);
+}
+
+.upd__avail-body {
+  font-size: 12px;
+  color: var(--ck-ink);
+  line-height: 1.5;
+  margin: 4px 0 8px;
+}
+
+.upd__avail-cta {
+  display: inline-block;
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
 }
 
 .upd__callout {

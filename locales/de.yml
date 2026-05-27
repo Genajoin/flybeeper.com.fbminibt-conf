@@ -17,6 +17,12 @@ intro:
   desc: Bluetooth Atmosphärendrucksensor
   device-list: Geräteliste
 
+catalog:
+  pitch-eyebrow: EIGENES GERÄT
+  pitch-title: BLE-Wearables, schlüsselfertig.
+  pitch-body: Dieselben Hände hinter FlyBeeper übernehmen Auftragsarbeit — nRF52-Firmware, BLE-Protokolle, KiCad-Platinen, Web-Backends.
+  pitch-cta: ALPISTO ↗
+
 home:
   eyebrow: FlyBeeper · BLE-Konfigurator
   title: Variometer direkt im Browser einstellen
@@ -27,8 +33,6 @@ home:
   link-cockpit: Cockpit
   link-terminal: Terminal
   link-update: Firmware-Update
-  catalog-eyebrow: Oder schau in den Katalog
-  catalog-link: Alle FlyBeeper-Geräte
 
 not-found: Nicht gefunden
 
@@ -160,8 +164,28 @@ about:
   install-app: Anwendung installieren
   p4: Eine ausführliche Projektbeschreibung finden Sie auf der Projektseite.
   link-description: Projektseite
-  link-blog: Projektseite
   link-market: FlyBeeper-Shop
+  alpisto-eyebrow: GEBAUT VON ALPISTO
+  alpisto-title: Working code, not slide decks.
+  alpisto-body: 'FlyBeeper-Hardware und -Firmware kommen von Alpisto — einer Ein-Personen-Ingenieurpraxis in Tolmin, Slowenien, geführt von Evgeny Istomin. Zwanzig Jahre nRF52-Firmware, BLE-Protokolle, KiCad-Platinen und Back-End-Arbeit — alles selbst gemacht. Kein Outsourcing, keine Folien.'
+  alpisto-services: 'Embedded BLE (nRF52, Zephyr, ESP32) · IoT-Back-Ends (FastAPI, NATS, MQTT) · MATLAB → Python-Migrationen · technische Due Diligence.'
+  alpisto-address: 'Rutarjeva ulica 15, 5220 Tolmin, Slowenien · USt-IdNr. SI91102227'
+  alpisto-cta: alpisto.eu öffnen
+  contact-eyebrow: KONTAKT
+  contact-title: Nachricht senden
+  contact-body: 'Fehlermeldungen, Hardware-Fragen, Kooperationsideen — schreib uns. Antwort innerhalb von zwei Werktagen.'
+  contact-name: Name
+  contact-name-ph: Optional
+  contact-email: E-Mail
+  contact-email-ph: 'du{''@''}beispiel.de'
+  contact-message: Nachricht
+  contact-message-ph: 'Worum geht''s?'
+  contact-send: Senden
+  contact-sending: Wird gesendet…
+  contact-success-eyebrow: GESENDET
+  contact-success-body: Danke — deine Nachricht ist angekommen. Du erhältst eine Antwort an die angegebene Adresse.
+  contact-error-eyebrow: SENDEN FEHLGESCHLAGEN
+  contact-error-body: 'Verbindung zum Formular-Endpoint nicht möglich. Prüfe deine Internetverbindung und versuche es erneut, oder schreibe direkt an hello{''@''}alpisto.eu.'
   fbtas-p1: Autonomer wahre Luftgeschwindigkeitssensor mit Bluetooth.
   fbminibt-p1: Variometer mit Bluetooth und drahtlosen Tasten. Hörbare Steigrate-Anzeige basierend auf benutzerdefinierten Kurven. Die Batterie ist kälteresistent.
   fbps1-p1: Immer verfügbar für Bluetooth-Verbindung externer Barometer. Hohe Empfindlichkeit und Stabilität mit minimalen Verzögerungen. Verwandeln Sie jedes Smartphone in einen zuverlässigen Variometer.
@@ -285,6 +309,12 @@ update:
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.
   descr2: Ab fw Version 0.21 können Sie eine einfachere und intuitivere Anwendung zum Aktualisieren der Firmware verwenden
   update-first: Bitte zuerst die Firmware aktualisieren.
+  available-eyebrow: UPDATE VERFÜGBAR
+  available-body: 'Ihr Gerät läuft auf FW {current}; FW {latest} ist veröffentlicht.'
+  firmware-list-title: 'Firmware-Historie für {model}'
+  no-public-firmware-eyebrow: NOCH KEIN BUILD
+  no-public-firmware: Für dieses Gerät gibt es noch keine öffentliche Firmware.
+  latest-badge: NEUESTE
 
 preset:
   import-eyebrow: Preset-Import
@@ -318,6 +348,8 @@ dashboard:
   button-map: Tastenkarte
   live: ● LIVE
   hover-jump-hint: HOVER → SPRINGEN
+  manual-link: HANDBUCH ↗
+  manual-link-need-connect: Gerät verbinden, um das Handbuch zu öffnen
   vario: Vario
   alt: HÖHE
   press: DRUCK
@@ -359,3 +391,21 @@ dashboard:
   connecting-title: KANAL WIRD AUFGEBAUT
   fetching-eyebrow: LESEN
   fetching-title: 'LADE {n}/{total} CHARAKTERISTIKEN'
+  fw-update-warn: FW AKTUALISIEREN
+
+device:
+  firmware-eyebrow: FIRMWARE
+  firmware-title: 'FW {latest}'
+  firmware-body: '{count} öffentliche Builds — vollständige Historie unten.'
+  firmware-download: ↓ .bin herunterladen
+  firmware-all-builds: Alle Builds →
+  firmware-empty: Noch kein öffentlicher Firmware-Build.
+  changelog-title: Änderungsprotokoll
+  manual-title: Handbuch
+  manual-open-standalone: Im neuen Tab ↗
+
+footer:
+  about: Über FlyBeeper
+  devices: Geräte
+  firmware-update: Firmware-Update
+  alpisto: alpisto.eu ↗

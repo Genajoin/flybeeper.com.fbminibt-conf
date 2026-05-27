@@ -18,6 +18,12 @@ intro:
   device-list: Список устройств
 not-found: Не найден
 
+catalog:
+  pitch-eyebrow: СВОЁ УСТРОЙСТВО
+  pitch-title: BLE-носимка под ключ.
+  pitch-body: Та же команда, что делает FlyBeeper, берёт клиентские проекты — прошивка на nRF52, BLE-протоколы, KiCad-платы, веб-бэкенды.
+  pitch-cta: ALPISTO ↗
+
 home:
   eyebrow: FlyBeeper · BLE конфигуратор
   title: Настройте вариометр прямо в браузере
@@ -28,8 +34,6 @@ home:
   link-cockpit: Кокпит
   link-terminal: Терминал
   link-update: Прошивка
-  catalog-eyebrow: Или загляните в каталог
-  catalog-link: Все устройства FlyBeeper
 
 local:
   disconnected-banner: Устройство отключено — настройки сохранены локально, звук переключён на браузер.
@@ -138,6 +142,8 @@ dashboard:
   button-map: Карта кнопок
   live: ● LIVE
   hover-jump-hint: НАВЕДИ → ПЕРЕЙТИ
+  manual-link: ИНСТРУКЦИЯ ↗
+  manual-link-need-connect: Подключите устройство, чтобы открыть инструкцию
   vario: Варио
   alt: ВЫС
   press: ДАВЛ
@@ -179,6 +185,18 @@ dashboard:
   connecting-title: УСТАНАВЛИВАЕМ КАНАЛ
   fetching-eyebrow: ЧТЕНИЕ
   fetching-title: 'ЗАГРУЖАЕМ {n}/{total} ХАРАКТЕРИСТИК'
+  fw-update-warn: ОБНОВИТЬ FW
+
+device:
+  firmware-eyebrow: ПРОШИВКА
+  firmware-title: 'FW {latest}'
+  firmware-body: '{count} публичных сборок — полная история ниже.'
+  firmware-download: ↓ Скачать .bin
+  firmware-all-builds: Все сборки →
+  firmware-empty: Публичных сборок прошивки пока нет.
+  changelog-title: История изменений
+  manual-title: Инструкция
+  manual-open-standalone: Открыть отдельно ↗
 
 msg:
   disconnected: Устройство отключено
@@ -232,8 +250,28 @@ about:
   p3: Приложение можно установить и использовать оффлайн.
   install-app: Установить приложение
   p4: Подробное описание проекта можно найти на странице проекта или в магазине.
-  link-blog: Страница проекта
   link-market: Магазин FlyBeeper
+  alpisto-eyebrow: РАЗРАБОТАНО ALPISTO
+  alpisto-title: Working code, not slide decks.
+  alpisto-body: 'Железо и прошивки FlyBeeper делаются в Alpisto — инженерной практике одного человека в Тольмине (Словения), которую ведёт Евгений Истомин. Двадцать лет nRF52, BLE-протоколов, KiCad-плат и бэкендов — всё руками, без аутсорса и без слайдов.'
+  alpisto-services: 'Embedded BLE (nRF52, Zephyr, ESP32) · IoT-бэкенды (FastAPI, NATS, MQTT) · миграции MATLAB → Python · техническая экспертиза.'
+  alpisto-address: 'Rutarjeva ulica 15, 5220 Tolmin, Slovenia · VAT SI91102227'
+  alpisto-cta: Открыть alpisto.eu
+  contact-eyebrow: НАПИСАТЬ
+  contact-title: Отправить сообщение
+  contact-body: 'Баги, вопросы по железу, идеи сотрудничества — пиши. Ответ приходит в течение двух рабочих дней.'
+  contact-name: Имя
+  contact-name-ph: Необязательно
+  contact-email: Почта
+  contact-email-ph: 'вы{''@''}пример.ru'
+  contact-message: Сообщение
+  contact-message-ph: О чём речь?
+  contact-send: Отправить
+  contact-sending: Отправка…
+  contact-success-eyebrow: ОТПРАВЛЕНО
+  contact-success-body: Спасибо — сообщение ушло. Ответ придёт на указанный адрес.
+  contact-error-eyebrow: НЕ УДАЛОСЬ ОТПРАВИТЬ
+  contact-error-body: 'Не удалось достучаться до сервера формы. Проверь интернет и попробуй ещё раз, или напиши на hello{''@''}alpisto.eu напрямую.'
   fbtas-p1: Датчик истинной воздушной скорости с блютус.
   fbminibt-p1: Вариометр с Bluetooth и беспроводными кнопками. Звуковая индикация скорости подъема на основе пользовательских кривых. Батарея устойчива к холоду.
   fbps1-p1: Внешний барометр. Всегда доступен для Bluetooth-подключения. Высокая чувствительность и стабильность с минимальными задержками. Превратите любой смартфон в надежный вариометр.
@@ -355,3 +393,15 @@ update:
   descr: лучшее решение для обновления прошивки. Установите и запустите приложение. На вкладке `Scan` найдите устройство и нажмите кнопку `connect`. На открывшейся вкладке, рядом с кнопкой `disconnect`, нажмите на значок `DFU`. Выберите ранее загруженный файл прошивки `app_update.bin` в файловой системе. Выберите `Test and Confirm` и нажмите `Ok`. Через 15 секунд файл будет передан, проверен, и устройство перезагрузится. Батарея должна быть новой.
   descr2: Начиная с версии прошивки 0.21 вы можете использовать более простое и интуитивно понятное приложение для обновления прошивки
   update-first: Пожалуйста сначала обновите прошивку
+  available-eyebrow: ДОСТУПНО ОБНОВЛЕНИЕ
+  available-body: 'На устройстве FW {current}; опубликована FW {latest}.'
+  firmware-list-title: 'История прошивок для {model}'
+  no-public-firmware-eyebrow: ПУБЛИЧНЫХ СБОРОК НЕТ
+  no-public-firmware: Публичной прошивки для этого устройства пока нет.
+  latest-badge: ПОСЛЕДНЯЯ
+
+footer:
+  about: О FlyBeeper
+  devices: Устройства
+  firmware-update: Обновление прошивки
+  alpisto: alpisto.eu ↗

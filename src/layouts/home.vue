@@ -11,6 +11,7 @@
   <main class="page page--home">
     <RouterView />
   </main>
+  <TheFooter />
   <ReconnectDiffDialog />
   <InstallToast />
 </template>

@@ -46,17 +46,6 @@ const { t } = useI18n()
         <span class="landing__cell-label">{{ t('home.link-update') }}</span>
       </RouterLink>
     </div>
-
-    <div class="landing__catalog">
-      <CkEyebrow color="var(--ck-dim)" block>
-        {{ t('home.catalog-eyebrow') }}
-      </CkEyebrow>
-      <RouterLink class="landing__catalog-link" to="/devices">
-        {{ t('home.catalog-link') }} →
-      </RouterLink>
-    </div>
-
-    <InvertedFooter />
   </section>
 </template>
 
@@ -126,28 +115,6 @@ const { t } = useI18n()
   font-size: 17px;
   text-transform: uppercase;
   letter-spacing: -0.2px;
-}
-
-.landing__catalog {
-  padding: 16px 22px;
-  background: var(--ck-paper);
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
-}
-
-.landing__catalog-link {
-  display: inline-block;
-  margin-top: 6px;
-  font-family: var(--ck-font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-ink);
-  text-decoration: none;
-}
-
-.landing__catalog-link:hover {
-  color: var(--ck-signal);
 }
 
 @media (min-width: 960px) {
