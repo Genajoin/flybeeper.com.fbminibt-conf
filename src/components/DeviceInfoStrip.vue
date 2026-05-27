@@ -92,6 +92,8 @@ onBeforeUnmount(() => {
 const name = computed(() => (bt.dis.modelNumberString.value as string | null) || null)
 const fw = computed(() => (bt.dis.firmwareRevisionString.value as string | null) || null)
 
+const fwUpdate = useFirmwareUpdate()
+
 const batText = computed(() => {
   if (batPct.value !== null)
     return `${Math.round(batPct.value)}%`
@@ -106,7 +108,15 @@ const hasAny = computed(() => !!(name.value || fw.value || batText.value))
 <template>
   <template v-if="hasAny">
     <span v-if="name" class="dev__cell dev__cell--name">{{ name }}</span>
-    <span v-if="fw" class="dev__cell">FW {{ fw }}</span>
+    <RouterLink
+      v-if="fw && fwUpdate.hasUpdate.value"
+      class="dev__cell dev__cell--update"
+      to="/update"
+      :title="t('dashboard.fw-update-warn')"
+    >
+      ⚠ FW {{ fwUpdate.current.value || fw }} → {{ fwUpdate.latest.value }}
+    </RouterLink>
+    <span v-else-if="fw" class="dev__cell">FW {{ fw }}</span>
     <span v-if="batText" class="dev__cell">{{ t('dashboard.bat') }} {{ batText }}</span>
   </template>
 </template>
@@ -132,5 +142,16 @@ const hasAny = computed(() => !!(name.value || fw.value || batText.value))
 
 .dev__cell--name {
   color: var(--ck-signal);
+}
+
+.dev__cell--update {
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+  text-decoration: none;
+}
+
+.dev__cell--update:hover {
+  background: var(--ck-ink);
+  color: var(--ck-paper);
 }
 </style>
