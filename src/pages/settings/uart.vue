@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const cpfChars = useCpfGroup('uart')
+
+function labelFor(ch: BleCharacteristic): string {
+  const k = `sett.${ch.characteristic.uuid}`
+  if (te(k))
+    return t(k)
+  return ch.userFormatDescriptor || ch.characteristic.uuid
+}
 
 const PROTOCOL_UUID = '84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b'
 const protocolChar = computed(() => cpfChars.value.find(c => c.characteristic.uuid === PROTOCOL_UUID))
@@ -42,11 +50,18 @@ const protocolOptions = [
     </div>
 
     <div v-if="otherChars.length" class="uart-extras">
-      <TheSetting
-        v-for="ch in otherChars"
-        :key="ch.characteristic.uuid"
-        :cha="ch"
-      />
+      <template v-for="ch in otherChars" :key="ch.characteristic.uuid">
+        <template v-if="typeof ch.formattedValue === 'boolean'">
+          <CkSquareToggle
+            :model-value="Boolean(ch.formattedValue)"
+            :aria-label="labelFor(ch)"
+            class="uart-extras__toggle"
+            @update:model-value="ch.formattedValue = $event"
+          />
+          <span class="uart-extras__toggle-label">{{ labelFor(ch) }}</span>
+        </template>
+        <TheSetting v-else :cha="ch" />
+      </template>
     </div>
 
     <p v-if="cpfChars.length === 0" class="empty">
@@ -78,6 +93,18 @@ const protocolOptions = [
   .uart-extras {
     justify-content: center;
   }
+}
+
+/* Pin the toggle to the seam so a 28px toggle and a 10ch <input> share
+ * the same right edge in col 1. */
+.uart-extras__toggle {
+  justify-self: end;
+}
+
+.uart-extras__toggle-label {
+  font-family: var(--ck-font-body);
+  font-size: var(--ck-fs-body);
+  color: var(--ck-ink);
 }
 
 .uart-row__seg {
