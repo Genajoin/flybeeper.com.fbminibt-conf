@@ -21,12 +21,12 @@ function labelFor(ch: BleCharacteristic): string {
     <ul v-if="cpfChars.length" class="b-list">
       <template v-for="ch in cpfChars" :key="ch.characteristic.uuid">
         <li v-if="typeof ch.formattedValue === 'boolean'" class="b-row">
-          <span class="b-row__label">{{ labelFor(ch) }}</span>
           <CkSquareToggle
             :model-value="Boolean(ch.formattedValue)"
             :aria-label="labelFor(ch)"
             @update:model-value="ch.formattedValue = $event"
           />
+          <span class="b-row__label">{{ labelFor(ch) }}</span>
         </li>
         <li v-else class="b-row b-row--full">
           <TheSetting :cha="ch" />
@@ -68,7 +68,7 @@ function labelFor(ch: BleCharacteristic): string {
   font-size: 15px;
   text-transform: uppercase;
   letter-spacing: -0.2px;
-  text-align: right;
+  text-align: left;
 }
 
 .empty {

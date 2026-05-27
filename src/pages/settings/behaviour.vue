@@ -25,12 +25,12 @@ const list = computed(() => cpfChars.value)
   <SettingsPanel group="behaviour" :cpf-chars="cpfChars">
     <ul v-if="list.length" class="b-list">
       <li v-for="ch in list" :key="ch.characteristic.uuid" class="b-row">
-        <span class="b-row__label">{{ labelFor(ch) }}</span>
         <CkSquareToggle
           :model-value="Boolean(ch.formattedValue)"
           :aria-label="labelFor(ch)"
           @update:model-value="ch.formattedValue = $event"
         />
+        <span class="b-row__label">{{ labelFor(ch) }}</span>
       </li>
     </ul>
     <p v-else class="empty">
@@ -67,7 +67,7 @@ const list = computed(() => cpfChars.value)
   font-size: 15px;
   text-transform: uppercase;
   letter-spacing: -0.2px;
-  text-align: right;
+  text-align: left;
 }
 
 .empty {

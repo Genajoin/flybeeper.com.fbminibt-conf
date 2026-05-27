@@ -57,9 +57,6 @@ const inputType = computed(() => getTypeFromPresentationFormat())
 
 <template>
   <div v-if="isVisible" class="row" :class="{ 'row--check': inputType === 'checkbox' }">
-    <label class="row__label" :for="ch.characteristic.uuid">
-      {{ getTranslation() }}
-    </label>
     <input
       :id="ch.characteristic.uuid"
       v-model="ch.formattedValue"
@@ -69,19 +66,23 @@ const inputType = computed(() => getTypeFromPresentationFormat())
       :step="getStepByFormatDescriptor()"
       @input="handelChange"
     >
+    <label class="row__label" :for="ch.characteristic.uuid">
+      {{ getTranslation() }}
+    </label>
   </div>
 </template>
 
 <style scoped>
 .row {
-  /* Two centred columns anchored to a middle seam, instead of stretched
-   * full-width with a yawning gap on desktop. Label right-aligned, input
-   * left-aligned, both meet at the gap. */
+  /* Values stack along a single vertical seam on the LEFT, labels read
+   * from that seam to the right. Same idea as form inputs in a settings
+   * dialog: scan the column of values, glance right for what each is. */
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto auto;
+  justify-content: center;
   align-items: center;
   gap: 16px;
-  max-width: 480px;
+  max-width: 540px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -90,7 +91,7 @@ const inputType = computed(() => getTypeFromPresentationFormat())
   font-family: var(--ck-font-body);
   font-size: var(--ck-fs-body);
   color: var(--ck-ink);
-  text-align: right;
+  text-align: left;
 }
 
 .row__input {
