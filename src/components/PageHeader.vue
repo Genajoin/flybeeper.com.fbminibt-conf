@@ -9,9 +9,10 @@ withDefaults(defineProps<{
   right?: string
   rightSignal?: boolean
   /**
-   * Suppress the global theme/language toggles in the strip. Set `true`
-   * when this header is nested inside another PageHeader (e.g. the step
-   * strips inside PairingWizard) so the toggles aren't duplicated.
+   * Suppress the global theme/language toggles + device-info strip inside
+   * this header. Set `true` when this header is nested inside another
+   * PageHeader (e.g. the step strips inside PairingWizard) so the global
+   * chrome isn't duplicated.
    */
   hideUtils?: boolean
 }>(), {
@@ -19,6 +20,8 @@ withDefaults(defineProps<{
   rightSignal: false,
   hideUtils: false,
 })
+
+const bt = useBluetoothStore()
 </script>
 
 <template>
@@ -28,6 +31,13 @@ withDefaults(defineProps<{
         {{ breadcrumbLabel || '← BACK' }}
       </RouterLink>
       <span v-else-if="breadcrumbLabel" class="page-head__crumb">{{ breadcrumbLabel }}</span>
+      <!-- Device-info cells (model · FW · battery) shown on every header
+           once a device is paired. Placed after the breadcrumb but before
+           the spacer so on wide viewports it sits inline with the utility
+           cluster; on narrow viewports the strip's flex-wrap pushes
+           utils/right onto a second row. Suppressed inside nested headers
+           (PairingWizard step strips) via hide-utils. -->
+      <DeviceInfoStrip v-if="bt.isConnected && !hideUtils" />
       <span class="page-head__spacer" />
       <!-- Global utility toggles (theme + language) live in every page's
            header strip so the user can always change them. Sits before the
@@ -61,6 +71,7 @@ withDefaults(defineProps<{
 
 .page-head__strip {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);

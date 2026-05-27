@@ -7,10 +7,6 @@ import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 const props = defineProps<{
   group: SettingsGroupKey
   cpfChars: BleCharacteristic[]
-  /** Optional title override for the page header. Falls back to `sett.group-<group>`. */
-  title?: string
-  /** Optional subtitle override. */
-  sub?: string
 }>()
 
 const settings = useSettingsStore()
@@ -77,9 +73,6 @@ function revert() {
   for (const ch of cpfDirtyChars.value)
     ch.formattedValue = cloneDeep(cpfInitial.value[ch.characteristic.uuid])
 }
-
-const resolvedTitle = computed(() => props.title ?? t(`sett.group-${props.group}`))
-const resolvedSub = computed(() => props.sub ?? t(`sett.group-${props.group}-desc`))
 </script>
 
 <template>
@@ -87,8 +80,6 @@ const resolvedSub = computed(() => props.sub ?? t(`sett.group-${props.group}-des
     <PageHeader
       breadcrumb-to="/settings"
       :breadcrumb-label="t('dashboard.back-dashboard')"
-      :eyebrow="resolvedTitle"
-      :title="resolvedSub"
     >
       <template #right>
         <ConnectionPill />

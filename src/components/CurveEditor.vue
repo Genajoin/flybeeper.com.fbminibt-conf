@@ -113,7 +113,7 @@ const baseCenterCmS = computed(() => (baseMinCmS.value + baseMaxCmS.value) / 2)
 // 10× is the high end (fine-tune around zero); 4× was too coarse for the
 // dead-band region just past the climb-on / sink-on thresholds.
 const ZOOM_PRESETS = [1, 2, 10]
-const zoomLevel = ref(1)
+const { zoomLevel } = useCurveZoom()
 const zoomCenterCmS = ref(0)
 
 const visibleRangeCmS = computed(() => baseRangeCmS.value / zoomLevel.value)

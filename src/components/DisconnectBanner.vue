@@ -1,8 +1,13 @@
+<script lang="ts">
+// Module-scope so the dismissal survives layout swaps (default.vue ↔
+// home.vue) and route navigation. Was per-instance before, which meant
+// "work offline" was forgotten the moment the user navigated away.
+const dismissed = ref(false)
+</script>
+
 <script setup lang="ts">
 const bt = useBluetoothStore()
 const { t } = useI18n()
-
-const dismissed = ref(false)
 
 const show = computed(() =>
   bt.hasConnectedThisSession && !bt.isConnected && !dismissed.value,
@@ -42,9 +47,11 @@ function reconnect() {
 
 <style scoped>
 .disc {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 8;
+  left: 0;
+  right: 0;
+  z-index: 20;
 }
 
 .banner-enter-active,

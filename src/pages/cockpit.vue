@@ -42,14 +42,6 @@ function onJump(h: Hotspot) {
 const ledOn = computed(() => bt.isConnected)
 const fwLabel = computed(() => bt.dis.firmwareRevisionString.value ?? '—')
 const isOffline = computed(() => !bt.isConnected)
-const headerTitle = computed(() =>
-  bt.dis.modelNumberString.value || (isOffline.value ? t('dashboard.demo-device') : 'DEVICE'),
-)
-const headerSub = computed(() => {
-  if (isOffline.value)
-    return t('dashboard.demo-mode-sub')
-  return `${bt.dis.manufacturerNameString.value} · fw ${fwLabel.value}`
-})
 
 // Banner state priority: connect-error → connecting/fetching progress → demo.
 const banner = computed(() => {
@@ -98,9 +90,6 @@ const banner = computed(() => {
     <PageHeader
       breadcrumb-to="/"
       breadcrumb-label="← HOME"
-      :eyebrow="isOffline ? t('dashboard.demo-mode-eyebrow') : t('dashboard.eyebrow')"
-      :title="headerTitle"
-      :sub="headerSub"
     >
       <template #right>
         <ConnectionPill />
@@ -121,8 +110,8 @@ const banner = computed(() => {
       <div class="dash__col dash__col--map">
         <div class="dash__col-head">
           <CkEyebrow>{{ t('dashboard.button-map') }}</CkEyebrow>
-          <CkEyebrow color="var(--ck-signal)">
-            {{ t('dashboard.live') }}
+          <CkEyebrow :color="bt.isConnected ? 'var(--ck-signal)' : 'var(--ck-dim)'">
+            {{ bt.isConnected ? t('dashboard.live') : t('dashboard.offline-eyebrow') }}
           </CkEyebrow>
         </div>
         <div class="dash__topdown">
@@ -143,9 +132,6 @@ const banner = computed(() => {
       <div class="dash__col dash__col--hub">
         <div class="dash__hub-head">
           <CkEyebrow>{{ t('dashboard.settings-title') }}</CkEyebrow>
-          <CkEyebrow color="var(--ck-signal)">
-            {{ t('dashboard.synced') }}
-          </CkEyebrow>
         </div>
         <RouterLink to="/settings/audio" class="dash__hub-row">
           <div>

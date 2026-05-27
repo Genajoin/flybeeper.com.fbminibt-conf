@@ -80,7 +80,11 @@ const showSilentDeviceWarning = computed(() =>
 
 const SLIDER_MIN_MS = -5
 const SLIDER_MAX_MS = 10
-const SLIDER_STEP_MS = 0.1
+// Step follows the curve editor's zoom: at 10× the user is fine-tuning
+// around the dead-band so we drop to 0.01 m/s; otherwise 0.1 m/s.
+const { zoomLevel } = useCurveZoom()
+const sliderStepMs = computed(() => (zoomLevel.value >= 10 ? 0.01 : 0.1))
+const sliderDecimals = computed(() => (zoomLevel.value >= 10 ? 2 : 1))
 
 const sliderMs = ref(sim.valueMs.value)
 const SYNC_EPS = 0.05
@@ -339,14 +343,14 @@ onUnmounted(() => {
 
     <div class="ctrl__slider-block">
       <div class="ctrl__readout">
-        <span class="ctrl__readout-big" :class="{ 'ctrl__readout-big--signal': sliderMs > 0 }">{{ sliderMs >= 0 ? '+' : '' }}{{ sliderMs.toFixed(1) }}</span>
+        <span class="ctrl__readout-big" :class="{ 'ctrl__readout-big--signal': sliderMs > 0 }">{{ sliderMs >= 0 ? '+' : '' }}{{ sliderMs.toFixed(sliderDecimals) }}</span>
         <span class="ctrl__readout-unit">M/S</span>
       </div>
       <ClimbrateSlider
         v-model="sliderMs"
         :min="SLIDER_MIN_MS"
         :max="SLIDER_MAX_MS"
-        :step="SLIDER_STEP_MS"
+        :step="sliderStepMs"
         @pointerdown="source === 'browser' && synth.ensureContext()"
       >
         <template #extra>

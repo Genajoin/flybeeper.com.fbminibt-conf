@@ -10,6 +10,9 @@ const { t } = useI18n()
 <template>
   <section class="landing">
     <PageHeader>
+      <template #right>
+        <ConnectionPill />
+      </template>
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('home.eyebrow') }}
