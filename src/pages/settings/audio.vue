@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
+import isEqual from 'lodash/isEqual'
 
 interface iVarioCurves {
   buzzer_vario_dots: number[]
@@ -86,18 +87,38 @@ const presets = {
   },
 } satisfies Record<string, iVarioCurves>
 
-const activePreset = ref<keyof typeof presets | 'custom'>('custom')
+// Last-known user-customised curves. Module-scoped so it survives audio.vue
+// remounts during a session (e.g. user navigates to /settings/power and back).
+// Captured whenever the user leaves the CUSTOM bucket for a preset, so that
+// returning to CUSTOM restores exactly what they had — instead of leaving them
+// staring at the preset's curves with the CUSTOM segment lit.
+let customSnapshot: iVarioCurves | null = null
 
-function applyPreset(name: keyof typeof presets) {
-  const next = cloneDeep(presets[name])
-  if (cpfReady.value) {
-    const m = cpfByUuid.value
-    m[CPF_VARIO_UUID].formattedValue = next.buzzer_vario_dots
-    m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
-    m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
-    m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
+type PresetKey = keyof typeof presets
+
+/**
+ * Active preset is derived from the live curves — drag a handle and it
+ *  auto-switches to CUSTOM because the shape no longer matches any preset.
+ */
+const activePreset = computed<PresetKey | 'custom'>(() => {
+  const c = cpfCurves.value
+  if (!c)
+    return 'custom'
+  for (const [name, p] of Object.entries(presets)) {
+    if (isEqual(c, p))
+      return name as PresetKey
   }
-  activePreset.value = name
+  return 'custom'
+})
+
+function writeCurves(next: iVarioCurves) {
+  if (!cpfReady.value)
+    return
+  const m = cpfByUuid.value
+  m[CPF_VARIO_UUID].formattedValue = next.buzzer_vario_dots
+  m[CPF_FREQ_UUID].formattedValue = next.buzzer_frequency_dots
+  m[CPF_CYCLE_UUID].formattedValue = next.buzzer_cycle_dots
+  m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
 }
 
 const presetOptions = [
@@ -107,12 +128,20 @@ const presetOptions = [
   { label: 'CUSTOM*', value: 'custom' as const },
 ]
 
-function selectPreset(v: 'sensitive' | 'aggressive' | 'silent-gnd' | 'custom') {
+function selectPreset(v: PresetKey | 'custom') {
   if (v === 'custom') {
-    activePreset.value = 'custom'
+    // Restore the user's last custom shape if we have one stashed. If not
+    // (first ever click on CUSTOM with no prior edits), leave curves alone —
+    // they ARE the implicit starting point for the user's custom editing.
+    if (customSnapshot)
+      writeCurves(cloneDeep(customSnapshot))
     return
   }
-  applyPreset(v)
+  // Leaving CUSTOM for a preset: snapshot the user's work so a later
+  // CUSTOM click can bring it back.
+  if (activePreset.value === 'custom' && cpfCurves.value)
+    customSnapshot = cloneDeep(cpfCurves.value)
+  writeCurves(cloneDeep(presets[v]))
 }
 </script>
 
