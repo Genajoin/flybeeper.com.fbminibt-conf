@@ -1,11 +1,18 @@
 <script setup lang="ts">
-const { t } = useI18n()
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+
+const { t, te } = useI18n()
 const cpfChars = useCpfGroup('power')
 
-function labelFor(uuid: string): string {
-  const k = `sett.${uuid}`
-  const fb = t(k)
-  return fb === k ? uuid : fb
+/**
+ * Label resolution: curated i18n key → BLE User Format Descriptor
+ * (firmware-provided name) → raw UUID. Same shape as behaviour.vue.
+ */
+function labelFor(ch: BleCharacteristic): string {
+  const k = `sett.${ch.characteristic.uuid}`
+  if (te(k))
+    return t(k)
+  return ch.userFormatDescriptor || ch.characteristic.uuid
 }
 </script>
 
@@ -14,10 +21,10 @@ function labelFor(uuid: string): string {
     <ul v-if="cpfChars.length" class="b-list">
       <template v-for="ch in cpfChars" :key="ch.characteristic.uuid">
         <li v-if="typeof ch.formattedValue === 'boolean'" class="b-row">
-          <span class="b-row__label">{{ labelFor(ch.characteristic.uuid) }}</span>
+          <span class="b-row__label">{{ labelFor(ch) }}</span>
           <CkSquareToggle
             :model-value="Boolean(ch.formattedValue)"
-            :aria-label="labelFor(ch.characteristic.uuid)"
+            :aria-label="labelFor(ch)"
             @update:model-value="ch.formattedValue = $event"
           />
         </li>

@@ -44,6 +44,18 @@ export const DEMO_SETTINGS: Record<string, unknown> = {
 
   // ── simulator (write-only on device; included so virtual-char shim has a value)
   '904baf04-5814-11ee-8c99-0242ac120002': 0,
+
+  // ── FANET radio (firmware defaults from FbFANET/src/settings/settings.c)
+  '8d8e8809-4697-41fc-8ee2-ca0b999354ec': 868200000, // frequency, Hz (868.2 MHz)
+  'f19422e2-982a-4954-9a75-b38927236a59': 1, // bandwidth (1 = 250 kHz)
+  '108b855f-11cd-4bc5-adee-eafce49bc77a': 7, // datarate (SF7)
+  '17a95752-3c12-438f-9244-4f4612a1ab49': 1, // coding rate (CR 4/5)
+  '8ef0c42e-adb6-4897-b9c9-6fe93143faf4': 14, // tx power, dBm
+  '9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba': 1, // FANET UART protocol (1 = FNNGB)
+
+  // ── TAS (firmware defaults from FbFANET/src/settings/settings.c)
+  '904baf04-5814-11ee-8c99-0242ac120201': 1.05, // Pitot K factor (firmware k_factor = 1050, exponent -3)
+  '904baf04-5814-11ee-8c99-0242ac120202': 0, // Diff. pressure offset, Pa
 }
 
 /**
@@ -84,20 +96,18 @@ export const VIRTUAL_CPF_FORMAT: Record<string, VirtualCpfFormat> = {
 
   '904baf04-5814-11ee-8c99-0242ac120002': { format: 0x0E, exponent: -2, unit: 'm/s' },
 
-  // FANET radio (fbfanet, fbfanetvario). Format/exponent are sane fallbacks
-  // for demo mode — on a real connected device the firmware's CPF
-  // presentation descriptor is spliced onto the virtual char so the live
-  // values render with the device's actual format. Without these entries
-  // getOrCreateVirtualChar returns null and the panel stays empty even
-  // after the device is paired.
-  '8d8e8809-4697-41fc-8ee2-ca0b999354ec': { format: 0x08, exponent: 0, unit: 'MHz' },
-  'f19422e2-982a-4954-9a75-b38927236a59': { format: 0x06, exponent: 0, unit: 'kHz' },
-  '108b855f-11cd-4bc5-adee-eafce49bc77a': { format: 0x04, exponent: 0 },
-  '17a95752-3c12-438f-9244-4f4612a1ab49': { format: 0x04, exponent: 0 },
-  '8ef0c42e-adb6-4897-b9c9-6fe93143faf4': { format: 0x0C, exponent: 0, unit: 'dBm' },
-  '9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba': { format: 0x04, exponent: 0 },
+  // FANET radio (fbfanet, fbfanetvario). Types match struct fb_settings
+  // in FbFANET/src/settings/settings.h. On a real connected device the
+  // firmware's actual CPF descriptor is spliced onto the virtual char,
+  // so these fallbacks only matter offline.
+  '8d8e8809-4697-41fc-8ee2-ca0b999354ec': { format: 0x08, exponent: 0, unit: 'Hz' }, // uint32, frequency
+  'f19422e2-982a-4954-9a75-b38927236a59': { format: 0x0C, exponent: 0 }, // int8, bandwidth enum 0-3
+  '108b855f-11cd-4bc5-adee-eafce49bc77a': { format: 0x0C, exponent: 0 }, // int8, datarate (SF) 6-12
+  '17a95752-3c12-438f-9244-4f4612a1ab49': { format: 0x0C, exponent: 0 }, // int8, coding rate 1-4
+  '8ef0c42e-adb6-4897-b9c9-6fe93143faf4': { format: 0x0C, exponent: 0, unit: 'dBm' }, // int8, tx_power
+  '9d9a9cd9-65ed-4d73-91ad-20cfdb5dbbba': { format: 0x0C, exponent: 0 }, // int8, fanet_uart_protocol enum
 
-  // TAS (fbtas).
+  // TAS (fbtas). k_factor stored as int16 *1000 (firmware 1050 = 1.05).
   '904baf04-5814-11ee-8c99-0242ac120201': { format: 0x0E, exponent: -3 },
   '904baf04-5814-11ee-8c99-0242ac120202': { format: 0x0E, exponent: 0, unit: 'Pa' },
 }

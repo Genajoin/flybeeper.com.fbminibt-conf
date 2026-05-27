@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const cpfChars = useCpfGroup('behaviour')
 
-// Per-UUID label, fallback to i18n sett.<uuid>.
-function labelFor(uuid: string): string {
-  const k = `sett.${uuid}`
-  const fb = t(k)
-  return fb === k ? uuid : fb
+/**
+ * Label resolution order:
+ *   1. `sett.<uuid>` i18n key (curated translation).
+ *   2. BLE User Format Descriptor (0x2901) — firmware-provided name.
+ *   3. UUID as last resort.
+ */
+function labelFor(ch: BleCharacteristic): string {
+  const k = `sett.${ch.characteristic.uuid}`
+  if (te(k))
+    return t(k)
+  return ch.userFormatDescriptor || ch.characteristic.uuid
 }
 
 const list = computed(() => cpfChars.value)
@@ -18,10 +25,10 @@ const list = computed(() => cpfChars.value)
   <SettingsPanel group="behaviour" :cpf-chars="cpfChars">
     <ul v-if="list.length" class="b-list">
       <li v-for="ch in list" :key="ch.characteristic.uuid" class="b-row">
-        <span class="b-row__label">{{ labelFor(ch.characteristic.uuid) }}</span>
+        <span class="b-row__label">{{ labelFor(ch) }}</span>
         <CkSquareToggle
           :model-value="Boolean(ch.formattedValue)"
-          :aria-label="labelFor(ch.characteristic.uuid)"
+          :aria-label="labelFor(ch)"
           @update:model-value="ch.formattedValue = $event"
         />
       </li>
