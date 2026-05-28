@@ -108,16 +108,18 @@ const bt = useBluetoothStore()
   background: var(--ck-bg-deep);
 }
 
-/* Button reset so the back-button visually matches the RouterLink and
- * static span variants of .page-head__crumb. */
+/* Button-only resets so the back-button matches the RouterLink and
+ * span variants of .page-head__crumb. font-family / size / weight /
+ * letter-spacing / text-transform are intentionally NOT touched here —
+ * they're inherited from .page-head__crumb. Do NOT add `font: inherit`,
+ * it's a short-hand that nukes all font-* and lets the UA button font
+ * through. */
 .page-head__crumb--btn {
   background: none;
   border: none;
   border-right: var(--ck-stroke-rule) solid var(--ck-ink);
   cursor: pointer;
-  font: inherit;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
+  color: inherit;
 }
 
 .page-head__spacer {
