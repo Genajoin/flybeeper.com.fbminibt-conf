@@ -18,9 +18,7 @@ const { t } = useI18n()
 const { source } = useAudioSource()
 const synth = useToneSynth()
 const sim = useSimulation()
-const route = useRoute()
 
-const CPF_BUZZER_VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
 const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
 const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
 const CPF_SMOOTH_FREQ_UUID = 'e88b07e7-9035-4afa-9fe8-206ddc34de61'
@@ -43,13 +41,6 @@ function readBoolChar(uuid: string): boolean {
   return typeof local === 'boolean' ? local : false
 }
 
-// Device buzzer_volume — only relevant when the audio source is "device":
-// the simulator routes the slider to the GATT simulate characteristic and
-// the firmware plays the buzzer. If volume is 0, nothing will be audible
-// regardless of how vigorously the user drags. Warn so they don't sit there
-// thinking the simulator is broken.
-const deviceBuzzerVolume = computed<number | null>(() => readNumChar(CPF_BUZZER_VOLUME_UUID))
-
 // climb-on / sink-on are the start-of-tone thresholds. The buzzer (and the
 // browser preview) stays silent between these two values. Values are
 // presented in m/s after the CPF exponent has been applied, so we convert
@@ -67,16 +58,6 @@ const sinkOnCmS = computed<number>(() => {
 // freq/cycle/duty for the duration of each cycle and only step at the cycle
 // boundary so the user can hear the discrete jumps.
 const smoothFrequencyChange = computed<boolean>(() => readBoolChar(CPF_SMOOTH_FREQ_UUID))
-
-const showSilentDeviceWarning = computed(() =>
-  bt.isConnected
-  && source.value === 'device'
-  && deviceBuzzerVolume.value === 0
-  // The /settings/audio page already exposes the volume picker right next
-  // to the simulator — surfacing the same warning twice on that route is
-  // noise.
-  && route.path !== '/settings/audio',
-)
 
 const SLIDER_MIN_MS = -5
 const SLIDER_MAX_MS = 10
@@ -335,12 +316,6 @@ onUnmounted(() => {
       <AudioSourceToggle />
     </div>
 
-    <RouterLink v-if="showSilentDeviceWarning" to="/settings/audio" class="ctrl__warning">
-      <span class="ctrl__warning-eyebrow">{{ t('audio.silent-device-eyebrow') }}</span>
-      <span class="ctrl__warning-body">{{ t('audio.silent-device-body') }}</span>
-      <span class="ctrl__warning-cta">{{ t('audio.silent-device-cta') }} →</span>
-    </RouterLink>
-
     <div class="ctrl__slider-block">
       <div class="ctrl__readout">
         <span class="ctrl__readout-big" :class="{ 'ctrl__readout-big--signal': sliderMs > 0 }">{{ sliderMs >= 0 ? '+' : '' }}{{ sliderMs.toFixed(sliderDecimals) }}</span>
@@ -438,44 +413,5 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 0;
   text-transform: uppercase;
-}
-
-.ctrl__warning {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  background: var(--ck-paper);
-  border: var(--ck-stroke-rule) solid var(--ck-signal);
-  text-decoration: none;
-  color: var(--ck-ink);
-  font-family: var(--ck-font-body);
-}
-
-.ctrl__warning:hover {
-  background: var(--ck-bg-deep);
-}
-
-.ctrl__warning-eyebrow {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-signal);
-  font-weight: 700;
-}
-
-.ctrl__warning-body {
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.ctrl__warning-cta {
-  font-family: var(--ck-font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-signal);
 }
 </style>

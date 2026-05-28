@@ -6,7 +6,6 @@ const bt = useBluetoothStore()
 const settings = useSettingsStore()
 const { source } = useAudioSource()
 const router = useRouter()
-const route = useRoute()
 const { t } = useI18n()
 
 // Device buzzer_volume — when the user is auditioning via the device but the
@@ -14,6 +13,11 @@ const { t } = useI18n()
 // "simulation active" banner is misleading in that case (no sound is reaching
 // the user), so we swap it for a more useful "device muted" variant that
 // links straight to the volume control. Silent variant takes priority.
+//
+// No route-based suppression: the simulator is currently only operable on
+// /settings/audio (that's where SimulatorControls lives), and stopping it
+// happens on unmount when leaving the page. Suppressing the banner there
+// would mean it never showed at all.
 const CPF_BUZZER_VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
 const deviceBuzzerVolume = computed<number | null>(() => {
   const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_BUZZER_VOLUME_UUID)
@@ -26,9 +30,6 @@ const deviceBuzzerVolume = computed<number | null>(() => {
 const silentMode = computed(() =>
   bt.isConnected && source.value === 'device' && deviceBuzzerVolume.value === 0,
 )
-// SimulatorControls already shows an inline "device muted" warning on the
-// audio page right next to the slider — top banner would double up.
-const suppressSilentBanner = computed(() => route.path === '/settings/audio')
 
 /**
  * Debounced visibility. The slider is continuous, so it spends a few ms at
@@ -109,7 +110,7 @@ const variant = computed<Variant>(() => {
   if (!show.value)
     return null
   if (silentMode.value)
-    return suppressSilentBanner.value ? null : 'silent'
+    return 'silent'
   return 'sim'
 })
 </script>
