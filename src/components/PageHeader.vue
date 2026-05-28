@@ -2,6 +2,14 @@
 withDefaults(defineProps<{
   breadcrumbLabel?: string
   breadcrumbTo?: string | object
+  /**
+   * Render the breadcrumb as a button that emits 'back' instead of a
+   * static label. Use when "back" means "step backwards through this
+   * flow" (e.g. wizard step 2 → step 1) rather than navigating to a
+   * concrete route. Ignored when breadcrumbTo is set — a route always
+   * wins.
+   */
+  breadcrumbBack?: boolean
   eyebrow?: string
   eyebrowSignal?: boolean
   title?: string
@@ -19,7 +27,10 @@ withDefaults(defineProps<{
   eyebrowSignal: true,
   rightSignal: false,
   hideUtils: false,
+  breadcrumbBack: false,
 })
+
+const emit = defineEmits<{ back: [] }>()
 
 const bt = useBluetoothStore()
 </script>
@@ -30,6 +41,9 @@ const bt = useBluetoothStore()
       <RouterLink v-if="breadcrumbTo" class="page-head__crumb" :to="breadcrumbTo">
         {{ breadcrumbLabel || '← BACK' }}
       </RouterLink>
+      <button v-else-if="breadcrumbBack" type="button" class="page-head__crumb page-head__crumb--btn" @click="emit('back')">
+        {{ breadcrumbLabel || '← BACK' }}
+      </button>
       <span v-else-if="breadcrumbLabel" class="page-head__crumb">{{ breadcrumbLabel }}</span>
       <!-- Device-info cells (model · FW · battery) shown on every header
            once a device is paired. Placed after the breadcrumb but before
@@ -92,6 +106,18 @@ const bt = useBluetoothStore()
 
 .page-head__crumb:hover {
   background: var(--ck-bg-deep);
+}
+
+/* Button reset so the back-button visually matches the RouterLink and
+ * static span variants of .page-head__crumb. */
+.page-head__crumb--btn {
+  background: none;
+  border: none;
+  border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
 }
 
 .page-head__spacer {

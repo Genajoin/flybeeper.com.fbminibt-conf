@@ -22,6 +22,19 @@ function dismissExplainer() {
     window.localStorage.setItem(WIZARD_SEEN_KEY, '1')
 }
 
+/**
+ * Step 2's ← BACK button. Re-arm the explainer so the wizard re-renders
+ * step 1, and abort any in-flight connect attempt — otherwise stepping
+ * back while the system picker is up leaves a half-pending request.
+ */
+function goBackToExplainer() {
+  if (bt.isConnecting || bt.isFetching)
+    bt.cancelConnect()
+  wizardSeen.value = false
+  if (typeof window !== 'undefined')
+    window.localStorage.removeItem(WIZARD_SEEN_KEY)
+}
+
 function connect() {
   if (bt.isConnecting || bt.isFetching) {
     bt.cancelConnect()
@@ -102,7 +115,7 @@ const isBusy = computed(() => bt.isConnecting || bt.isFetching)
 
   <!-- Step 2: power-on + connect (explainer dismissed, no saved devices) -->
   <section v-else-if="showConnect" class="wizard">
-    <PageHeader hide-utils breadcrumb-label="← BACK" right="02 / 02">
+    <PageHeader hide-utils breadcrumb-label="← BACK" breadcrumb-back right="02 / 02" @back="goBackToExplainer">
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('pair.step2-eyebrow') }}
