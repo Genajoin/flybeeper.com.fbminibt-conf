@@ -107,6 +107,10 @@ pair:
   disc-sub: Audio preview routed to Browser. Reconnect anytime.
   disc-reconnect: RECONNECT
   disc-work-offline: WORK OFFLINE
+  connect-err-eyebrow: CONNECT FAILED
+  connect-err-title: Couldn't reach the device
+  connect-err-retry: RETRY
+  connect-err-dismiss: DISMISS
   restart-eyebrow: Restart required
   restart-title: Cycle device power
   restart-sub: Some settings only take effect after a power-cycle.
@@ -378,6 +382,7 @@ audio:
   demo: ▶ Demo
   demo-stop: ■ Stop
   silent-device-eyebrow: DEVICE MUTED
+  silent-device-title: Buzzer is silent
   silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
   silent-device-cta: Open audio settings
   preset-strong-sink: -3 m/s

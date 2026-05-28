@@ -38,11 +38,11 @@ const hasUart = computed(() => presentGroups.value.has('uart'))
 // Coordinates target the 240×240 viewBox in DeviceTopdown — button centres
 // sit at (66,66) / (174,66) / (66,174) / (174,174); LED is dead-center.
 const hotspots = computed<Hotspot[]>(() => [
-  { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: 'LED · behaviour' },
-  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 1' },
-  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 2' },
-  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 3' },
-  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 4' },
+  { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: t('dashboard.hub-behaviour') },
+  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/power', label: t('dashboard.hub-power') },
+  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/audio', label: t('dashboard.hub-sound') },
+  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: t('dashboard.hub-behaviour') },
+  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/audio', label: t('dashboard.hub-sound') },
 ])
 
 function onJump(h: Hotspot) {
@@ -54,17 +54,10 @@ const ledOn = computed(() => bt.isConnected)
 const fwLabel = computed(() => bt.dis.firmwareRevisionString.value ?? '—')
 const isOffline = computed(() => !bt.isConnected)
 
-// Banner state priority: connect-error → connecting/fetching progress → demo.
+// Banner state priority: connecting/fetching progress → demo. Connect
+// errors are surfaced by the global ConnectErrorBanner in the layout, so
+// no inline branch for bt.errorMessage here — would just double-fire.
 const banner = computed(() => {
-  if (bt.errorMessage) {
-    return {
-      accent: 'var(--ck-signal)',
-      eyebrow: t('dashboard.connect-error-eyebrow'),
-      title: t('dashboard.connect-error-title'),
-      sub: bt.errorMessage,
-      loading: false,
-    }
-  }
   if (bt.isConnecting) {
     return {
       accent: 'var(--ck-signal)',

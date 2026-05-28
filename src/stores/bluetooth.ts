@@ -169,7 +169,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
-        this.hasConnectedThisSession = true
 
         // Eager-initialize every FlyBeeper Settings Service characteristic so
         // panels render without lazy per-visit reads. Await the batch before
@@ -188,6 +187,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           return
         this.isFetching = false
         this.isConnected = true
+        // After isConnected, so DisconnectBanner's `hasConnectedThisSession
+        // && !isConnected` predicate cannot be true while the FSS fetch is
+        // still in flight — otherwise the banner pops on a successful
+        // connect during the (multi-second) initial CPF batch.
+        this.hasConnectedThisSession = true
 
         // Build a snapshot of what the device currently has and hand it to
         // the settings store. applyDeviceSnapshot writes it into
@@ -312,13 +316,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       catch { /* device already gone */ }
 
       // Best-effort unsubscribe so the BleCharacteristicImpl notification
-      // callbacks don't fire against a torn-down GATT.
-      for (const ch of this.bleCharacteristics) {
-        try {
-          ch.unsubscribeFromNotifications()
-        }
-        catch { /* characteristic already invalid */ }
-      }
+      // callbacks don't fire against a torn-down GATT. The call is async —
+      // wrap each invocation in .catch() so a rejected promise doesn't
+      // escape (the try/catch around the synchronous call site is useless
+      // for that). The implementation already guards against a torn-down
+      // GATT, this is the belt to its braces.
+      for (const ch of this.bleCharacteristics)
+        ch.unsubscribeFromNotifications().catch(() => { /* link gone */ })
 
       this.isConnected = false
       this.isDisconnecting = false

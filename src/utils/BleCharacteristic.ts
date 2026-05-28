@@ -89,7 +89,19 @@ export class BleCharacteristicImpl implements BleCharacteristic {
 
     this.isNotified = false
     log.debug('stop notify', this.characteristic.uuid)
-    await this.characteristic.stopNotifications()
+    // When called from the gattserverdisconnected handler the link is
+    // already torn down; stopNotifications() then throws a NetworkError
+    // that's just noise. Bail out cleanly if the GATT server is gone.
+    if (!this.characteristic.service.device.gatt?.connected)
+      return
+    try {
+      await this.characteristic.stopNotifications()
+    }
+    catch (err) {
+      // Race: link dropped between the guard above and the call. Swallow —
+      // notifications are dead with the link anyway.
+      log.debug('stopNotifications swallowed', err)
+    }
   }
 
   // Метод для добавления подписчика

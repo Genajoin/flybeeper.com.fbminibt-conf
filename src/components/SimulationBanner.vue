@@ -1,9 +1,35 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 const { isActive, valueMs, stop } = useSimulation()
 const bt = useBluetoothStore()
+const settings = useSettingsStore()
+const { source } = useAudioSource()
+const router = useRouter()
 const { t } = useI18n()
+
+// Device buzzer_volume — when the user is auditioning via the device but the
+// firmware buzzer is muted, the slider produces nothing audible. The
+// "simulation active" banner is misleading in that case (no sound is reaching
+// the user), so we swap it for a more useful "device muted" variant that
+// links straight to the volume control. Silent variant takes priority.
+//
+// No route-based suppression: the simulator is currently only operable on
+// /settings/audio (that's where SimulatorControls lives), and stopping it
+// happens on unmount when leaving the page. Suppressing the banner there
+// would mean it never showed at all.
+const CPF_BUZZER_VOLUME_UUID = '67f82d94-2b2a-4123-81c9-058e460c3d01'
+const deviceBuzzerVolume = computed<number | null>(() => {
+  const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_BUZZER_VOLUME_UUID)
+  const v = ch?.formattedValue
+  if (typeof v === 'number')
+    return v
+  const local = settings.local?.[CPF_BUZZER_VOLUME_UUID]
+  return typeof local === 'number' ? local : null
+})
+const silentMode = computed(() =>
+  bt.isConnected && source.value === 'device' && deviceBuzzerVolume.value === 0,
+)
 
 /**
  * Debounced visibility. The slider is continuous, so it spends a few ms at
@@ -71,12 +97,45 @@ function onStop() {
   clearHide()
   show.value = false
 }
+
+function openAudioSettings() {
+  void router.push('/settings/audio')
+}
+
+// Which variant to actually render. Silent variant has priority over the
+// standard "sim active" message — if the device is muted, "vario simulation
+// active" is technically true but practically useless to the user.
+type Variant = 'silent' | 'sim' | null
+const variant = computed<Variant>(() => {
+  if (!show.value)
+    return null
+  if (silentMode.value)
+    return 'silent'
+  return 'sim'
+})
 </script>
 
 <template>
   <Transition name="sim">
     <CkBannerRow
-      v-if="show"
+      v-if="variant === 'silent'"
+      class="sim"
+      accent="var(--ck-ink)"
+      :eyebrow="t('audio.silent-device-eyebrow')"
+      :title="t('audio.silent-device-title')"
+      :sub="t('audio.silent-device-body')"
+    >
+      <template #actions>
+        <button class="btn-primary--ink" type="button" @click="openAudioSettings">
+          {{ t('audio.silent-device-cta') }}
+        </button>
+        <button type="button" @click="onStop">
+          {{ t('pair.sim-stop') }}
+        </button>
+      </template>
+    </CkBannerRow>
+    <CkBannerRow
+      v-else-if="variant === 'sim'"
       class="sim"
       accent="var(--ck-signal)"
       :eyebrow="t('pair.sim-eyebrow')"

@@ -23,15 +23,8 @@ const connectLabel = computed(() => {
 })
 
 const banner = computed(() => {
-  if (bt.errorMessage) {
-    return {
-      accent: 'var(--ck-signal)',
-      eyebrow: t('dashboard.connect-error-eyebrow'),
-      title: t('dashboard.connect-error-title'),
-      sub: bt.errorMessage,
-      loading: false,
-    }
-  }
+  // Connect-error branch lives in the global ConnectErrorBanner now —
+  // don't double-fire it inline here.
   if (bt.isConnecting) {
     return {
       accent: 'var(--ck-signal)',

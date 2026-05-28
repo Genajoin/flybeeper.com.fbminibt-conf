@@ -85,6 +85,10 @@ pair:
   disc-sub: Audio-Vorschau läuft im Browser. Jederzeit erneut verbinden.
   disc-reconnect: NEU VERBINDEN
   disc-work-offline: OFFLINE ARBEITEN
+  connect-err-eyebrow: VERBINDUNG FEHLGESCHLAGEN
+  connect-err-title: Gerät nicht erreichbar
+  connect-err-retry: ERNEUT
+  connect-err-dismiss: SCHLIESSEN
   restart-eyebrow: Neustart nötig
   restart-title: Gerät neu starten
   restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
@@ -287,6 +291,7 @@ audio:
   demo: ▶ Demo
   demo-stop: ■ Stopp
   silent-device-eyebrow: GERÄT STUMM
+  silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
   silent-device-cta: Audio-Einstellungen öffnen
   preset-strong-sink: −3 m/s

@@ -89,6 +89,34 @@ const bt = useBluetoothStore()
   align-items: stretch;
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);
+  position: relative;
+}
+
+/* Border-top on every direct child gives the wrapped second row a
+ * horizontal divider against the first. The spacer participates so the
+ * line continues through the empty gap. :deep(*) is required because
+ * several flex children come from other components (DeviceInfoStrip
+ * cells via fragment, ConnectionPill via slot) — scoped CSS without
+ * :deep would only target elements rendered in PageHeader's own scope,
+ * leaving those cells without the divider. */
+.page-head__strip > :deep(*) {
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+/* The trick above would also draw a stray border across the strip's
+ * very top (row 1 children's top borders) — we don't want a top frame
+ * because .page-head has none. Cover just that 1-pixel top edge with a
+ * paper-coloured strip; the row 1 / row 2 divider lives at y = row1
+ * height, far below this cover, so the divider stays visible. */
+.page-head__strip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--ck-stroke-rule);
+  background: var(--ck-paper);
+  pointer-events: none;
 }
 
 .page-head__crumb {

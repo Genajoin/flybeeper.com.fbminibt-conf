@@ -107,6 +107,10 @@ pair:
   disc-sub: Звук переключён на браузер. Подключитесь, когда будете готовы.
   disc-reconnect: ПЕРЕПОДКЛЮЧИТЬ
   disc-work-offline: РАБОТАТЬ ОФФЛАЙН
+  connect-err-eyebrow: ОШИБКА ПОДКЛЮЧЕНИЯ
+  connect-err-title: Не удалось подключиться к устройству
+  connect-err-retry: ПОВТОРИТЬ
+  connect-err-dismiss: ЗАКРЫТЬ
   restart-eyebrow: Нужен перезапуск
   restart-title: Перезагрузите устройство
   restart-sub: Часть настроек применяется только после полной перезагрузки.
@@ -376,6 +380,7 @@ audio:
   demo: ▶ Демо
   demo-stop: ■ Стоп
   silent-device-eyebrow: ЗВУК УСТРОЙСТВА ВЫКЛЮЧЕН
+  silent-device-title: Зумер молчит
   silent-device-body: Громкость зумера на устройстве выставлена в 0 — симулятор играть не будет, пока не увеличите её.
   silent-device-cta: Открыть настройки звука
   preset-strong-sink: −3 м/с
