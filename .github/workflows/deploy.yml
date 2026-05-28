@@ -1,0 +1,60 @@
+# Cloudflare Pages production deploy.
+#
+# Triggered on every push to main (typically a PR merge) and via manual
+# workflow_dispatch from the Actions tab. Pushes from PR branches are NOT
+# auto-deployed — those are intentionally manual via `wrangler pages
+# deploy --branch=<branch>` until we decide to spend CI minutes on every PR.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — token with the "Cloudflare Pages: Edit" permission
+#                           on the account. Create at
+#                           https://dash.cloudflare.com/profile/api-tokens
+#                           using the "Edit Cloudflare Workers" / custom
+#                           Pages template.
+#   CLOUDFLARE_ACCOUNT_ID — the account ID (visible on the dashboard
+#                           sidebar). For this project: cbecbed5520c9e2f45c8fe08246ca8a0
+#
+# Concurrency: only one production deploy at a time, latest wins.
+
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm (version pinned via package.json "packageManager")
+        uses: pnpm/action-setup@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=flybeeper-config --branch=main --commit-hash=${{ github.sha }}
