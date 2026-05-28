@@ -39,10 +39,10 @@ const hasUart = computed(() => presentGroups.value.has('uart'))
 // sit at (66,66) / (174,66) / (66,174) / (174,174); LED is dead-center.
 const hotspots = computed<Hotspot[]>(() => [
   { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: 'LED · behaviour' },
-  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 1' },
-  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/behaviour', label: 'Button 2' },
-  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 3' },
-  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 4' },
+  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/power', label: 'Button 1 · power' },
+  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/audio', label: 'Button 2 · audio' },
+  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 3 · behaviour' },
+  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/audio', label: 'Button 4 · audio' },
 ])
 
 function onJump(h: Hotspot) {
