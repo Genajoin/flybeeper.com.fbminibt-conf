@@ -55,6 +55,8 @@ pair:
   step2-title-line2: Then connect.
   step2-sub: Chromium opens the system chooser. Pick anything starting with FB-.
   step2-cta: ⚡ Connect via Bluetooth
+  connecting-label: Connecting
+  cancel: Cancel
   step2-meta-left: navigator.bluetooth · prefix FB
   step2-meta-right: HTTPS
   saved-eyebrow: Devices · paired

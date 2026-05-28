@@ -22,6 +22,19 @@ function dismissExplainer() {
     window.localStorage.setItem(WIZARD_SEEN_KEY, '1')
 }
 
+/**
+ * Step 2's ← BACK button. Re-arm the explainer so the wizard re-renders
+ * step 1, and abort any in-flight connect attempt — otherwise stepping
+ * back while the system picker is up leaves a half-pending request.
+ */
+function goBackToExplainer() {
+  if (bt.isConnecting || bt.isFetching)
+    bt.cancelConnect()
+  wizardSeen.value = false
+  if (typeof window !== 'undefined')
+    window.localStorage.removeItem(WIZARD_SEEN_KEY)
+}
+
 function connect() {
   if (bt.isConnecting || bt.isFetching) {
     bt.cancelConnect()
@@ -39,11 +52,7 @@ const bullets = computed(() => [
   { t: t('pair.explainer-bullet-4-title'), d: t('pair.explainer-bullet-4-desc') },
 ])
 
-const step2CtaLabel = computed(() => {
-  if (bt.isConnecting || bt.isFetching)
-    return t('dashboard.cancel-cta')
-  return t('pair.step2-cta')
-})
+const isBusy = computed(() => bt.isConnecting || bt.isFetching)
 </script>
 
 <template>
@@ -106,7 +115,7 @@ const step2CtaLabel = computed(() => {
 
   <!-- Step 2: power-on + connect (explainer dismissed, no saved devices) -->
   <section v-else-if="showConnect" class="wizard">
-    <PageHeader hide-utils breadcrumb-label="← BACK" right="02 / 02">
+    <PageHeader hide-utils breadcrumb-label="← BACK" breadcrumb-back right="02 / 02" @back="goBackToExplainer">
       <template #body>
         <CkEyebrow color="var(--ck-signal)" block>
           {{ t('pair.step2-eyebrow') }}
@@ -128,8 +137,16 @@ const step2CtaLabel = computed(() => {
     </div>
 
     <div class="wizard__cta-row">
-      <CkCTA kind="signal" @click="connect">
-        <span>{{ step2CtaLabel }}</span><CkDots v-if="bt.isConnecting || bt.isFetching" />
+      <template v-if="isBusy">
+        <div class="wizard__busy" aria-live="polite">
+          <span>{{ t('pair.connecting-label') }}</span><CkDots />
+        </div>
+        <CkCTA kind="ghost" @click="connect">
+          {{ t('pair.cancel') }}
+        </CkCTA>
+      </template>
+      <CkCTA v-else kind="signal" @click="connect">
+        {{ t('pair.step2-cta') }}
       </CkCTA>
       <div class="wizard__meta">
         <span>{{ t('pair.step2-meta-left') }}</span>
@@ -301,6 +318,23 @@ const step2CtaLabel = computed(() => {
 
 .wizard__cta-row--explainer {
   align-items: center;
+}
+
+/* Active connect attempt: status line up top with animated dots so it's
+ * obviously a progress indicator, plain Cancel CTA beneath. Replaces the
+ * earlier "CANCEL · · ·" single button that confusingly conflated the
+ * action label with the loading animation. */
+.wizard__busy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  align-self: center;
+  font-family: var(--ck-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  color: var(--ck-signal);
 }
 
 .wizard__skip {

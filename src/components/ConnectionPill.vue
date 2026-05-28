@@ -77,12 +77,16 @@ function onClick() {
   opacity: 0.5;
 }
 
-.pill--off,
+/* ONLINE state is the one we want to call attention to — orange so the
+ * user sees at a glance that the device is live. OFFLINE is the resting
+ * state, so it stays in the regular ink colour and doesn't compete with
+ * other UI. Busy stays orange while the connection attempt is in flight. */
+.pill--on,
 .pill--busy {
   color: var(--ck-signal);
 }
 
-.pill--on {
+.pill--off {
   color: var(--ck-ink);
 }
 </style>
