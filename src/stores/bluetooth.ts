@@ -19,23 +19,23 @@ interface iDIS {
 
 export const useBluetoothStore = defineStore('bluetoothStore', {
   state: () => ({
-    bleAvailable: 'bluetooth' in navigator,
     /**
-     * Why Web Bluetooth is not available. Distinct cases drive distinct UI:
-     *   - 'insecure': page loaded over plain HTTP (and not localhost) — the
-     *     browser hides navigator.bluetooth on purpose. Fix: switch to
-     *     HTTPS / localhost. Affects e.g. Chrome on a LAN IP over HTTP.
-     *   - 'browser':  the browser itself has no Web Bluetooth (iOS Safari,
-     *     desktop Firefox). Fix: use Chrome/Edge, or Bluefy on iOS.
-     *   - null:       Web Bluetooth IS available (bleAvailable === true).
+     * SSR-safe defaults: assume Web Bluetooth is unavailable. The state
+     * factory must NOT touch globals like `navigator` here — `navigator`
+     * is undefined under Node < 21, so `'bluetooth' in navigator` throws
+     * a ReferenceError at vite-ssg prerender time. A throw out of the
+     * factory leaves the store with partial/empty state — `bt.dis`
+     * becomes undefined and any computed that reads it (e.g.
+     * pages/settings.vue's `needsFirmwareUpdate`) crashes the SSR pass.
+     *
+     * The real detection runs client-side in `detectBleAvailability()`
+     * (called from `modules/pinia.ts` right after pinia hydrates from
+     * the SSR snapshot), where the live navigator + window.isSecureContext
+     * are both available. See the action below for what 'insecure' /
+     * 'browser' / null mean.
      */
-    bleUnavailableReason: (
-      'bluetooth' in navigator
-        ? null
-        : typeof window !== 'undefined' && window.isSecureContext === false
-          ? 'insecure'
-          : 'browser'
-    ) as 'insecure' | 'browser' | null,
+    bleAvailable: false,
+    bleUnavailableReason: 'browser' as 'insecure' | 'browser' | null,
     device: null as BluetoothDevice,
     isConnected: false,
     isConnecting: false,
