@@ -2,6 +2,7 @@ import { createPinia } from 'pinia'
 import type { UserModule } from '~/types'
 import { useSettingsStore } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
+import { useBluetoothStore } from '~/stores/bluetooth'
 
 // Setup Pinia + local-first settings hydration.
 // https://pinia.vuejs.org/
@@ -18,6 +19,11 @@ export const install: UserModule = async ({ isClient, initialState, app }) => {
 
   if (!isClient)
     return
+
+  // Re-detect Web Bluetooth against the real navigator. The SSR snapshot
+  // we just restored always says bleAvailable=false / reason='browser'
+  // because the prerender has no navigator / window.
+  useBluetoothStore(pinia).detectBleAvailability()
 
   // Hydrate the local-first settings store from IndexedDB before the first
   // route renders, then auto-persist on every mutation (debounced to coalesce

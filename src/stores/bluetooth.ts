@@ -79,6 +79,27 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
   }),
   actions: {
+    /**
+     * Re-evaluate Web Bluetooth availability against the live `navigator`
+     * and `window`. Required because vite-ssg prerenders every route with
+     * no `navigator` / `window` — the SSR snapshot therefore always says
+     * `bleAvailable: false, bleUnavailableReason: 'browser'`, and pinia
+     * restores that snapshot on the client before the state factory ever
+     * runs against the real browser. Call this exactly once at app boot
+     * (right after pinia state hydration) so PairingWizard branches on the
+     * actual capabilities of the user's browser.
+     */
+    detectBleAvailability() {
+      if (typeof navigator === 'undefined')
+        return
+      this.bleAvailable = 'bluetooth' in navigator
+      this.bleUnavailableReason = this.bleAvailable
+        ? null
+        : typeof window !== 'undefined' && window.isSecureContext === false
+          ? 'insecure'
+          : 'browser'
+    },
+
     async toggleConnectionBT() {
       if (this.isConnected && !this.isDisconnecting)
         await this.disconnectDevice()
