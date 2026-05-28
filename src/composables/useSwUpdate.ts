@@ -1,15 +1,25 @@
 import { type Ref, ref } from 'vue'
 
 /**
- * Service-worker update signal. Backed by virtual:pwa-register/vue when
- * available (browser); during SSR it falls back to inert refs.
+ * Service-worker update signal. Single source of truth around
+ * `useRegisterSW` from `virtual:pwa-register/vue` — call sites get a stable
+ * `needRefresh` ref and an `updateSW()` action that activates the waiting
+ * worker (skipWaiting → controllerchange → reload).
  *
- * `needRefresh` flips true when the worker has installed a new build.
- * `updateSW()` activates it (skipWaiting → reload).
+ * History: there used to be a second `registerSW({ immediate: true })` call
+ * in a separate pwa module. Both created their own workbox-window instance
+ * against the same SW URL — the browser dedups the registration, but each
+ * Workbox instance has its own `_waiting` state populated only by the
+ * `waiting` event it personally caught. The first instance grabbed the
+ * event; the second one (the composable's) ended up with a null waiting
+ * worker, so its `updateServiceWorker(true)` silently no-op'd. That's why
+ * the banner's UPDATE button did nothing. The pwa module is now gone —
+ * registration lives only here, called from UpdateBanner's setup, which is
+ * mounted in every layout so the SW still registers on first paint.
  */
 export interface SwUpdate {
   needRefresh: Ref<boolean>
-  updateSW: () => void
+  updateSW: (reload?: boolean) => void
 }
 
 let cached: SwUpdate | null = null
@@ -21,30 +31,31 @@ export function useSwUpdate(): SwUpdate {
     cached = { needRefresh: ref(false), updateSW: () => {} }
     return cached
   }
-  // Lazily import — virtual module only exists in client build.
+
   const needRefresh = ref(false)
-  let updateFn: (reload?: boolean) => void = () => {}
-  import('virtual:pwa-register/vue')
+  let doUpdate: (reload?: boolean) => Promise<void> = async () => {}
+
+  void import('virtual:pwa-register/vue')
     .then(({ useRegisterSW }) => {
-      const reg = useRegisterSW({ immediate: true })
-      // useRegisterSW returns a refs object; wire ours to it.
-      const wr = reg.needRefresh as Ref<boolean>
-      const wu = reg.updateServiceWorker as (reload?: boolean) => Promise<void>
-      // Sync flag once mounted.
-      const unwatch = () => {}
-      const sync = () => {
-        needRefresh.value = !!wr.value
-      }
-      sync()
-      // Watch reactive flag — keep it simple.
-      const id = setInterval(sync, 1500)
-      updateFn = () => {
-        clearInterval(id)
-        unwatch()
-        wu(true)
-      }
+      const reg = useRegisterSW({
+        immediate: true,
+        onNeedRefresh() {
+          needRefresh.value = true
+        },
+      })
+      // Cover the race where the new SW reached `waiting` before our
+      // callback was wired (useRegisterSW already exposes the ref).
+      if (reg.needRefresh.value)
+        needRefresh.value = true
+      doUpdate = reg.updateServiceWorker
     })
     .catch(() => {})
-  cached = { needRefresh, updateSW: () => updateFn(true) }
+
+  cached = {
+    needRefresh,
+    updateSW: (reload = true) => {
+      void doUpdate(reload)
+    },
+  }
   return cached
 }
