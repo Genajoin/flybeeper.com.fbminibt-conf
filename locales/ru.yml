@@ -55,6 +55,8 @@ pair:
   step2-title-line2: Подключайтесь.
   step2-sub: Chromium откроет системный селектор. Выберите устройство, имя которого начинается с FB-.
   step2-cta: ⚡ Подключиться по Bluetooth
+  connecting-label: Соединение
+  cancel: Отмена
   step2-meta-left: navigator.bluetooth · префикс FB
   step2-meta-right: HTTPS
   saved-eyebrow: Устройства · в памяти

@@ -56,6 +56,8 @@ pair:
   step2-title-line2: Verbinden.
   step2-sub: Chromium öffnet den System-Auswahldialog. Wähle ein Gerät mit dem Präfix FB-.
   step2-cta: ⚡ Per Bluetooth verbinden
+  connecting-label: Verbinde
+  cancel: Abbrechen
   step2-meta-left: navigator.bluetooth · Präfix FB
   step2-meta-right: HTTPS
   saved-eyebrow: Geräte · gepaart
