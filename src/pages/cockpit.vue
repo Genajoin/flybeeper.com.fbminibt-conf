@@ -38,11 +38,11 @@ const hasUart = computed(() => presentGroups.value.has('uart'))
 // Coordinates target the 240×240 viewBox in DeviceTopdown — button centres
 // sit at (66,66) / (174,66) / (66,174) / (174,174); LED is dead-center.
 const hotspots = computed<Hotspot[]>(() => [
-  { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: 'LED · behaviour' },
-  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/power', label: 'Button 1 · power' },
-  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/audio', label: 'Button 2 · audio' },
-  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: 'Button 3 · behaviour' },
-  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/audio', label: 'Button 4 · audio' },
+  { id: 'led', x: 120, y: 120, r: 18, route: '/settings/behaviour', label: t('dashboard.hub-behaviour') },
+  { id: 'btn-1', x: 66, y: 66, r: 44, route: '/settings/power', label: t('dashboard.hub-power') },
+  { id: 'btn-2', x: 174, y: 66, r: 44, route: '/settings/audio', label: t('dashboard.hub-sound') },
+  { id: 'btn-3', x: 66, y: 174, r: 44, route: '/settings/behaviour', label: t('dashboard.hub-behaviour') },
+  { id: 'btn-4', x: 174, y: 174, r: 44, route: '/settings/audio', label: t('dashboard.hub-sound') },
 ])
 
 function onJump(h: Hotspot) {
