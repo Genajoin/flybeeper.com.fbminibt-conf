@@ -4,6 +4,7 @@
 <template>
   <UpdateBanner />
   <BluefyBanner />
+  <ConnectErrorBanner />
   <DisconnectBanner />
   <RestartDeviceBanner />
   <SimulationBanner />

@@ -32,6 +32,7 @@ function pathFor(lang: 'en' | 'ru' | 'de') {
 <template>
   <UpdateBanner />
   <BluefyBanner />
+  <ConnectErrorBanner />
   <DisconnectBanner />
   <RestartDeviceBanner />
   <SimulationBanner />

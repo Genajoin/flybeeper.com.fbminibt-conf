@@ -54,17 +54,10 @@ const ledOn = computed(() => bt.isConnected)
 const fwLabel = computed(() => bt.dis.firmwareRevisionString.value ?? '—')
 const isOffline = computed(() => !bt.isConnected)
 
-// Banner state priority: connect-error → connecting/fetching progress → demo.
+// Banner state priority: connecting/fetching progress → demo. Connect
+// errors are surfaced by the global ConnectErrorBanner in the layout, so
+// no inline branch for bt.errorMessage here — would just double-fire.
 const banner = computed(() => {
-  if (bt.errorMessage) {
-    return {
-      accent: 'var(--ck-signal)',
-      eyebrow: t('dashboard.connect-error-eyebrow'),
-      title: t('dashboard.connect-error-title'),
-      sub: bt.errorMessage,
-      loading: false,
-    }
-  }
   if (bt.isConnecting) {
     return {
       accent: 'var(--ck-signal)',

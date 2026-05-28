@@ -107,6 +107,10 @@ pair:
   disc-sub: Звук переключён на браузер. Подключитесь, когда будете готовы.
   disc-reconnect: ПЕРЕПОДКЛЮЧИТЬ
   disc-work-offline: РАБОТАТЬ ОФФЛАЙН
+  connect-err-eyebrow: ОШИБКА ПОДКЛЮЧЕНИЯ
+  connect-err-title: Не удалось подключиться к устройству
+  connect-err-retry: ПОВТОРИТЬ
+  connect-err-dismiss: ЗАКРЫТЬ
   restart-eyebrow: Нужен перезапуск
   restart-title: Перезагрузите устройство
   restart-sub: Часть настроек применяется только после полной перезагрузки.

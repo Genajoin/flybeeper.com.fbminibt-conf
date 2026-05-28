@@ -85,6 +85,10 @@ pair:
   disc-sub: Audio-Vorschau läuft im Browser. Jederzeit erneut verbinden.
   disc-reconnect: NEU VERBINDEN
   disc-work-offline: OFFLINE ARBEITEN
+  connect-err-eyebrow: VERBINDUNG FEHLGESCHLAGEN
+  connect-err-title: Gerät nicht erreichbar
+  connect-err-retry: ERNEUT
+  connect-err-dismiss: SCHLIESSEN
   restart-eyebrow: Neustart nötig
   restart-title: Gerät neu starten
   restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
