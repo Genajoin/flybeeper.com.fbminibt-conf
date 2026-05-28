@@ -492,6 +492,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
     <svg
       ref="svgRef"
       class="editor__svg"
+      :class="{ 'editor__svg--pannable': zoomLevel > 1 }"
       :viewBox="`0 0 ${VB_W} ${VB_H}`"
       preserveAspectRatio="xMidYMid meet"
       @pointerdown="onSvgPointerDown"
@@ -824,7 +825,10 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
   border: var(--ck-stroke-rule) solid var(--ck-grid);
   border-radius: var(--ck-radius-soft);
   touch-action: none;
-  cursor: grab;
+  /* No grab cursor at 1× — at that zoom there is nothing to pan, the only
+     interactive bits are the handles / threshold knobs, which set their own
+     cursor on :hover. At >1× the SVG becomes pannable and the grab cursor
+     applies via the .editor__svg--pannable modifier. */
   display: block;
 }
 
@@ -852,7 +856,11 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.editor__svg:active {
+.editor__svg--pannable {
+  cursor: grab;
+}
+
+.editor__svg--pannable:active {
   cursor: grabbing;
 }
 
@@ -895,10 +903,25 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
 
 .editor__handle {
   cursor: grab;
+  transition: filter 90ms ease-out;
 }
 
-.editor__handle--dragging {
+.editor__handle:hover {
+  /* Subtle ink-coloured halo on hover so the user can see which point is
+     about to grab BEFORE they press. */
+  filter: drop-shadow(0 0 2.5px var(--ck-ink));
+}
+
+.editor__handle:active {
+  cursor: grabbing;
+}
+
+.editor__handle--dragging,
+.editor__handle--dragging:hover {
+  /* Drag state overrides the hover halo with a stronger signal-coloured
+     glow — listed after :hover so it wins on the dragged handle. */
   filter: drop-shadow(0 0 4px var(--ck-signal));
+  cursor: grabbing;
 }
 
 .editor__threshold-knob {
