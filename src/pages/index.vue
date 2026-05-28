@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 defineOptions({
   name: 'IndexPage',
 })
 
 const bt = useBluetoothStore()
 const { t } = useI18n()
+const router = useRouter()
+
+// Watcher lives here, not in PairingWizard: this page renders the wizard
+// only while !bt.isConnected, so the wizard would unmount on the same
+// flush that isConnected flips true — its own watcher would be torn down
+// before it could fire. Pilots want to land in the cockpit immediately
+// after pairing (live vario + simulator are there).
+watch(() => bt.isConnected, (now, prev) => {
+  if (now && !prev)
+    router.push('/cockpit')
+})
 </script>
 
 <template>

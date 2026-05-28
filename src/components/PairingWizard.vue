@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-
 const bt = useBluetoothStore()
 const saved = useSavedDevicesStore()
 const { t } = useI18n()
-const router = useRouter()
 
 const WIZARD_SEEN_KEY = 'fb:wizard-seen-v1'
 
@@ -43,16 +40,6 @@ const bullets = computed(() => [
 ])
 
 const isBusy = computed(() => bt.isConnecting || bt.isFetching)
-
-// When a connect attempt initiated from the wizard succeeds, hop the user
-// to the cockpit — that's where the live readings + simulator live, and
-// it's the first thing a pilot wants to see after pairing. Watcher only
-// fires the transition false→true, so reconnects from elsewhere don't
-// hijack navigation.
-watch(() => bt.isConnected, (now, prev) => {
-  if (now && !prev)
-    router.push('/cockpit')
-})
 </script>
 
 <template>
