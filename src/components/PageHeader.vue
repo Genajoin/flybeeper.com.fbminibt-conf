@@ -94,8 +94,12 @@ const bt = useBluetoothStore()
 
 /* Border-top on every direct child gives the wrapped second row a
  * horizontal divider against the first. The spacer participates so the
- * line continues through the empty gap. */
-.page-head__strip > * {
+ * line continues through the empty gap. :deep(*) is required because
+ * several flex children come from other components (DeviceInfoStrip
+ * cells via fragment, ConnectionPill via slot) — scoped CSS without
+ * :deep would only target elements rendered in PageHeader's own scope,
+ * leaving those cells without the divider. */
+.page-head__strip > :deep(*) {
   border-top: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
