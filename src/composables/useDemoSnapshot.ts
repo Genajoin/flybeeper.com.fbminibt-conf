@@ -23,11 +23,15 @@ export const DEMO_SETTINGS: Record<string, unknown> = {
   'e88b07e7-9035-4afa-9fe8-206ddc34de61': false, // smooth frequency change
   '7e035080-7417-4393-959a-58505ef9cf4a': 0.5, // vario averaging (s)
 
-  // ── curves (raw cm/s, format 0x1B)
-  '512d6d89-7a6f-461c-983e-902b68d40f56': [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
+  // ── curves (raw cm/s, format 0x1B) — byte-identical to firmware
+  // factory defaults (FbBT/src/buzzer.h, FbFANET/src/buzzer/buzzer.h).
+  // Must stay aligned with the DEFAULT preset in pages/settings/audio.vue
+  // so a freshly-seeded offline session lands on activePreset === 'default'
+  // instead of stranding the user on CUSTOM.
+  '512d6d89-7a6f-461c-983e-902b68d40f56': [-1400, -800, -100, 0, 39, 40, 100, 200, 300, 450, 1200, 2000],
   '8c090502-81c4-4d29-8d10-6db20607ace9': [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
-  '9c3b62c0-e227-4f1a-8342-7e647015555d': [850, 790, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
-  '98c16914-00ad-47ba-b625-148f0baaec47': [100, 98, 95, 38, 40, 41, 43, 46, 49, 54, 78, 90],
+  '9c3b62c0-e227-4f1a-8342-7e647015555d': [850, 790, 725, 350, 150, 595, 430, 325, 265, 210, 120, 100],
+  '98c16914-00ad-47ba-b625-148f0baaec47': [100, 98, 95, 20, 80, 41, 43, 46, 49, 54, 78, 90],
 
   // ── behaviour
   'daadb8a9-a566-450e-97d0-990a0c8487dd': true, // silent_on_ground
