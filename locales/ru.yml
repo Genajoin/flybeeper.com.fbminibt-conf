@@ -376,6 +376,7 @@ audio:
   demo: ▶ Демо
   demo-stop: ■ Стоп
   silent-device-eyebrow: ЗВУК УСТРОЙСТВА ВЫКЛЮЧЕН
+  silent-device-title: Зумер молчит
   silent-device-body: Громкость зумера на устройстве выставлена в 0 — симулятор играть не будет, пока не увеличите её.
   silent-device-cta: Открыть настройки звука
   preset-strong-sink: −3 м/с

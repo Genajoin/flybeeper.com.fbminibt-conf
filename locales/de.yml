@@ -287,6 +287,7 @@ audio:
   demo: ▶ Demo
   demo-stop: ■ Stopp
   silent-device-eyebrow: GERÄT STUMM
+  silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
   silent-device-cta: Audio-Einstellungen öffnen
   preset-strong-sink: −3 m/s

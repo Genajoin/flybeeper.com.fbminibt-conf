@@ -378,6 +378,7 @@ audio:
   demo: ▶ Demo
   demo-stop: ■ Stop
   silent-device-eyebrow: DEVICE MUTED
+  silent-device-title: Buzzer is silent
   silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
   silent-device-cta: Open audio settings
   preset-strong-sink: -3 m/s
