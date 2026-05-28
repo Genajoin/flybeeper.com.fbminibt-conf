@@ -67,11 +67,15 @@ function writeThreshold(uuid: string, valueCmS: number) {
 }
 
 const presets = {
-  'sensitive': {
-    buzzer_vario_dots: [-1400, -800, -100, 0, 5, 20, 100, 200, 300, 450, 1200, 2000],
+  // Firmware factory default — matches BUZZER_*_ARRAY_DEFAULT in the
+  // firmware (FbBT/src/buzzer.h, FbFANET/src/buzzer/buzzer.h). Keep
+  // byte-identical so this preset can be used to restore a device to its
+  // out-of-box behaviour after manual edits or a misclick on AGGRESSIVE.
+  'default': {
+    buzzer_vario_dots: [-1400, -800, -100, 0, 39, 40, 100, 200, 300, 450, 1200, 2000],
     buzzer_frequency_dots: [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000],
-    buzzer_cycle_dots: [850, 790, 725, 750, 665, 595, 430, 325, 265, 210, 120, 100],
-    buzzer_duty_dots: [100, 98, 95, 38, 40, 41, 43, 46, 49, 54, 78, 90],
+    buzzer_cycle_dots: [850, 790, 725, 350, 150, 595, 430, 325, 265, 210, 120, 100],
+    buzzer_duty_dots: [100, 98, 95, 20, 80, 41, 43, 46, 49, 54, 78, 90],
   },
   'aggressive': {
     buzzer_vario_dots: [-1000, -300, -55, -50, 0, 10, 100, 250, 425, 600, 800, 1000],
@@ -122,7 +126,7 @@ function writeCurves(next: iVarioCurves) {
 }
 
 const presetOptions = [
-  { label: 'SENSITIVE', value: 'sensitive' as const },
+  { label: 'DEFAULT', value: 'default' as const },
   { label: 'AGGRESSIVE', value: 'aggressive' as const },
   { label: 'SILENT GND', value: 'silent-gnd' as const },
   { label: 'CUSTOM*', value: 'custom' as const },
