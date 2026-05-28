@@ -91,6 +91,16 @@ const bt = useBluetoothStore()
   font-family: var(--ck-font-mono);
 }
 
+/* Border-top on every direct strip child. On a single-row layout the
+ * children's tops align and read as one continuous frame line (matches
+ * the strip's existing border-bottom). When the strip wraps onto two
+ * rows on mobile, the second row's children inherit the same border —
+ * which becomes a horizontal divider between the wrapped rows. The
+ * spacer participates so the line continues through the gap. */
+.page-head__strip > * {
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
 .page-head__crumb {
   padding: 10px 18px;
   border-right: var(--ck-stroke-rule) solid var(--ck-ink);

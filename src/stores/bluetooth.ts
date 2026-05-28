@@ -316,13 +316,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       catch { /* device already gone */ }
 
       // Best-effort unsubscribe so the BleCharacteristicImpl notification
-      // callbacks don't fire against a torn-down GATT.
-      for (const ch of this.bleCharacteristics) {
-        try {
-          ch.unsubscribeFromNotifications()
-        }
-        catch { /* characteristic already invalid */ }
-      }
+      // callbacks don't fire against a torn-down GATT. The call is async —
+      // wrap each invocation in .catch() so a rejected promise doesn't
+      // escape (the try/catch around the synchronous call site is useless
+      // for that). The implementation already guards against a torn-down
+      // GATT, this is the belt to its braces.
+      for (const ch of this.bleCharacteristics)
+        ch.unsubscribeFromNotifications().catch(() => { /* link gone */ })
 
       this.isConnected = false
       this.isDisconnecting = false
