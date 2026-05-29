@@ -68,6 +68,8 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
+    /** Last connect's GATT discovery result — for the NoSettingsBanner diagnostic. */
+    discovery: { services: [] as string[], chars: 0 },
 
     dis: {
       modelNumberString: { characteristic: null, value: null },
@@ -131,48 +133,76 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         const server = await this.device.gatt.connect()
 
         const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
-        let services = await server.getPrimaryServices()
 
-        // iOS WebBluetooth shims (Bluefy / WebBLE) sometimes omit the custom
-        // 128-bit FlyBeeper Settings Service from the bulk getPrimaryServices()
-        // enumeration on the first call right after pairing, even though the
-        // device exposes it. Without FSS chars the settings pages render empty.
-        // Recover by requesting the service directly and, if found, merging it
-        // into the list; retry a couple of times with a short delay to let
-        // CoreBluetooth's service discovery settle.
-        if (!services.some(s => s.uuid === FSS_UUID)) {
-          for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-              const fss = await server.getPrimaryService(FSS_UUID)
-              if (fss) {
-                services = [...services.filter(s => s.uuid !== FSS_UUID), fss]
-                break
-              }
-            }
-            catch { /* not discoverable yet — wait and re-enumerate */ }
-            await new Promise(resolve => setTimeout(resolve, 350))
-            const reenumerated = await server.getPrimaryServices()
-            if (reenumerated.some(s => s.uuid === FSS_UUID)) {
-              services = reenumerated
-              break
-            }
-          }
-          if (!services.some(s => s.uuid === FSS_UUID))
-            log.warn('FSS not discovered after retries — settings pages will fall back to virtual chars')
+        // Service discovery. Desktop Chrome returns everything from the bulk
+        // getPrimaryServices(); iOS WebBluetooth shims (Bluefy / WebBLE) often
+        // return an incomplete or empty list right after pairing, so we ALSO
+        // resolve each known service directly via getPrimaryService(uuid) — the
+        // path those shims reliably support — and union the two results, with a
+        // few short retries while CoreBluetooth's GATT discovery settles.
+        const KNOWN_SERVICE_UUIDS = [
+          '0000180a-0000-1000-8000-00805f9b34fb', // device_information
+          '0000181a-0000-1000-8000-00805f9b34fb', // environmental_sensing
+          '0000180f-0000-1000-8000-00805f9b34fb', // battery_service
+          '00001819-0000-1000-8000-00805f9b34fb', // location_and_navigation
+          '00001815-0000-1000-8000-00805f9b34fb', // automation_io
+          FSS_UUID, // FlyBeeper Settings Service
+        ]
+        const servicesByUuid = new Map<string, BluetoothRemoteGATTService>()
+        try {
+          for (const s of await server.getPrimaryServices())
+            servicesByUuid.set(s.uuid, s)
         }
+        catch (e) {
+          log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
+        }
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const missing = KNOWN_SERVICE_UUIDS.filter(u => !servicesByUuid.has(u))
+          if (!missing.length)
+            break
+          for (const uuid of missing) {
+            try {
+              const svc = await server.getPrimaryService(uuid)
+              if (svc)
+                servicesByUuid.set(svc.uuid, svc)
+            }
+            catch { /* absent on this device, or not yet discoverable */ }
+          }
+          if (KNOWN_SERVICE_UUIDS.every(u => servicesByUuid.has(u)))
+            break
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+        const services = [...servicesByUuid.values()]
 
         this.isConnecting = false
         this.isFetching = true
         log.info('fetching')
         for (const service of services) {
           log.debug('SERVICE', service.uuid)
-          const characteristics = await service.getCharacteristics()
+          let characteristics: BluetoothRemoteGATTCharacteristic[] = []
+          try {
+            characteristics = await service.getCharacteristics()
+          }
+          catch (e) {
+            log.warn('getCharacteristics() failed for', service.uuid, e)
+            continue
+          }
           for (const ch of characteristics) {
             log.debug('characteristic', ch.uuid)
             const bleCharacteristic = new BleCharacteristicImpl(ch)
             this.bleCharacteristics.push(bleCharacteristic)
           }
         }
+
+        // Discovery diagnostics surfaced by NoSettingsBanner so a failed iOS
+        // discovery is debuggable from a phone screenshot (no devtools there).
+        this.discovery = {
+          services: services.map(svc => svc.uuid),
+          chars: this.bleCharacteristics.length,
+        }
+        log.info(`discovered ${services.length} services / ${this.bleCharacteristics.length} characteristics`)
+        if (!servicesByUuid.has(FSS_UUID))
+          log.warn('FSS not discovered — settings fall back to virtual chars')
 
         this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
           .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
