@@ -15,9 +15,6 @@ import { get as idbGet, set as idbSet } from 'idb-keyval'
  * see `bluetooth.ts > connectToSavedDevice`. The picker only ever appears to
  * add a NEW device, or as a fallback when a saved one is no longer in the
  * permission list (revoked / cleared site data / different profile).
- *
- * `autoConnect` is a per-device hint `bluetooth.ts > tryAutoConnect` reads on
- * app boot to reconnect the flagged device silently.
  */
 
 const IDB_KEY = 'fb:saved-devices:v1'
@@ -28,7 +25,6 @@ export interface SavedDevice {
   nickname: string | null
   lastSeenAt: number
   lastFirmware: string | null
-  autoConnect: boolean
 }
 
 export const useSavedDevicesStore = defineStore('savedDevicesStore', {
@@ -38,7 +34,6 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
   }),
   getters: {
     byId: state => (id: string) => state.devices.find(d => d.id === id) ?? null,
-    autoConnectDevice: state => state.devices.find(d => d.autoConnect) ?? null,
     sortedByLastSeen: state => [...state.devices].sort((a, b) => b.lastSeenAt - a.lastSeenAt),
   },
   actions: {
@@ -60,9 +55,8 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
     },
 
     /**
-     * Upsert from a successful connect. Preserves nickname / autoConnect if the
-     * device was already saved; bumps lastSeenAt and updates firmware on every
-     * call.
+     * Upsert from a successful connect. Preserves nickname if the device was
+     * already saved; bumps lastSeenAt and updates firmware on every call.
      */
     remember(input: { id: string, name: string, firmware?: string | null }): void {
       const existing = this.devices.find(d => d.id === input.id)
@@ -79,7 +73,6 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
         nickname: null,
         lastSeenAt: Date.now(),
         lastFirmware: input.firmware ?? null,
-        autoConnect: false,
       })
     },
 
@@ -88,15 +81,6 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
       if (!dev)
         return
       dev.nickname = nickname && nickname.trim() ? nickname.trim() : null
-    },
-
-    /**
-     * Flip autoConnect for the named device. Only one device can be the
-     * auto-connect target — turning it on clears the flag on the others.
-     */
-    setAutoConnect(id: string, value: boolean): void {
-      for (const dev of this.devices)
-        dev.autoConnect = dev.id === id ? value : false
     },
 
     forget(id: string): void {

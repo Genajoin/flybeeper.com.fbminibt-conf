@@ -32,11 +32,6 @@ export const install: UserModule = async ({ isClient, initialState, app }) => {
   const savedDevices = useSavedDevicesStore(pinia)
   await Promise.all([settings.hydrate(), savedDevices.hydrate()])
 
-  // Boot-time auto-connect: if a saved device is flagged auto-connect and the
-  // origin still holds its Web Bluetooth permission, reconnect straight away —
-  // no picker, no tap. Best-effort; see bluetooth.ts > tryAutoConnect.
-  void useBluetoothStore(pinia).tryAutoConnect()
-
   let settingsPersistTimer: ReturnType<typeof setTimeout> | null = null
   settings.$subscribe(() => {
     if (settingsPersistTimer)

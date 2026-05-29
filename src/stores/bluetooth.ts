@@ -4,7 +4,6 @@ import { BleCharacteristicImpl, normalizeUuid } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
 import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
-import { useDevicePresence } from '~/composables/useDevicePresence'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
 // Upper bound on a single gatt.connect(). The picker path already confirmed
@@ -14,11 +13,6 @@ import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 // forever. This turns that into a clean, surfaced failure instead of a stuck
 // spinner.
 const CONNECT_TIMEOUT_MS = 12_000
-
-// How long boot-time auto-connect waits for an advertising packet from the
-// flagged device before deciding it's absent. Only used when the advertisement
-// API is available; otherwise the presence check resolves immediately.
-const AUTO_CONNECT_PRESENCE_TIMEOUT_MS = 4_000
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -391,56 +385,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       }
 
       log.info('direct reconnect to', match.name)
-      await this.connectToDevice(match)
-    },
-
-    /**
-     * Boot-time auto-connect. If the user flagged a saved device as
-     * auto-connect AND the origin still holds its permission, reconnect to it
-     * silently — no gesture needed (gatt.connect on an already-granted device
-     * is gesture-free). Best-effort: any miss (unsupported browser, device
-     * out of range / powered off → caught by the connect timeout, permission
-     * gone) leaves the user on the pairing screen with no error noise.
-     *
-     * When advertisement support is available (experimental flag on), we first
-     * wait briefly for an advertising packet from the target — if it's powered
-     * off / out of range we skip without burning the connect timeout window on
-     * every boot. When advertisements are unsupported (flag off / shim),
-     * waitForPresence resolves true and we fall through to a direct connect
-     * (whose own 12s timeout is the backstop) — same behaviour as before.
-     */
-    async tryAutoConnect() {
-      if (!this.bleAvailable || this.isConnected || this.isConnecting)
-        return
-
-      const saved = useSavedDevicesStore()
-      await saved.hydrate()
-      const target = saved.autoConnectDevice
-      if (!target)
-        return
-
-      if (typeof navigator.bluetooth?.getDevices !== 'function')
-        return
-
-      let match: BluetoothDevice | undefined
-      try {
-        const devices = await navigator.bluetooth.getDevices()
-        match = devices.find(d => d.id === target.id)
-      }
-      catch (error) {
-        log.warn('auto-connect getDevices() failed', error)
-        return
-      }
-      if (!match)
-        return
-
-      const present = await useDevicePresence().waitForPresence(match, AUTO_CONNECT_PRESENCE_TIMEOUT_MS)
-      if (!present) {
-        log.info('auto-connect target not advertising — skipping', target.nickname || target.name)
-        return
-      }
-
-      log.info('auto-connecting to', target.nickname || target.name)
       await this.connectToDevice(match)
     },
 

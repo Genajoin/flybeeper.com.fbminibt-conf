@@ -50,10 +50,6 @@ function reconnect(id: string) {
   bt.connectToSavedDevice(id)
 }
 
-function toggleAuto(id: string, current: boolean) {
-  saved.setAutoConnect(id, !current)
-}
-
 const pendingForgetId = ref<string | null>(null)
 
 function askForget(id: string) {
@@ -115,15 +111,6 @@ function cancelForget() {
         >
           {{ t('pair.reconnect') }} →
         </CkCTA>
-        <span class="device-row__spacer" />
-        <label class="device-row__auto">
-          <span>{{ t('pair.auto') }}</span>
-          <CkSquareToggle
-            :model-value="dev.autoConnect"
-            :aria-label="t('pair.autoconnect-label')"
-            @update:model-value="toggleAuto(dev.id, dev.autoConnect)"
-          />
-        </label>
       </div>
       <div v-if="pendingForgetId === dev.id" class="device-row__confirm">
         <span>{{ t('pair.forget-confirm') }}</span>
@@ -234,23 +221,6 @@ function cancelForget() {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.device-row__spacer {
-  flex: 1;
-}
-
-.device-row__auto {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--ck-font-mono);
-  font-size: 10px;
-  letter-spacing: var(--ck-track-data);
-  text-transform: uppercase;
-  color: var(--ck-ink);
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .device-row__confirm {

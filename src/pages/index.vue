@@ -14,7 +14,14 @@ const router = useRouter()
 // flush that isConnected flips true — its own watcher would be torn down
 // before it could fire. Pilots want to land in the cockpit immediately
 // after pairing (live vario + simulator are there).
-watch(() => bt.isConnected, (now, prev) => {
+//
+// Redirect on connect *start* (isConnecting), not just on isConnected: the
+// GATT link comes up fast but the characteristic read that follows takes
+// several seconds. Jumping to the cockpit right away means that long phase
+// plays out on the cockpit's own "READING n/total" progress banner instead
+// of a frozen "CONNECTING…" on the wizard. The picker is dismissed before
+// isConnecting flips true, so a cancelled chooser never triggers this.
+watch(() => bt.isConnecting || bt.isConnected, (now, prev) => {
   if (now && !prev)
     router.push('/cockpit')
 })

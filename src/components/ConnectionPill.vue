@@ -14,7 +14,12 @@ const { t } = useI18n()
 const busy = computed(() => bt.isConnecting || bt.isFetching)
 
 const label = computed(() => {
-  if (busy.value)
+  // Two distinct phases: connect (pairing the GATT link) then the longer
+  // characteristic read. Surfacing them separately so the pill stops looking
+  // frozen on one "СОЕДИНЕНИЕ…" for the whole multi-second sequence.
+  if (bt.isFetching)
+    return t('dashboard.fetching-cta', { n: bt.fetchProgress, total: bt.fetchTotal || '?' })
+  if (bt.isConnecting)
     return t('dashboard.connecting-eyebrow')
   return bt.isConnected ? t('dashboard.synced') : t('dashboard.offline-eyebrow')
 })

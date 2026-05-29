@@ -68,7 +68,6 @@ pair:
   presence-hint-link: как включить →
   pair-new: +  ДОБАВИТЬ УСТРОЙСТВО
   retry: Повторить
-  auto: AUTO
   last-ago: 'БЫЛО · {when}'
   explainer-bullet-1-title: Браузер «из коробки»
   explainer-bullet-1-desc: Web Bluetooth напрямую общается с вашим FlyBeeper.
@@ -88,7 +87,6 @@ pair:
   saved-title: Ваши устройства
   saved-empty: Сохранённых устройств пока нет — нажмите Подключить, чтобы добавить.
   reconnect: Переподключить
-  autoconnect-label: Подключаться при запуске
   last-seen: Последнее подключение
   firmware: Прошивка
   rename: Переименовать

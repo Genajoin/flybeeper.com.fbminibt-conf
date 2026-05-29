@@ -69,7 +69,6 @@ pair:
   presence-hint-link: aktivieren →
   pair-new: +  NEUES GERÄT PAAREN
   retry: Wiederholen
-  auto: AUTO
   last-ago: 'ZULETZT · {when}'
   explainer-bullet-1-title: Browser-nativ
   explainer-bullet-1-desc: Web Bluetooth spricht direkt mit deinem FlyBeeper.
@@ -114,7 +113,6 @@ pair:
   saved-title: Deine Geräte
   saved-empty: Noch keine gekoppelten Geräte — tippe auf Verbinden, um eines hinzuzufügen.
   reconnect: Neu verbinden
-  autoconnect-label: Beim Start automatisch verbinden
   last-seen: Zuletzt gesehen
   firmware: Firmware
   rename: Umbenennen
