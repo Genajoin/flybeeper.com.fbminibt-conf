@@ -68,8 +68,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     characteristicsData: {},
     subscribedCharacteristics: [],
     bleCharacteristics: [] as BleCharacteristicImpl[],
-    /** Last connect's GATT discovery result — for the NoSettingsBanner diagnostic. */
-    discovery: { services: [] as string[], chars: 0 },
 
     dis: {
       modelNumberString: { characteristic: null, value: null },
@@ -197,12 +195,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           }
         }
 
-        // Discovery diagnostics surfaced by NoSettingsBanner so a failed iOS
-        // discovery is debuggable from a phone screenshot (no devtools there).
-        this.discovery = {
-          services: services.map(svc => normalizeUuid(svc.uuid)),
-          chars: this.bleCharacteristics.length,
-        }
         log.info(`discovered ${services.length} services / ${this.bleCharacteristics.length} characteristics`)
         if (!servicesByUuid.has(FSS_UUID))
           log.warn('FSS not discovered — settings fall back to virtual chars')

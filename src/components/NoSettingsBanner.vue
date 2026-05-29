@@ -21,14 +21,6 @@ const show = computed(() =>
   bt.isConnected && !bt.isFetching && !hasCpfSettings.value,
 )
 
-// Discovery diagnostic — shown in the banner so an iOS (Bluefy) connect that
-// returns no usable services is debuggable straight from a screenshot.
-const diag = computed(() => {
-  const d = bt.discovery
-  const svc = d.services.map(u => u.slice(0, 8)).join(' ')
-  return `${d.chars} chars · ${d.services.length} svc${svc ? `: ${svc}` : ''}`
-})
-
 function reconnect() {
   // Drop the half-discovered link and re-run the pairing/discovery flow.
   bt.disconnectDevice().finally(() => bt.connectToRequestDevice())
@@ -43,7 +35,7 @@ function reconnect() {
       accent="var(--ck-signal)"
       :eyebrow="t('pair.no-settings-eyebrow')"
       :title="t('pair.no-settings-title')"
-      :sub="`${t('pair.no-settings-sub')} — ${diag}`"
+      :sub="t('pair.no-settings-sub')"
     >
       <template #actions>
         <button class="btn-primary--ink" type="button" @click="reconnect">
