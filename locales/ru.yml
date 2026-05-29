@@ -111,6 +111,10 @@ pair:
   connect-err-title: Не удалось подключиться к устройству
   connect-err-retry: ПОВТОРИТЬ
   connect-err-dismiss: ЗАКРЫТЬ
+  no-settings-eyebrow: НЕТ НАСТРОЕК
+  no-settings-title: Устройство подключено, настройки недоступны
+  no-settings-sub: Устройство не вернуло настройки — частое поведение в Bluefy на iOS. Переподключитесь, чтобы повторить.
+  no-settings-retry: ПЕРЕПОДКЛЮЧИТЬ
   restart-eyebrow: Нужен перезапуск
   restart-title: Перезагрузите устройство
   restart-sub: Часть настроек применяется только после полной перезагрузки.
