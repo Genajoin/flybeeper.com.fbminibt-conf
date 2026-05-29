@@ -41,8 +41,18 @@ export const useSavedDevicesStore = defineStore('savedDevicesStore', {
       if (this.hydrated)
         return
       const stored = await idbGet<SavedDevice[]>(IDB_KEY)
-      if (stored)
-        this.devices = stored
+      if (stored) {
+        // Strip the legacy `autoConnect` key from records persisted before the
+        // auto-connect feature was removed — otherwise it lingers in IDB on
+        // every persist() round-trip. Keep only the current SavedDevice shape.
+        this.devices = stored.map(({ id, name, nickname, lastSeenAt, lastFirmware }) => ({
+          id,
+          name,
+          nickname,
+          lastSeenAt,
+          lastFirmware,
+        }))
+      }
       this.hydrated = true
     },
 

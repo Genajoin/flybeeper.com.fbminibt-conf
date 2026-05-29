@@ -6,13 +6,12 @@ import log from 'loglevel'
  *
  * Web Bluetooth's `device.watchAdvertisements()` lets us listen for a device's
  * advertising packets WITHOUT connecting — so we can light an "available now"
- * badge and skip a doomed auto-connect to a powered-off device. Two big caveats
- * drive the design here:
+ * badge for saved devices powered on nearby. Two big caveats drive the design:
  *
  *  1. In stable Chrome the whole advertisement API sits behind
  *     `chrome://flags/#enable-experimental-web-platform-features`. With the flag
  *     off, `watchAdvertisements()` rejects — so support is only knowable by
- *     trying* it. We surface that as `supported` (stays false until one watch
+ *     trying it. We surface that as `supported` (stays false until one watch
  *     resolves) and degrade silently: no badge, direct connect still works.
  *  2. iOS Bluefy / older shims don't implement it at all → same graceful path.
  *
@@ -37,6 +36,9 @@ const presenceById = reactive<Record<string, PresenceEntry>>({})
 const supported = ref<boolean | null>(null)
 
 let started = false
+// Bumped on every stop(); an in-flight start() captures it and bails if it
+// changed mid-await, so a stop() during start() can't leave orphan watchers.
+let generation = 0
 // id → teardown that detaches the listener and aborts the watch for that device.
 const watchers = new Map<string, () => void>()
 let sweepTimer: ReturnType<typeof setInterval> | null = null
@@ -70,6 +72,7 @@ async function start() {
     return
   }
   started = true
+  const gen = generation
 
   let devices: BluetoothDevice[]
   try {
@@ -77,9 +80,13 @@ async function start() {
   }
   catch (error) {
     log.warn('[presence] getDevices() failed', error)
-    started = false
+    if (gen === generation)
+      started = false
     return
   }
+  // stop() ran while getDevices() was in flight — abandon this pass.
+  if (gen !== generation)
+    return
 
   for (const device of devices) {
     if (typeof device.watchAdvertisements !== 'function') {
@@ -90,10 +97,10 @@ async function start() {
     }
 
     const handler = (ev: BluetoothAdvertisingEvent) => markSeen(device.id, ev.rssi ?? null)
-    device.addEventListener('advertisementreceived', handler)
 
     if (device.watchingAdvertisements) {
       supported.value = true
+      device.addEventListener('advertisementreceived', handler)
       watchers.set(device.id, () => device.removeEventListener('advertisementreceived', handler))
       continue
     }
@@ -101,16 +108,22 @@ async function start() {
     const controller = new AbortController()
     try {
       await device.watchAdvertisements({ signal: controller.signal })
+      // stop() ran during the await — don't register against a torn-down pass.
+      if (gen !== generation) {
+        controller.abort()
+        return
+      }
       supported.value = true
+      device.addEventListener('advertisementreceived', handler)
       watchers.set(device.id, () => {
         controller.abort()
         device.removeEventListener('advertisementreceived', handler)
       })
     }
     catch (error) {
-      // Flag off / unsupported / already-watching race — clean up this one and
-      // leave `supported` false unless another device proved otherwise.
-      device.removeEventListener('advertisementreceived', handler)
+      // Flag off / unsupported / already-watching race — leave `supported`
+      // false unless another device proved otherwise.
+      controller.abort()
       if (supported.value === null)
         supported.value = false
       log.debug('[presence] watchAdvertisements rejected', error)
@@ -122,6 +135,9 @@ async function start() {
 }
 
 function stop() {
+  // Invalidate any in-flight start() so its continuation won't register
+  // watchers after we've cleared the map.
+  generation++
   for (const teardown of watchers.values())
     teardown()
   watchers.clear()
@@ -134,52 +150,8 @@ function stop() {
   started = false
 }
 
-/**
- * Wait for a single advertisement from a specific device, up to `timeoutMs`.
- * Resolves `true` on the first packet, `false` on timeout. If the advertisement
- * API is unsupported (flag off / shim), resolves `true` — callers must NOT
- * treat "can't tell" as "absent", or they'd block the only working path.
- */
-async function waitForPresence(device: BluetoothDevice, timeoutMs: number): Promise<boolean> {
-  if (typeof device.watchAdvertisements !== 'function')
-    return true
-
-  // Already heard from it within the TTL → present.
-  const known = presenceById[device.id]
-  if (known?.inRange && Date.now() - known.lastAdAt <= PRESENCE_TTL_MS)
-    return true
-
-  return new Promise<boolean>((resolve) => {
-    const controller = new AbortController()
-    let settled = false
-    let timer: ReturnType<typeof setTimeout>
-
-    const onAd = (ev: BluetoothAdvertisingEvent) => {
-      markSeen(device.id, ev.rssi ?? null)
-      done(true)
-    }
-
-    function done(result: boolean) {
-      if (settled)
-        return
-      settled = true
-      device.removeEventListener('advertisementreceived', onAd)
-      controller.abort()
-      clearTimeout(timer)
-      resolve(result)
-    }
-
-    timer = setTimeout(() => done(false), timeoutMs)
-    device.addEventListener('advertisementreceived', onAd)
-    device.watchAdvertisements({ signal: controller.signal }).catch(() => {
-      // Flag off / unsupported — don't block the connect path.
-      done(true)
-    })
-  })
-}
-
 export function useDevicePresence() {
-  return { presenceById, supported, start, stop, waitForPresence }
+  return { presenceById, supported, start, stop }
 }
 
 export default useDevicePresence
