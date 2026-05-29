@@ -64,6 +64,9 @@ pair:
   saved-count: '{count} in deinem Kit'
   saved-scanning: 'Scannen · {count} in Reichweite'
   in-range: ● IN REICHWEITE
+  available-now: ● VERFÜGBAR
+  presence-hint: 'Anwesenheitserkennung ist aus. Aktiviere sie, um Geräte in der Nähe zu sehen und sofort zu verbinden:'
+  presence-hint-link: aktivieren →
   pair-new: +  NEUES GERÄT PAAREN
   retry: Wiederholen
   auto: AUTO
@@ -179,6 +182,14 @@ about:
   p4: Eine ausführliche Projektbeschreibung finden Sie auf der Projektseite.
   link-description: Projektseite
   link-market: FlyBeeper-Shop
+  flag-eyebrow: ERWEITERT · DESKTOP CHROME
+  flag-title: Sofortverbindung & Anwesenheit
+  flag-body: 'Chrome kann anzeigen, welche deiner gespeicherten Geräte in der Nähe eingeschaltet sind, und sich selbst wieder verbinden — die Funktion steckt jedoch hinter einem experimentellen Flag. Einmal aktivieren:'
+  flag-step1: Zum Kopieren klicken, in die Adressleiste einfügen und Enter drücken
+  flag-copied: Kopiert — in die Adressleiste einfügen
+  flag-step2: '"Experimental Web Platform features" auf Enabled setzen'
+  flag-step3: Chrome neu starten, wenn dazu aufgefordert
+  flag-note: Optional. Ohne das Flag funktioniert die Wiederverbindung weiterhin — du tippst das Gerät nur selbst an. Auf iOS-Browsern nicht verfügbar.
   alpisto-eyebrow: GEBAUT VON ALPISTO
   alpisto-title: Working code, not slide decks.
   alpisto-body: 'FlyBeeper-Hardware und -Firmware kommen von Alpisto — einer Ein-Personen-Ingenieurpraxis in Tolmin, Slowenien, geführt von Evgeny Istomin. Zwanzig Jahre nRF52-Firmware, BLE-Protokolle, KiCad-Platinen und Back-End-Arbeit — alles selbst gemacht. Kein Outsourcing, keine Folien.'

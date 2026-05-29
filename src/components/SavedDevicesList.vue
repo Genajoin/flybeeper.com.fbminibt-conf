@@ -3,6 +3,28 @@ const bt = useBluetoothStore()
 const saved = useSavedDevicesStore()
 const { t, locale } = useI18n()
 
+// Best-effort presence: light an "available now" badge for saved devices whose
+// advertising packets we can hear without connecting. Degrades silently when
+// the advertisement API is unavailable (flag off / iOS shim). Watching costs
+// radio, so we only run it while this list is on screen and not connected.
+const { presenceById, supported: presenceSupported, start: startPresence, stop: stopPresence } = useDevicePresence()
+
+function isAvailable(id: string): boolean {
+  return !bt.isConnected && (presenceById[id]?.inRange ?? false)
+}
+
+onMounted(() => {
+  if (!bt.isConnected)
+    startPresence()
+})
+onUnmounted(stopPresence)
+watch(() => bt.isConnected, (connected) => {
+  if (connected)
+    stopPresence()
+  else
+    startPresence()
+})
+
 const dtfRelative = computed(() => {
   if (typeof Intl === 'undefined' || !('RelativeTimeFormat' in Intl))
     return null
@@ -58,13 +80,19 @@ function cancelForget() {
       v-for="dev in saved.sortedByLastSeen"
       :key="dev.id"
       class="device-row"
-      :class="{ 'device-row--active': bt.isConnected && bt.devName === dev.name }"
+      :class="{
+        'device-row--active': bt.isConnected && bt.devName === dev.name,
+        'device-row--available': isAvailable(dev.id),
+      }"
     >
       <div class="device-row__head">
         <div class="device-row__name-block">
           <span class="device-row__name">{{ dev.nickname || dev.name }}</span>
           <CkTag v-if="bt.isConnected && bt.devName === dev.name" filled color="var(--ck-signal)">
             {{ t('pair.in-range') }}
+          </CkTag>
+          <CkTag v-else-if="isAvailable(dev.id)" color="var(--ck-signal)">
+            {{ t('pair.available-now') }}
           </CkTag>
         </div>
         <button class="device-row__menu" :aria-label="t('pair.forget')" @click="askForget(dev.id)">
@@ -110,6 +138,12 @@ function cancelForget() {
       </div>
     </li>
   </ul>
+  <p v-if="presenceSupported === false && !bt.isConnected && saved.devices.length > 0" class="presence-hint">
+    {{ t('pair.presence-hint') }}
+    <RouterLink to="/about">
+      {{ t('pair.presence-hint-link') }}
+    </RouterLink>
+  </p>
 </template>
 
 <style scoped>
