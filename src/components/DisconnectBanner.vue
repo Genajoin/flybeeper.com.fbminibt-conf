@@ -7,6 +7,7 @@ const dismissed = ref(false)
 
 <script setup lang="ts">
 const bt = useBluetoothStore()
+const saved = useSavedDevicesStore()
 const { t } = useI18n()
 
 const show = computed(() =>
@@ -19,7 +20,14 @@ watch(() => bt.isConnected, (now) => {
 })
 
 function reconnect() {
-  bt.connectToRequestDevice()
+  // We just lost a device this session — reconnect straight to the most
+  // recently seen one (no picker). connectToSavedDevice falls back to the
+  // chooser if that device is no longer reachable without one.
+  const last = saved.sortedByLastSeen[0]
+  if (last)
+    bt.connectToSavedDevice(last.id)
+  else
+    bt.connectToRequestDevice()
 }
 </script>
 

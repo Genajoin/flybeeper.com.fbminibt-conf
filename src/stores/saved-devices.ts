@@ -2,16 +2,22 @@ import { defineStore } from 'pinia'
 import { get as idbGet, set as idbSet } from 'idb-keyval'
 
 /**
- * Saved devices registry (DECISIONS.md §5).
+ * Saved devices registry.
  *
- * The browser's own `navigator.bluetooth.getDevices()` is a permission-coupled
- * list that triggers a location prompt on Android the moment we observe it, and
- * its IDs are opaque/regenerated per origin. We keep our own registry instead:
- * the user explicitly pairs once, we remember the device by `id` + `name` and
- * offer a one-tap reconnect on the next visit (the browser still holds the
- * pairing permission; the chooser comes up only when a new device is added).
+ * This is our own human-facing layer over the browser's Web Bluetooth
+ * permission list: the user pairs once, we remember the device by `id` +
+ * `name` (+ nickname, last-seen, firmware) and render it on the next visit.
  *
- * autoConnect is a per-device hint the connect flow respects on app boot.
+ * The actual chooser-less reconnect is driven by the browser's
+ * `navigator.bluetooth.getDevices()` — it returns every device the origin was
+ * granted, without a picker and without scanning (so no Android location
+ * prompt). We match our saved `id` against that list and connect directly;
+ * see `bluetooth.ts > connectToSavedDevice`. The picker only ever appears to
+ * add a NEW device, or as a fallback when a saved one is no longer in the
+ * permission list (revoked / cleared site data / different profile).
+ *
+ * `autoConnect` is a per-device hint `bluetooth.ts > tryAutoConnect` reads on
+ * app boot to reconnect the flagged device silently.
  */
 
 const IDB_KEY = 'fb:saved-devices:v1'

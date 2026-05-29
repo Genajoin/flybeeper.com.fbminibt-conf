@@ -24,8 +24,8 @@ function relTime(ts: number): string {
   return fmt.format(days, 'day')
 }
 
-function reconnect() {
-  bt.connectToRequestDevice()
+function reconnect(id: string) {
+  bt.connectToSavedDevice(id)
 }
 
 function toggleAuto(id: string, current: boolean) {
@@ -83,7 +83,7 @@ function cancelForget() {
           :kind="bt.isConnected ? 'ghost' : 'primary'"
           :full="false"
           :disabled="bt.isConnecting || bt.isFetching"
-          @click="reconnect"
+          @click="reconnect(dev.id)"
         >
           {{ t('pair.reconnect') }} →
         </CkCTA>
