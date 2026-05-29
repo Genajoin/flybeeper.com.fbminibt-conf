@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import log from 'loglevel'
-import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
+import { BleCharacteristicImpl, normalizeUuid } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
 import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
@@ -130,19 +130,74 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       try {
         const server = await this.device.gatt.connect()
 
-        const services = await server.getPrimaryServices()
+        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+
+        // Service discovery. Desktop Chrome returns everything from the bulk
+        // getPrimaryServices(); iOS WebBluetooth shims (Bluefy / WebBLE) often
+        // return an incomplete or empty list right after pairing, so we ALSO
+        // resolve each known service directly via getPrimaryService(uuid) — the
+        // path those shims reliably support — and union the two results, with a
+        // few short retries while CoreBluetooth's GATT discovery settles.
+        const KNOWN_SERVICE_UUIDS = [
+          '0000180a-0000-1000-8000-00805f9b34fb', // device_information
+          '0000181a-0000-1000-8000-00805f9b34fb', // environmental_sensing
+          '0000180f-0000-1000-8000-00805f9b34fb', // battery_service
+          '00001819-0000-1000-8000-00805f9b34fb', // location_and_navigation
+          '00001815-0000-1000-8000-00805f9b34fb', // automation_io
+          FSS_UUID, // FlyBeeper Settings Service
+        ]
+        // Key by NORMALIZED uuid: iOS shims return short/uppercase UUIDs, so
+        // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
+        // — the retry loop would spin and the FSS lookup below would miss.
+        const servicesByUuid = new Map<string, BluetoothRemoteGATTService>()
+        try {
+          for (const s of await server.getPrimaryServices())
+            servicesByUuid.set(normalizeUuid(s.uuid), s)
+        }
+        catch (e) {
+          log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
+        }
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const missing = KNOWN_SERVICE_UUIDS.filter(u => !servicesByUuid.has(u))
+          if (!missing.length)
+            break
+          for (const uuid of missing) {
+            try {
+              const svc = await server.getPrimaryService(uuid)
+              if (svc)
+                servicesByUuid.set(normalizeUuid(svc.uuid), svc)
+            }
+            catch { /* absent on this device, or not yet discoverable */ }
+          }
+          if (KNOWN_SERVICE_UUIDS.every(u => servicesByUuid.has(u)))
+            break
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+        const services = [...servicesByUuid.values()]
+
         this.isConnecting = false
         this.isFetching = true
         log.info('fetching')
         for (const service of services) {
           log.debug('SERVICE', service.uuid)
-          const characteristics = await service.getCharacteristics()
+          let characteristics: BluetoothRemoteGATTCharacteristic[] = []
+          try {
+            characteristics = await service.getCharacteristics()
+          }
+          catch (e) {
+            log.warn('getCharacteristics() failed for', service.uuid, e)
+            continue
+          }
           for (const ch of characteristics) {
             log.debug('characteristic', ch.uuid)
             const bleCharacteristic = new BleCharacteristicImpl(ch)
             this.bleCharacteristics.push(bleCharacteristic)
           }
         }
+
+        log.info(`discovered ${services.length} services / ${this.bleCharacteristics.length} characteristics`)
+        if (!servicesByUuid.has(FSS_UUID))
+          log.warn('FSS not discovered — settings fall back to virtual chars')
 
         this.bleCharacteristics.filter(c => c.characteristic.service.uuid === '0000180a-0000-1000-8000-00805f9b34fb')
           .forEach(ch => ch.presentationFormatDescriptor = { format: 0x19, exponent: 0, unit: '', namespace: 1 })
@@ -162,10 +217,10 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
         // FlyBeeper Settings Service — pin the simulation characteristic so
         // useSimulation() can write to it without re-scanning every time.
-        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
+        const FSS = servicesByUuid.get(FSS_UUID)
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
-          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => normalizeUuid(ch.uuid) === '904baf04-5814-11ee-8c99-0242ac120002')
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
@@ -174,7 +229,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // panels render without lazy per-visit reads. Await the batch before
         // flipping isConnected so PairingWizard / cockpit watchers don't race
         // an empty bleCharacteristics list before CPF descriptors land.
-        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
         const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
         this.fetchTotal = fssChars.length
         await Promise.allSettled(

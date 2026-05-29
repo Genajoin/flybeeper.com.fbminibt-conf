@@ -76,7 +76,7 @@ pnpm test                 # vitest (jsdom)
 pnpm test:e2e             # cypress open
 ```
 
-Note: Web Bluetooth needs a secure context, so for BLE testing on a phone over the LAN, use a Cloudflare / Netlify deploy preview or run `pnpm preview-https` — plain `vite --host` over HTTP won't expose `navigator.bluetooth`.
+Note: Web Bluetooth needs a secure context, so for BLE testing on a phone over the LAN, use a Cloudflare Pages deploy preview or run `pnpm preview-https` — plain `vite --host` over HTTP won't expose `navigator.bluetooth`.
 
 ---
 
@@ -84,7 +84,7 @@ Note: Web Bluetooth needs a secure context, so for BLE testing on a phone over t
 
 Pure static output (`dist/`) — drop into any static host.
 
-- **[Netlify](./netlify.toml)** — current production deploy. Build: `pnpm build`, publish: `dist`, Node 20.
+- **[Cloudflare Pages](./.github/workflows/deploy.yml)** — production deploy (project `flybeeper-config`). Build: `pnpm build`, publish: `dist`, Node 20.
 - **Cloudflare Pages** — supported via `public/_redirects` (SPA fallback) and `public/_headers` (manifest MIME + asset caching). Set build command `pnpm build`, output dir `dist`, Node 20, and enable Corepack to honour the pinned pnpm version.
 
 ---

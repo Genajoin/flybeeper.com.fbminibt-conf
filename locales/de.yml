@@ -89,6 +89,10 @@ pair:
   connect-err-title: Gerät nicht erreichbar
   connect-err-retry: ERNEUT
   connect-err-dismiss: SCHLIESSEN
+  no-settings-eyebrow: KEINE EINSTELLUNGEN
+  no-settings-title: Gerät verbunden, Einstellungen nicht verfügbar
+  no-settings-sub: Das Gerät hat keine Einstellungen geliefert — häufig bei Bluefy unter iOS. Neu verbinden, um es erneut zu versuchen.
+  no-settings-retry: NEU VERBINDEN
   restart-eyebrow: Neustart nötig
   restart-title: Gerät neu starten
   restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.

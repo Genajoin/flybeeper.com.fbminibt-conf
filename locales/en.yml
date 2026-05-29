@@ -111,6 +111,10 @@ pair:
   connect-err-title: Couldn't reach the device
   connect-err-retry: RETRY
   connect-err-dismiss: DISMISS
+  no-settings-eyebrow: NO SETTINGS
+  no-settings-title: Device connected, settings unavailable
+  no-settings-sub: The device didn't return its settings — common on iOS Bluefy. Reconnect to try again.
+  no-settings-retry: RECONNECT
   restart-eyebrow: Restart required
   restart-title: Cycle device power
   restart-sub: Some settings only take effect after a power-cycle.

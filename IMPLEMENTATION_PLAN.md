@@ -23,7 +23,7 @@ Reused as-is (working, no rewrite needed):
 - **Pinia** — `src/stores/bluetooth.ts` + `src/stores/location.ts`. Layout is fine; we'll add `settings` (local-first) and `devices` (saved-device registry) stores alongside.
 - **Geolocation wrapper** — `src/utils/LocationParam.ts`. Used by `/cockpit` and `/terminal`. Keep, gate behind explicit opt-in.
 - **Device-info docs subtree** — `src/pages/devices/<sku>/{index.vue,changelog.md,manual-{en,ru}.md}` for 7 SKUs (fbminibt, fbps1, fbrc4, fbsv, fbtas, fbfanet, fbfanetvario). Product catalog stays; UI shell wraps them differently.
-- **Hosting/CI**: `netlify.toml` (Netlify SPA redirect + manifest header), `Dockerfile` + `docker-compose.yml` (nginx static-serve; historical, not used in prod), `.well-known/assetlinks.json` (Android TWA).
+- **Hosting/CI**: Cloudflare Pages (`.github/workflows/deploy.yml` + `public/_redirects`/`public/_headers`), `Dockerfile` + `docker-compose.yml` (nginx static-serve; historical, not used in prod), `.well-known/assetlinks.json` (Android TWA).
 
 ## What we rewrite
 
@@ -130,7 +130,7 @@ Pending receipt of visual mockups (FlyBeeper own brand, NOT alpisto brutalist).
 - [ ] Test PWA install on Android + desktop Chrome
 - [ ] Test URL-share roundtrip (paste link → preset applies)
 - [ ] Test multi-device disconnect/reconnect with local-first state preserved
-- [ ] Deploy to Netlify preview → smoke test → prod deploy
+- [ ] Deploy to Cloudflare Pages preview → smoke test → prod deploy
 
 ---
 
@@ -162,7 +162,7 @@ Pending receipt of visual mockups (FlyBeeper own brand, NOT alpisto brutalist).
 - `src/pages/devices/<sku>/{changelog.md,manual-{en,ru}.md}` — product docs (rewrite copy only if needed)
 - `public/pwa-{192,512}x512.png` — PWA icons (may swap with Claude Design output)
 - `public/.well-known/assetlinks.json` — Android TWA fingerprints
-- `netlify.toml` — deploy config
+- `.github/workflows/deploy.yml` — Cloudflare Pages deploy config
 
 ## Files / dirs to delete or significantly cut
 

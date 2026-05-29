@@ -37,30 +37,37 @@ const bt = useBluetoothStore()
 
 <template>
   <header class="page-head">
+    <!-- The strip is two flex zones: lead (breadcrumb + device info) and
+         trail (theme/lang toggles + per-page right content). Both grow, so
+         on a wide viewport they sit on one line (lead left, trail right);
+         on a narrow viewport the trail wraps onto its own full-width row.
+         The row divider is a border-BOTTOM on the lead zone — because lead
+         grows to fill its line, the divider always spans the full width
+         when trail wraps below (no partial line from per-cell borders), and
+         on a single row it coincides with the strip's own bottom rule so it
+         stays invisible. -->
     <div class="page-head__strip">
-      <RouterLink v-if="breadcrumbTo" class="page-head__crumb" :to="breadcrumbTo">
-        {{ breadcrumbLabel || '← BACK' }}
-      </RouterLink>
-      <button v-else-if="breadcrumbBack" type="button" class="page-head__crumb page-head__crumb--btn" @click="emit('back')">
-        {{ breadcrumbLabel || '← BACK' }}
-      </button>
-      <span v-else-if="breadcrumbLabel" class="page-head__crumb">{{ breadcrumbLabel }}</span>
-      <!-- Device-info cells (model · FW · battery) shown on every header
-           once a device is paired. Placed after the breadcrumb but before
-           the spacer so on wide viewports it sits inline with the utility
-           cluster; on narrow viewports the strip's flex-wrap pushes
-           utils/right onto a second row. Suppressed inside nested headers
-           (PairingWizard step strips) via hide-utils. -->
-      <DeviceInfoStrip v-if="bt.isConnected && !hideUtils" />
-      <span class="page-head__spacer" />
-      <!-- Global utility toggles (theme + language) live in every page's
-           header strip so the user can always change them. Sits before the
-           per-page right content so app-level controls stay in a stable
-           place across screens. Suppressed via hide-utils when this header
-           is nested inside another (e.g. PairingWizard step strips). -->
-      <UtilityToggles v-if="!hideUtils" class="page-head__utils" />
-      <span v-if="right" class="page-head__right" :class="{ 'page-head__right--signal': rightSignal }">{{ right }}</span>
-      <slot name="right" />
+      <div class="page-head__zone page-head__zone--lead">
+        <RouterLink v-if="breadcrumbTo" class="page-head__crumb" :to="breadcrumbTo">
+          {{ breadcrumbLabel || '← BACK' }}
+        </RouterLink>
+        <button v-else-if="breadcrumbBack" type="button" class="page-head__crumb page-head__crumb--btn" @click="emit('back')">
+          {{ breadcrumbLabel || '← BACK' }}
+        </button>
+        <span v-else-if="breadcrumbLabel" class="page-head__crumb">{{ breadcrumbLabel }}</span>
+        <!-- Device-info cells (model · FW · battery) shown on every header
+             once a device is paired. Suppressed inside nested headers
+             (PairingWizard step strips) via hide-utils. -->
+        <DeviceInfoStrip v-if="bt.isConnected && !hideUtils" />
+      </div>
+      <div class="page-head__zone page-head__zone--trail">
+        <!-- Global utility toggles (theme + language) live in every page's
+             header so the user can always change them. Suppressed via
+             hide-utils when this header is nested inside another. -->
+        <UtilityToggles v-if="!hideUtils" class="page-head__utils" />
+        <span v-if="right" class="page-head__right" :class="{ 'page-head__right--signal': rightSignal }">{{ right }}</span>
+        <slot name="right" />
+      </div>
     </div>
     <div v-if="eyebrow || title || sub || $slots.body" class="page-head__body">
       <CkEyebrow v-if="eyebrow" :color="eyebrowSignal ? 'var(--ck-signal)' : 'var(--ck-ink)'" block>
@@ -87,36 +94,30 @@ const bt = useBluetoothStore()
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);
-  position: relative;
 }
 
-/* Border-top on every direct child gives the wrapped second row a
- * horizontal divider against the first. The spacer participates so the
- * line continues through the empty gap. :deep(*) is required because
- * several flex children come from other components (DeviceInfoStrip
- * cells via fragment, ConnectionPill via slot) — scoped CSS without
- * :deep would only target elements rendered in PageHeader's own scope,
- * leaving those cells without the divider. */
-.page-head__strip > :deep(*) {
-  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+.page-head__zone {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  /* grow so a single zone alone on a wrapped line fills the full width
+     (→ full-width divider); shrink:0 so the two zones WRAP instead of
+     squeezing their nowrap content when they don't both fit. */
+  flex: 1 0 auto;
+  /* Both zones carry the bottom rule. On a single row, lead (left) and
+     trail (right) sit side-by-side so their bottom borders form one
+     continuous full-width line. When trail wraps below, lead's bottom
+     border becomes the full-width inter-row divider and trail's becomes
+     the strip's bottom rule. The strip itself has NO border-bottom, so
+     there is never a double line (fixes the uneven-thickness bug). */
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
-/* The trick above would also draw a stray border across the strip's
- * very top (row 1 children's top borders) — we don't want a top frame
- * because .page-head has none. Cover just that 1-pixel top edge with a
- * paper-coloured strip; the row 1 / row 2 divider lives at y = row1
- * height, far below this cover, so the divider stays visible. */
-.page-head__strip::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--ck-stroke-rule);
-  background: var(--ck-paper);
-  pointer-events: none;
+.page-head__zone--trail {
+  /* Keep the toggles + status anchored to the right edge, both on one row
+     and when wrapped onto their own row. */
+  justify-content: flex-end;
 }
 
 .page-head__crumb {
@@ -150,10 +151,6 @@ const bt = useBluetoothStore()
   color: inherit;
 }
 
-.page-head__spacer {
-  flex: 1;
-}
-
 .page-head__right {
   padding: 10px 18px;
   border-left: var(--ck-stroke-rule) solid var(--ck-ink);
@@ -162,6 +159,8 @@ const bt = useBluetoothStore()
   font-weight: 700;
   letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
 }
 
 .page-head__right--signal {

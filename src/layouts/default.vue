@@ -5,6 +5,7 @@
   <UpdateBanner />
   <BluefyBanner />
   <ConnectErrorBanner />
+  <NoSettingsBanner />
   <DisconnectBanner />
   <RestartDeviceBanner />
   <SimulationBanner />

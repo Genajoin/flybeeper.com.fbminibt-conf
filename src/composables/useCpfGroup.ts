@@ -106,10 +106,19 @@ export function useCpfGroup(group: SettingsGroupKey) {
         .map(ch => [ch.characteristic.uuid, ch]),
     )
 
+    // Did the device expose ANY CPF characteristic at all? If a connect
+    // succeeded but zero CPF chars landed (e.g. iOS Bluefy returned an
+    // incomplete service list), discovery failed — fall back to virtual
+    // chars so the page isn't blank, exactly like offline.
+    const anyCpfPresent = (bt.bleCharacteristics as BleCharacteristic[])
+      .some(ch => CPF_UUID_TO_GROUP[ch.characteristic.uuid])
+
     // Connected: only UUIDs the firmware exports (real char present).
+    // Connected but discovery failed (no CPF at all): every known UUID, as
+    // virtual chars, so the user still sees + edits settings.
     // Offline / pre-pair: every UUID known for this group, so demo mode +
     // preset-import work without hardware.
-    const surfaceUuids = bt.isConnected
+    const surfaceUuids = bt.isConnected && anyCpfPresent
       ? Array.from(realByUuid.keys())
       : (UUIDS_BY_GROUP[group] ?? [])
 
