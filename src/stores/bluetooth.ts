@@ -6,6 +6,29 @@ import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
+// Upper bound on a single gatt.connect(). The picker path already confirmed
+// the device is present, so it connects well within this. The chooser-less
+// reconnect / auto-connect paths, by contrast, can target a device that is
+// powered off or out of range — there gatt.connect() would otherwise hang
+// forever. This turns that into a clean, surfaced failure instead of a stuck
+// spinner.
+const CONNECT_TIMEOUT_MS = 12_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms)
+    promise
+      .then((v) => {
+        clearTimeout(timer)
+        resolve(v)
+      })
+      .catch((e) => {
+        clearTimeout(timer)
+        reject(e)
+      })
+  })
+}
+
 interface BtCh {
   characteristic: object | null
   value: number | string | null
@@ -128,7 +151,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         await useSettingsStore().loadSlot(this.device.id)
 
       try {
-        const server = await this.device.gatt.connect()
+        const server = await withTimeout(
+          this.device.gatt.connect(),
+          CONNECT_TIMEOUT_MS,
+          'Connection timed out — is the device powered on and in range?',
+        )
 
         const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
 
@@ -315,6 +342,52 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           this.isFetching = false
         })
     },
+
+    /**
+     * Direct, chooser-less reconnect to a device the origin was already
+     * granted access to. Web Bluetooth's `getDevices()` lists those permitted
+     * devices without a picker (and without scanning, so no Android location
+     * prompt); we match the saved registry's `id` against them and connect
+     * straight through `connectToDevice`.
+     *
+     * Falls back to the standard picker (`connectToRequestDevice`) when:
+     *  - the browser lacks `getDevices` (iOS Bluefy / older shims), or
+     *  - the device is no longer in the permission list (revoked, cleared
+     *    site data, a different browser profile).
+     *
+     * This is what makes the "Reconnect" button honest: it targets THIS
+     * device, and only surfaces a picker when a direct reconnect is genuinely
+     * impossible.
+     */
+    async connectToSavedDevice(savedId: string) {
+      if (!this.bleAvailable || this.isConnected || this.isConnecting)
+        return
+      this.errorMessage = ''
+
+      if (typeof navigator.bluetooth?.getDevices !== 'function') {
+        log.info('getDevices() unsupported — falling back to picker')
+        return this.connectToRequestDevice()
+      }
+
+      let match: BluetoothDevice | undefined
+      try {
+        const devices = await navigator.bluetooth.getDevices()
+        match = devices.find(d => d.id === savedId)
+      }
+      catch (error) {
+        log.warn('getDevices() failed — falling back to picker', error)
+        return this.connectToRequestDevice()
+      }
+
+      if (!match) {
+        log.info('saved device not in permission list — falling back to picker')
+        return this.connectToRequestDevice()
+      }
+
+      log.info('direct reconnect to', match.name)
+      await this.connectToDevice(match)
+    },
+
     async disconnectDevice() {
       if (!this.isConnected || this.isDisconnecting)
         return

@@ -6,6 +6,24 @@ const { canInstall, install } = useInstallPrompt()
 
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mwvzalkr'
 
+// chrome://flags links can't be navigated to programmatically (the browser
+// blocks scripted navigation to that scheme), so we surface it as copy-to-
+// clipboard text the user pastes into the address bar.
+const FLAG_URL = 'chrome://flags/#enable-experimental-web-platform-features'
+const flagCopied = ref(false)
+async function copyFlagUrl() {
+  try {
+    await navigator.clipboard.writeText(FLAG_URL)
+    flagCopied.value = true
+    setTimeout(() => {
+      flagCopied.value = false
+    }, 2000)
+  }
+  catch {
+    // Clipboard blocked — the text is selectable, so this is non-fatal.
+  }
+}
+
 const locationPermissionGranted = ref(false)
 const locationPermissionDenied = ref(false)
 
@@ -130,6 +148,29 @@ async function submitContact() {
         src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
       >
     </a>
+
+    <section class="about__flag">
+      <CkEyebrow color="var(--ck-signal)" block>
+        {{ t('about.flag-eyebrow') }}
+      </CkEyebrow>
+      <h2 class="about__alpisto-title">
+        {{ t('about.flag-title') }}
+      </h2>
+      <p class="about__body">
+        {{ t('about.flag-body') }}
+      </p>
+      <ol class="about__flag-steps">
+        <li>
+          <code class="about__flag-url" @click="copyFlagUrl">{{ FLAG_URL }}</code>
+          <span class="about__flag-copy">{{ flagCopied ? t('about.flag-copied') : t('about.flag-step1') }}</span>
+        </li>
+        <li>{{ t('about.flag-step2') }}</li>
+        <li>{{ t('about.flag-step3') }}</li>
+      </ol>
+      <p class="about__body about__body--dim">
+        {{ t('about.flag-note') }}
+      </p>
+    </section>
 
     <section class="about__alpisto">
       <CkEyebrow color="var(--ck-signal)" block>
@@ -428,5 +469,44 @@ async function submitContact() {
   line-height: 1.5;
   margin: 4px 0 0;
   color: var(--ck-ink);
+}
+
+.about__flag {
+  padding: 22px;
+  background: var(--ck-paper);
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.about__flag-steps {
+  margin: 14px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--ck-font-body);
+  font-size: 14px;
+  color: var(--ck-ink);
+}
+
+.about__flag-url {
+  display: inline-block;
+  font-family: var(--ck-font-mono);
+  font-size: 12px;
+  background: var(--ck-bg-deep);
+  border: var(--ck-stroke-hair) solid var(--ck-ink);
+  padding: 4px 8px;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.about__flag-copy {
+  display: block;
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-dim);
+  margin-top: 4px;
 }
 </style>

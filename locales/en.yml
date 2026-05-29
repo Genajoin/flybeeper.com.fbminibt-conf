@@ -63,9 +63,11 @@ pair:
   saved-count: '{count} in your kit'
   saved-scanning: Scanning · {count} in range
   in-range: ● IN RANGE
+  available-now: ● AVAILABLE
+  presence-hint: 'Presence detection is off. Enable it to light up nearby devices and auto-connect instantly:'
+  presence-hint-link: how to enable →
   pair-new: +  PAIR NEW DEVICE
   retry: Retry
-  auto: AUTO
   last-ago: 'LAST · {when}'
   explainer-bullet-1-title: Browser-native
   explainer-bullet-1-desc: Web Bluetooth speaks straight to your FlyBeeper device.
@@ -85,7 +87,6 @@ pair:
   saved-title: Your devices
   saved-empty: No paired devices yet — tap Connect to add one.
   reconnect: Reconnect
-  autoconnect-label: Auto-connect on launch
   last-seen: Last seen
   firmware: Firmware
   rename: Rename
@@ -270,6 +271,14 @@ about:
   p4: Detailed project description can be found on the project page.
   link-description: Project Page
   link-market: FlyBeeper Shop
+  flag-eyebrow: ADVANCED · DESKTOP CHROME
+  flag-title: Instant connect & presence
+  flag-body: 'Chrome can highlight which of your saved devices are powered on nearby and reconnect to them on its own — but it ships behind an experimental flag. Enable it once:'
+  flag-step1: Click to copy, then paste into the address bar and press Enter
+  flag-copied: Copied — paste into the address bar
+  flag-step2: 'Set "Experimental Web Platform features" to Enabled'
+  flag-step3: Relaunch Chrome when prompted
+  flag-note: 'Optional. Without it, reconnect still works — you just tap the device instead of it connecting on its own. Not available on iOS browsers.'
   alpisto-eyebrow: BUILT BY ALPISTO
   alpisto-title: Working code, not slide decks.
   alpisto-body: 'FlyBeeper hardware and firmware come out of Alpisto — a solo engineering practice in Tolmin, Slovenia, run by Evgeny Istomin. Twenty years of nRF52 firmware, BLE protocols, KiCad PCBs and back-end glue, delivered hands-on. No outsourcing, no slide decks.'

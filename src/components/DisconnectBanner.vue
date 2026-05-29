@@ -7,10 +7,16 @@ const dismissed = ref(false)
 
 <script setup lang="ts">
 const bt = useBluetoothStore()
+const saved = useSavedDevicesStore()
 const { t } = useI18n()
 
+// Hide the moment a (re)connect attempt is in flight — tapping RECONNECT
+// should clear the banner immediately, not leave it covering the
+// "CONNECTING… / READING…" progress. If the attempt fails, isConnecting /
+// isFetching drop back to false while still !isConnected, so the banner
+// reappears on its own.
 const show = computed(() =>
-  bt.hasConnectedThisSession && !bt.isConnected && !dismissed.value,
+  bt.hasConnectedThisSession && !bt.isConnected && !bt.isConnecting && !bt.isFetching && !dismissed.value,
 )
 
 watch(() => bt.isConnected, (now) => {
@@ -19,7 +25,14 @@ watch(() => bt.isConnected, (now) => {
 })
 
 function reconnect() {
-  bt.connectToRequestDevice()
+  // We just lost a device this session — reconnect straight to the most
+  // recently seen one (no picker). connectToSavedDevice falls back to the
+  // chooser if that device is no longer reachable without one.
+  const last = saved.sortedByLastSeen[0]
+  if (last)
+    bt.connectToSavedDevice(last.id)
+  else
+    bt.connectToRequestDevice()
 }
 </script>
 
