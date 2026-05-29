@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import log from 'loglevel'
-import { BleCharacteristicImpl } from '~/utils/BleCharacteristic'
+import { BleCharacteristicImpl, normalizeUuid } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
 import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
@@ -148,10 +148,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           '00001815-0000-1000-8000-00805f9b34fb', // automation_io
           FSS_UUID, // FlyBeeper Settings Service
         ]
+        // Key by NORMALIZED uuid: iOS shims return short/uppercase UUIDs, so
+        // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
+        // — the retry loop would spin and the FSS lookup below would miss.
         const servicesByUuid = new Map<string, BluetoothRemoteGATTService>()
         try {
           for (const s of await server.getPrimaryServices())
-            servicesByUuid.set(s.uuid, s)
+            servicesByUuid.set(normalizeUuid(s.uuid), s)
         }
         catch (e) {
           log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
@@ -164,7 +167,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             try {
               const svc = await server.getPrimaryService(uuid)
               if (svc)
-                servicesByUuid.set(svc.uuid, svc)
+                servicesByUuid.set(normalizeUuid(svc.uuid), svc)
             }
             catch { /* absent on this device, or not yet discoverable */ }
           }
@@ -197,7 +200,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // Discovery diagnostics surfaced by NoSettingsBanner so a failed iOS
         // discovery is debuggable from a phone screenshot (no devtools there).
         this.discovery = {
-          services: services.map(svc => svc.uuid),
+          services: services.map(svc => normalizeUuid(svc.uuid)),
           chars: this.bleCharacteristics.length,
         }
         log.info(`discovered ${services.length} services / ${this.bleCharacteristics.length} characteristics`)
@@ -222,10 +225,10 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
         // FlyBeeper Settings Service — pin the simulation characteristic so
         // useSimulation() can write to it without re-scanning every time.
-        const FSS = services.find(service => service.uuid === '904baf04-5814-11ee-8c99-0242ac120000')
+        const FSS = servicesByUuid.get(FSS_UUID)
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
-          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => ch.uuid === '904baf04-5814-11ee-8c99-0242ac120002')
+          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => normalizeUuid(ch.uuid) === '904baf04-5814-11ee-8c99-0242ac120002')
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)

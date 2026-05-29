@@ -2,6 +2,49 @@
 
 import log from 'loglevel'
 
+/**
+ * Canonicalise a BLE UUID to the spec form: lowercase, 128-bit.
+ *
+ * Conformant browsers (desktop Chrome) already hand us lowercase 128-bit
+ * UUIDs, but iOS WebBluetooth shims (Bluefy / WebBLE) violate the spec and
+ * return standard services/characteristics in SHORT 16/32-bit form (`180F`)
+ * and custom ones in UPPERCASE (`904BAF04-…`). Every UUID comparison in the
+ * app is written against lowercase 128-bit constants, so without this the
+ * device looks connected but no characteristic ever matches — empty settings
+ * AND no live sensor data. Normalising at the wrapper boundary fixes every
+ * comparison site at once.
+ */
+export function normalizeUuid(raw: string): string {
+  const s = String(raw).toLowerCase().replace(/^0x/, '')
+  if (/^[0-9a-f]{4}$/.test(s)) // 16-bit alias → 0000XXXX-0000-1000-8000-00805f9b34fb
+    return `0000${s}-0000-1000-8000-00805f9b34fb`
+  if (/^[0-9a-f]{8}$/.test(s)) // 32-bit alias → XXXXXXXX-0000-1000-8000-00805f9b34fb
+    return `${s}-0000-1000-8000-00805f9b34fb`
+  return s
+}
+
+/**
+ * Wrap a native GATT characteristic (or service) so reads of `.uuid` — and,
+ * for characteristics, `.service.uuid` — come back canonicalised, while every
+ * method (readValue, startNotifications, addEventListener, …) and getter
+ * (value, properties) still runs against the real native object. Lets the rest
+ * of the codebase keep doing `c.characteristic.uuid === '…'` unchanged.
+ */
+function uuidNormalizingProxy<T extends object>(target: T): T {
+  return new Proxy(target, {
+    get(t, prop, _recv) {
+      if (prop === 'uuid')
+        return normalizeUuid((t as any).uuid)
+      if (prop === 'service' && (t as any).service)
+        return uuidNormalizingProxy((t as any).service)
+      // Read against the real object as receiver so native getters work, and
+      // bind methods to it so `this` is the native target, not the proxy.
+      const v = Reflect.get(t, prop, t)
+      return typeof v === 'function' ? v.bind(t) : v
+    },
+  })
+}
+
 export interface LogEntry {
   timestamp: number // Метка времени
   value: any // Значение
@@ -55,7 +98,10 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   private subscribers: ((value: any) => void)[] = []
 
   constructor(characteristic: BluetoothRemoteGATTCharacteristic) {
-    this.characteristic = characteristic
+    // Wrap so `.uuid` / `.service.uuid` are canonical (lowercase 128-bit) no
+    // matter how the browser's WebBluetooth implementation formats them. See
+    // normalizeUuid — iOS shims (Bluefy) return short/uppercase UUIDs.
+    this.characteristic = uuidNormalizingProxy(characteristic)
   }
 
   private onNotification = async (event: Event) => {
@@ -127,7 +173,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (!this.userFormatDescriptor) {
       if (this.descriptors.length) {
         const userFormatDescriptor = this.descriptors.find(
-          descriptor => descriptor.uuid === '00002901-0000-1000-8000-00805f9b34fb',
+          descriptor => normalizeUuid(descriptor.uuid) === '00002901-0000-1000-8000-00805f9b34fb',
         )
 
         if (userFormatDescriptor) {
@@ -180,7 +226,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (this.descriptors.length === 0)
       return
     const presentationFormatDescriptor = this.descriptors.find(
-      descriptor => descriptor.uuid === '00002904-0000-1000-8000-00805f9b34fb',
+      descriptor => normalizeUuid(descriptor.uuid) === '00002904-0000-1000-8000-00805f9b34fb',
     )
 
     if (presentationFormatDescriptor) {
