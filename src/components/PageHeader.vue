@@ -94,7 +94,6 @@ const bt = useBluetoothStore()
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);
 }
 
@@ -106,12 +105,12 @@ const bt = useBluetoothStore()
      (→ full-width divider); shrink:0 so the two zones WRAP instead of
      squeezing their nowrap content when they don't both fit. */
   flex: 1 0 auto;
-}
-
-.page-head__zone--lead {
-  /* When the trail zone wraps to a second row, this border becomes the
-     full-width divider between the two rows. On a single row it sits on
-     top of the strip's own border-bottom (same position) and is invisible. */
+  /* Both zones carry the bottom rule. On a single row, lead (left) and
+     trail (right) sit side-by-side so their bottom borders form one
+     continuous full-width line. When trail wraps below, lead's bottom
+     border becomes the full-width inter-row divider and trail's becomes
+     the strip's bottom rule. The strip itself has NO border-bottom, so
+     there is never a double line (fixes the uneven-thickness bug). */
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
