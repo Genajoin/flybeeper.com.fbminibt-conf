@@ -1,4 +1,4 @@
-# Cloudflare Pages / Netlify-style header rules.
+# Cloudflare Pages header rules.
 #
 # Force the correct MIME on the PWA web app manifest — some browsers reject
 # the install prompt when Content-Type isn't application/manifest+json.
