@@ -32,6 +32,11 @@ const presentGroups = computed<Set<SettingsGroupKey>>(() => {
     if (g)
       out.add(g)
   }
+  // Connected but zero CPF chars discovered (e.g. iOS Bluefy returned an
+  // incomplete service list) — fall back to showing every group so the
+  // accordion isn't empty and the active page still renders its slot.
+  if (out.size === 0)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
   return out
 })
 

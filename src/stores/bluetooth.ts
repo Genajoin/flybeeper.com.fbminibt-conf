@@ -130,7 +130,37 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       try {
         const server = await this.device.gatt.connect()
 
-        const services = await server.getPrimaryServices()
+        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+        let services = await server.getPrimaryServices()
+
+        // iOS WebBluetooth shims (Bluefy / WebBLE) sometimes omit the custom
+        // 128-bit FlyBeeper Settings Service from the bulk getPrimaryServices()
+        // enumeration on the first call right after pairing, even though the
+        // device exposes it. Without FSS chars the settings pages render empty.
+        // Recover by requesting the service directly and, if found, merging it
+        // into the list; retry a couple of times with a short delay to let
+        // CoreBluetooth's service discovery settle.
+        if (!services.some(s => s.uuid === FSS_UUID)) {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              const fss = await server.getPrimaryService(FSS_UUID)
+              if (fss) {
+                services = [...services.filter(s => s.uuid !== FSS_UUID), fss]
+                break
+              }
+            }
+            catch { /* not discoverable yet — wait and re-enumerate */ }
+            await new Promise(resolve => setTimeout(resolve, 350))
+            const reenumerated = await server.getPrimaryServices()
+            if (reenumerated.some(s => s.uuid === FSS_UUID)) {
+              services = reenumerated
+              break
+            }
+          }
+          if (!services.some(s => s.uuid === FSS_UUID))
+            log.warn('FSS not discovered after retries — settings pages will fall back to virtual chars')
+        }
+
         this.isConnecting = false
         this.isFetching = true
         log.info('fetching')
@@ -174,7 +204,6 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // panels render without lazy per-visit reads. Await the batch before
         // flipping isConnected so PairingWizard / cockpit watchers don't race
         // an empty bleCharacteristics list before CPF descriptors land.
-        const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
         const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
         this.fetchTotal = fssChars.length
         await Promise.allSettled(

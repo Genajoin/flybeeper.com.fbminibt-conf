@@ -27,6 +27,10 @@ const presentGroups = computed<Set<SettingsGroupKey>>(() => {
     if (g)
       out.add(g)
   }
+  // Connected but no CPF chars discovered (iOS Bluefy incomplete service
+  // list) — fall back to all groups so the hub still links everywhere.
+  if (out.size === 0)
+    return new Set<SettingsGroupKey>(Object.values(CPF_UUID_TO_GROUP))
   return out
 })
 

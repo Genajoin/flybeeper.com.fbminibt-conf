@@ -33,6 +33,7 @@ function pathFor(lang: 'en' | 'ru' | 'de') {
   <UpdateBanner />
   <BluefyBanner />
   <ConnectErrorBanner />
+  <NoSettingsBanner />
   <DisconnectBanner />
   <RestartDeviceBanner />
   <SimulationBanner />
