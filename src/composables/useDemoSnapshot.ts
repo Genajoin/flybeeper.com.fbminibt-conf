@@ -100,7 +100,7 @@ export const VIRTUAL_CPF_FORMAT: Record<string, VirtualCpfFormat> = {
 
   '904baf04-5814-11ee-8c99-0242ac120002': { format: 0x0E, exponent: -2, unit: 'm/s' },
 
-  // FANET radio (fbfanet, fbfanetvario). Types match struct fb_settings
+  // FANET radio (fbfanet, fbfv). Types match struct fb_settings
   // in FbFANET/src/settings/settings.h. On a real connected device the
   // firmware's actual CPF descriptor is spliced onto the virtual char,
   // so these fallbacks only matter offline.

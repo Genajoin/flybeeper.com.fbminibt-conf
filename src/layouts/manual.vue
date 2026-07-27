@@ -30,22 +30,24 @@ function pathFor(lang: 'en' | 'ru' | 'de') {
 </script>
 
 <template>
-  <UpdateBanner />
-  <BluefyBanner />
-  <ConnectErrorBanner />
-  <NoSettingsBanner />
-  <DisconnectBanner />
-  <RestartDeviceBanner />
-  <SimulationBanner />
-  <PresetImportBanner />
-  <main class="manual">
-    <PageHeader :breadcrumb-to="backTo" breadcrumb-label="← BACK" />
-    <ManualLangChips :current="currentManualLocale" :to-path="pathFor" />
-    <article class="manual__body">
-      <RouterView />
-    </article>
-  </main>
-  <TheFooter />
+  <div class="ck-shell">
+    <UpdateBanner />
+    <BluefyBanner />
+    <ConnectErrorBanner />
+    <NoSettingsBanner />
+    <DisconnectBanner />
+    <RestartDeviceBanner />
+    <SimulationBanner />
+    <PresetImportBanner />
+    <main class="manual">
+      <PageHeader :breadcrumb-to="backTo" breadcrumb-label="← BACK" />
+      <ManualLangChips :current="currentManualLocale" :to-path="pathFor" />
+      <article class="manual__body">
+        <RouterView />
+      </article>
+    </main>
+    <TheFooter />
+  </div>
   <ReconnectDiffDialog />
   <InstallToast />
 </template>

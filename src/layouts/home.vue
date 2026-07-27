@@ -2,18 +2,20 @@
 </script>
 
 <template>
-  <UpdateBanner />
-  <BluefyBanner />
-  <ConnectErrorBanner />
-  <NoSettingsBanner />
-  <DisconnectBanner />
-  <RestartDeviceBanner />
-  <SimulationBanner />
-  <PresetImportBanner />
-  <main class="page page--home">
-    <RouterView />
-  </main>
-  <TheFooter />
+  <div class="ck-shell">
+    <UpdateBanner />
+    <BluefyBanner />
+    <ConnectErrorBanner />
+    <NoSettingsBanner />
+    <DisconnectBanner />
+    <RestartDeviceBanner />
+    <SimulationBanner />
+    <PresetImportBanner />
+    <main class="page page--home">
+      <RouterView />
+    </main>
+    <TheFooter />
+  </div>
   <ReconnectDiffDialog />
   <InstallToast />
 </template>

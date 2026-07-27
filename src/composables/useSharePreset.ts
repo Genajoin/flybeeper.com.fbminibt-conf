@@ -23,7 +23,7 @@ export function useSharePreset(groupKeys?: Ref<SettingsGroupKey[] | null>) {
 
   const baseUrl = computed(() => {
     if (typeof window === 'undefined')
-      return 'https://fbminibt-conf.flybeeper.com/'
+      return 'https://config.flybeeper.com/'
     return window.location.origin + window.location.pathname
   })
 

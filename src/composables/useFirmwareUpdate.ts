@@ -14,8 +14,9 @@ export function resolveSku(model: string | null | undefined): string | null {
   }
   if (norm.startsWith('fbminibt'))
     return 'fbminibt'
-  if (norm.startsWith('fbfanetvario'))
-    return 'fbfanetvario'
+  // 'fbfv' is already matched by the exact-SKU rule above; the prefix rules
+  // below must not swallow it — 'fbfanet' does not prefix 'fbfv', so order
+  // here is safe.
   if (norm.startsWith('fbfanet'))
     return 'fbfanet'
   if (norm.startsWith('fbtas'))
@@ -59,5 +60,14 @@ export function useFirmwareUpdate() {
     return compareFwVersions(current.value, latest.value) < 0
   })
 
-  return { sku, current, latest, hasUpdate }
+  /**
+   * Where "firmware" should take the user from anywhere in the app: straight
+   * to the update page of the connected device when we know which one it is,
+   * and only otherwise to the generic how-to. Every entry point used to land
+   * on /update, which explains rather than does — the actual update button
+   * was another two clicks away.
+   */
+  const updatePath = computed<string>(() => (sku.value ? `/update/firmware/${sku.value}` : '/update'))
+
+  return { sku, current, latest, hasUpdate, updatePath }
 }

@@ -89,7 +89,7 @@ Charakteristiken-UUIDs für Dienst `0x1819` LNS
 
 | Name              | UUID                                 | Size  | Exponent | Unit |
 | ----------------- | ------------------------------------ | ----- | -------- | ---- |
-| Vario by pressure | b4df8385-d9d6-4037-b2ed-2e14e1f4fa27 | INT16 | -2       | m/s  |
+| Vario by pressure | b4df8385-16d2-4037-b2ed-2e14e1f4fa27 | INT16 | -2       | m/s  |
 
 Charakteristiken-UUIDs des Dienstes `0x1815` AIOS. Das Gerät hat 4 Tasten. Das ist im Deskriptor 0x2909 „Number of Digitals" definiert. Je zwei Bit repräsentieren den Zustand einer Taste, beginnend mit dem niedrigstwertigen Bit. 0b00000001 bedeutet, Taste 1 ist gedrückt; sind alle Tasten gleichzeitig gedrückt, ergibt sich 0b01010101. Damit passt das gesamte Array in ein Byte. Es werden nur die Zustände 0b00 (losgelassen) und 0b01 (gedrückt) verwendet. Mehr Informationen zu den Zuständen finden Sie in der Automation IO Service 1.0 Specification (Abschnitt 3.1.1). Benachrichtigungen werden bei Änderung gesendet, also je eine separate Benachrichtigung für Drücken und Loslassen. So lassen sich lange Klicks, Doppelklicks und das gleichzeitige Halten mehrerer Tasten erkennen.
 

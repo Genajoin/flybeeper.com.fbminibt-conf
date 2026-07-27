@@ -170,7 +170,7 @@ export default defineConfig(({ command }) => {
       },
       onFinished() {
         generateSitemap({
-          hostname: 'https://fbminibt-conf.flybeeper.com/',
+          hostname: 'https://config.flybeeper.com/',
         })
       },
     },

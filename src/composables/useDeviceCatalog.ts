@@ -75,11 +75,15 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     iconName: 'radio',
   },
   {
-    sku: 'fbfanetvario',
+    // SKU matches the DIS Model Number the device reports ('FBFV'), so
+    // resolveSku() links a connected device to this entry by name alone.
+    sku: 'fbfv',
     displayName: 'FlyBeeper FANET Vario',
-    aboutKey: 'about.fbfanetvario-p1',
-    stlPath: '/fbfanetvario-model.stl',
-    stlPos: { x: 50, y: 20, z: 130 },
+    aboutKey: 'about.fbfv-p1',
+    stlPath: '/fbfv-model.stl',
+    // Enclosure is 28 × 92 × 16 mm, centred in X/Y — this camera looks at the
+    // solar-panel face from slightly above and off to one side.
+    stlPos: { x: 45, y: -28, z: 112 },
     iconName: 'satellite',
   },
 ]

@@ -1,3 +1,10 @@
+# FANET Vario was published as /devices/fbfanetvario before the SKU was renamed
+# to fbfv (the name the device itself reports in DIS). Keep the old address
+# alive — it may have been linked or indexed. Must stay ABOVE the SPA fallback.
+/devices/fbfanetvario      /devices/fbfv            301
+/devices/fbfanetvario/*    /devices/fbfv/:splat     301
+/update/firmware/fbfanetvario  /update/firmware/fbfv  301
+
 # Cloudflare Pages SPA fallback — every unmatched path serves index.html with
 # a 200 so the Vue client router can resolve the route on hydration.
 /*  /index.html  200
