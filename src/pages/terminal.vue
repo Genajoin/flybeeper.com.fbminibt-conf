@@ -6,12 +6,12 @@ const isOffline = computed(() => !bt.isConnected)
 const fwLabel = computed(() => bt.dis.firmwareRevisionString.value ?? '—')
 
 const titleLabel = computed(() =>
-  bt.dis.modelNumberString.value || (isOffline.value ? t('dashboard.demo-device') : '—'),
+  String(bt.dis.modelNumberString.value || (isOffline.value ? t('dashboard.demo-device') : '—')),
 )
 const subLabel = computed(() => {
   if (isOffline.value)
     return t('dashboard.demo-mode-sub')
-  return `${bt.dis.manufacturerNameString.value} · fw ${fwLabel.value}`
+  return `${bt.dis.manufacturerNameString.value ?? ''} · fw ${fwLabel.value}`
 })
 
 const isBusyConnecting = computed(() => bt.isConnecting || bt.isFetching)

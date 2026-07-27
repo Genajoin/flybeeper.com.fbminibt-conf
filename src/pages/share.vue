@@ -66,7 +66,7 @@ const urlTail = computed(() => {
             <button class="share__url-cta share__url-cta--ink" type="button" @click="copyUrl">
               {{ t('preset.copy-url') }}
             </button>
-            <button class="share__url-cta" type="button" @click="downloadJson">
+            <button class="share__url-cta" type="button" @click="downloadJson()">
               {{ t('preset.download-json') }}
             </button>
           </div>

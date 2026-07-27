@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import cloneDeep from 'lodash/cloneDeep'
-import isEqual from 'lodash/isEqual'
+import cloneDeep from 'lodash.clonedeep'
+import isEqual from 'lodash.isequal'
 
 interface iVarioCurves {
   buzzer_vario_dots: number[]

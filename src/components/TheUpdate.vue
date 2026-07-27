@@ -24,7 +24,7 @@ const target = computed(() => (fwUpdate.sku.value
 // "update available" callout when the connected device matches that
 // page. Avoids advertising an FBfanet update on the FBTAS page.
 const pageSku = computed<string | null>(() => {
-  const raw = route.params.sku
+  const raw = 'sku' in route.params ? route.params.sku : undefined
   if (typeof raw === 'string' && raw)
     return raw.toLowerCase()
   const m = route.path.match(/^\/devices\/([^/]+)/)

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "jsx": "preserve",
-    "lib": ["DOM", "ESNext", "webBluetooth"],
+    "lib": ["DOM", "ESNext"],
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "node",
@@ -13,10 +13,9 @@
     "types": [
       "vitest",
       "vite/client",
-      "vue/ref-macros",
       "vite-plugin-vue-layouts/client",
       "vite-plugin-pwa/client",
-      "unplugin-vue-macros/macros-global"
+      "web-bluetooth"
     ],
     "allowJs": true,
     "strict": true,
@@ -26,12 +25,6 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "skipLibCheck": true
-  },
-  "vueCompilerOptions": {
-    "plugins": [
-      "@vue-macros/volar/define-models",
-      "@vue-macros/volar/define-slots"
-    ]
   },
   "exclude": ["dist", "node_modules", "cypress"]
 }

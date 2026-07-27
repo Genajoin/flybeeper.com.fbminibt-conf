@@ -3,50 +3,56 @@ import { LocParamImpl } from '~/utils/LocationParam'
 
 export const useLocationStore = defineStore('locationStore', {
   state: () => ({
-    speed: null as number,
-    altitude: null as number,
-    latitude: null as number,
-    longitude: null as number,
-    accuracy: null as number,
-    altitudeAccuracy: null as number,
-    heading: null as number,
+    speed: null as number | null,
+    altitude: null as number | null,
+    latitude: null as number | null,
+    longitude: null as number | null,
+    accuracy: null as number | null,
+    altitudeAccuracy: null as number | null,
+    heading: null as number | null,
     watchId: 0,
     error: null as GeolocationPositionError | null,
-    locParams: [] as LocParamImpl,
+    locParams: [] as LocParamImpl[],
   }),
   actions: {
+    /** Appends a sample to the named series, if that series exists. */
+    logParam(description: string, timestamp: number, value: number | null) {
+      this.locParams.find(c => c.description === description)?.entryArray.push({ timestamp, value })
+    },
+
     successCallback(position: GeolocationPosition) {
-      this.speed = position.coords.speed * 3.6
-      this.altitude = position.coords.altitude
-      this.latitude = position.coords.latitude || 0
-      this.longitude = position.coords.longitude || 0
-      this.accuracy = position.coords.accuracy
-      this.heading = position.coords.heading
-      this.altitudeAccuracy = position.coords.altitudeAccuracy
-      // console.log(position.coords)
-      if (position.coords.speed != null)
-        this.locParams.find(c => c.description === 'speed').entryArray.push({ timestamp: position.timestamp, value: this.speed })
-      if (position.coords.altitude != null)
-        this.locParams.find(c => c.description === 'altitude').entryArray.push({ timestamp: position.timestamp, value: this.altitude })
-      this.locParams.find(c => c.description === 'latitude').entryArray.push({ timestamp: position.timestamp, value: this.latitude })
-      this.locParams.find(c => c.description === 'longitude').entryArray.push({ timestamp: position.timestamp, value: this.longitude })
-      this.locParams.find(c => c.description === 'accuracy').entryArray.push({ timestamp: position.timestamp, value: this.accuracy })
-      if (position.coords.heading != null)
-        this.locParams.find(c => c.description === 'heading').entryArray.push({ timestamp: position.timestamp, value: this.heading })
-      if (position.coords.altitudeAccuracy != null)
-        this.locParams.find(c => c.description === 'altitudeAccuracy').entryArray.push({ timestamp: position.timestamp, value: this.altitudeAccuracy })
+      const c = position.coords
+      this.speed = c.speed == null ? null : c.speed * 3.6
+      this.altitude = c.altitude
+      this.latitude = c.latitude || 0
+      this.longitude = c.longitude || 0
+      this.accuracy = c.accuracy
+      this.heading = c.heading
+      this.altitudeAccuracy = c.altitudeAccuracy
+      if (c.speed != null)
+        this.logParam('speed', position.timestamp, this.speed)
+      if (c.altitude != null)
+        this.logParam('altitude', position.timestamp, this.altitude)
+      this.logParam('latitude', position.timestamp, this.latitude)
+      this.logParam('longitude', position.timestamp, this.longitude)
+      this.logParam('accuracy', position.timestamp, this.accuracy)
+      if (c.heading != null)
+        this.logParam('heading', position.timestamp, this.heading)
+      if (c.altitudeAccuracy != null)
+        this.logParam('altitudeAccuracy', position.timestamp, this.altitudeAccuracy)
     },
 
     startWatchingSpeed() {
       try {
-        this.locParams = [] as LocParamImpl
-        this.locParams.push(new LocParamImpl('speed'))
-        this.locParams.push(new LocParamImpl('altitude'))
-        this.locParams.push(new LocParamImpl('latitude'))
-        this.locParams.push(new LocParamImpl('longitude'))
-        this.locParams.push(new LocParamImpl('accuracy'))
-        this.locParams.push(new LocParamImpl('heading'))
-        this.locParams.push(new LocParamImpl('altitudeAccuracy'))
+        this.locParams = [
+          'speed',
+          'altitude',
+          'latitude',
+          'longitude',
+          'accuracy',
+          'heading',
+          'altitudeAccuracy',
+        ].map(d => new LocParamImpl(d))
         this.watchId = navigator.geolocation.watchPosition(
           this.successCallback,
           (error: GeolocationPositionError) => {
@@ -56,7 +62,7 @@ export const useLocationStore = defineStore('locationStore', {
         )
       }
       catch (error) {
-        this.error = error
+        this.error = error as GeolocationPositionError
       }
     },
 
