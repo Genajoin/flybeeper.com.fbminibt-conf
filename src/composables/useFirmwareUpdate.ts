@@ -14,8 +14,9 @@ export function resolveSku(model: string | null | undefined): string | null {
   }
   if (norm.startsWith('fbminibt'))
     return 'fbminibt'
-  if (norm.startsWith('fbfanetvario'))
-    return 'fbfanetvario'
+  // 'fbfv' is already matched by the exact-SKU rule above; the prefix rules
+  // below must not swallow it — 'fbfanet' does not prefix 'fbfv', so order
+  // here is safe.
   if (norm.startsWith('fbfanet'))
     return 'fbfanet'
   if (norm.startsWith('fbtas'))

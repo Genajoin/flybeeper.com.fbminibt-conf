@@ -87,7 +87,7 @@ const UUIDS_BY_GROUP: Record<SettingsGroupKey, string[]> = (() => {
  * `settings.local` so the user's intent stays put across BLE connects.
  *
  * On a real device we still hide UUIDs the firmware doesn't expose (e.g.
- * fbfanetvario lacks hid_keyboard_off — showing it as an editable toggle
+ * fbfv lacks hid_keyboard_off — showing it as an editable toggle
  * would be a lie). Offline we surface every UUID in the group so demo
  * mode + URL-share import are exercise-able without hardware.
  *

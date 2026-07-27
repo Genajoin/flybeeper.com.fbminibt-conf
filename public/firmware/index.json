@@ -6,9 +6,11 @@
       "0.1.0"
     ]
   },
-  "fbfanetvario": {
-    "latest": null,
-    "files": []
+  "fbfv": {
+    "latest": "0.24.0",
+    "files": [
+      "0.24.0"
+    ]
   },
   "fbminibt": {
     "latest": "0.21.0",

@@ -73,7 +73,7 @@ export const CPF_UUID_TO_GROUP: Record<string, SettingsGroupKey> = {
   'd9eec180-344e-41e3-8c18-adf312dce8bb': 'power', // ble_never_sleep
   '9a560750-0bca-4d0c-a1fc-21bbc574d5a6': 'power', // power off timeout
 
-  // fanet (only present on FANET-equipped hardware — fbfanet, fbfanetvario)
+  // fanet (only present on FANET-equipped hardware — fbfanet, fbfv)
   '8d8e8809-4697-41fc-8ee2-ca0b999354ec': 'fanet', // radio frequency
   'f19422e2-982a-4954-9a75-b38927236a59': 'fanet', // radio bandwidth
   '108b855f-11cd-4bc5-adee-eafce49bc77a': 'fanet', // radio datarate
