@@ -76,6 +76,13 @@
 
   /* ── Elevation ─────────────────────────────────────────── */
   --ck-shadow: none;
+
+  /* ── Shell ─────────────────────────────────────────────── */
+  /* The app was built mobile-first and every surface ran edge to edge, so
+   * on a desktop monitor a line of body text stretched across 1900 px. The
+   * shell caps the readable column and centres it; below this width nothing
+   * changes, so phones keep the full-bleed cockpit look. */
+  --ck-shell-max: 1120px;
 }
 
 /* Desktop breakpoint — scale type up modestly */

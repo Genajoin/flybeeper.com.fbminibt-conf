@@ -32,7 +32,7 @@ home:
   link-settings: Einstellungen
   link-cockpit: Cockpit
   link-terminal: Terminal
-  link-update: Firmware-Update
+  link-update: Firmware aktualisieren
 
 not-found: Nicht gefunden
 
@@ -338,8 +338,28 @@ update:
   fallback-body: Safari unter iOS hat kein Web Bluetooth. Nutze den Browser Bluefy — dort funktioniert diese Seite wie gewohnt — oder lade die .bin herunter und installiere sie mit Nordics nRF Connect Device Manager.
   cta-ios: nRF · iOS ↗
   cta-android: nRF · Android ↗
-  cta-firmware: Firmware laden ↓
+  cta-firmware: Gerät aktualisieren →
+  cta-download: .bin laden ↓
+  page-title: 'Firmware-Update — {model}'
+  archive-eyebrow: Alle Builds · Dateien
+  archive-sub: Eine .bin wird nur für Safari unter iOS oder einen nativen MCUmgr-Client gebraucht. Das Update oben kommt ohne sie aus.
+  archive-download: ↓ .bin-Datei
+  archive-install: Installieren
+  archive-installed: Läuft gerade
+  wizard-connect: Verbinden
+  wizard-install: Installieren
+  wizard-done: Fertig
   flash-eyebrow: Update über Bluetooth
+  flash-connect-title: '{model} verbinden'
+  flash-connect-lead: 'FW {latest} ist veröffentlicht. Gerät verbinden — dann lässt sie sich direkt von dieser Seite installieren.'
+  flash-connect-cta: ● Gerät verbinden
+  flash-connect-other: Anderes Gerät verbinden
+  flash-other-device-title: Anderes Gerät verbunden
+  flash-install-title: 'FW {latest} installieren'
+  flash-uptodate-title: Bereits aktuell
+  flash-uptodate-hint: Um zu einem älteren Build zurückzukehren, in der Liste unten auf „Installieren“ daneben drücken.
+  flash-unsupported-title: Browser kann kein Bluetooth
+  flash-download-instead: 'Stattdessen FW {version} laden'
   flash-connect-first: Gerät verbinden, um die Firmware aus dem Browser zu installieren.
   flash-other-device: 'Verbunden ist {model}. Für diese Firmware ein {expected} verbinden.'
   flash-uptodate: 'Das Gerät läuft bereits auf FW {version}.'
@@ -366,7 +386,7 @@ update:
   flash-dismiss: Schließen
   flash-unsupported: Für das Update im Browser wird ein Browser mit Web Bluetooth benötigt — siehe Alternative unten.
   changelog: Änderungsprotokoll
-  firmware: Firmware
+  firmware: Firmware-Versionen
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.
   descr2: Ab fw Version 0.21 können Sie eine einfachere und intuitivere Anwendung zum Aktualisieren der Firmware verwenden
   update-first: Bitte zuerst die Firmware aktualisieren.
@@ -436,7 +456,7 @@ dashboard:
   hub-simulator: SIMULATOR
   hub-simulator-sub: Wert senden
   hub-firmware: FIRMWARE
-  hub-firmware-sub: 'fw {v}'
+  hub-firmware-sub: 'aktualisieren · fw {v}'
   hub-terminal: TERMINAL
   hub-terminal-sub: BLE-Log
   back-dashboard: ← DASHBOARD
@@ -462,7 +482,8 @@ device:
   firmware-eyebrow: FIRMWARE
   firmware-title: 'FW {latest}'
   firmware-body: '{count} öffentliche Builds — vollständige Historie unten.'
-  firmware-download: ↓ .bin herunterladen
+  firmware-update-cta: Gerät aktualisieren →
+  firmware-download: ↓ .bin-Datei laden
   firmware-all-builds: Alle Builds →
   firmware-empty: Noch kein öffentlicher Firmware-Build.
   changelog-title: Änderungsprotokoll

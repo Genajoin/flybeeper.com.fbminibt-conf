@@ -14,11 +14,12 @@ const device = computed(() => bySku(sku.value))
 const files = computed(() => fwIndex.filesFor(sku.value))
 const latest = computed(() => fwIndex.latestFor(sku.value))
 
-// The row-level CTA only appears for the latest build and only when THIS
-// device is on the other end of the link — flashing an FBFV image into an
-// FBTAS is exactly the mistake worth designing out.
-const canFlashLatest = computed(() =>
-  bt.isConnected && fwUpdate.sku.value === sku.value && !!latest.value && !isActive.value,
+// Installing a specific older build (a downgrade) is a real need, but it is
+// not what most visitors came for — the row button therefore appears only
+// while THIS device is on the link, and only for builds other than the one
+// the wizard above already offers.
+const canInstall = computed(() =>
+  bt.isConnected && fwUpdate.sku.value === sku.value && !isActive.value && phase.value !== 'done',
 )
 const breadcrumbTo = computed(() => (sku.value ? `/devices/${sku.value}` : '/devices'))
 const breadcrumbLabel = computed(() => {
@@ -39,7 +40,7 @@ function downloadHref(version: string) {
           {{ t('update.eyebrow') }}
         </CkEyebrow>
         <h1 class="fwlist__display">
-          {{ t('update.firmware-list-title', { model: device?.displayName || sku }) }}
+          {{ t('update.page-title', { model: device?.displayName || sku }) }}
         </h1>
       </template>
     </PageHeader>
@@ -55,23 +56,36 @@ function downloadHref(version: string) {
       </p>
     </div>
 
-    <ul v-else class="fwlist__items">
-      <li v-for="v in files" :key="v" class="fwlist__row">
-        <a class="fwlist__link" :href="downloadHref(v)" download>
-          <span class="fwlist__ver">{{ v }}</span>
-          <span v-if="v === latest" class="fwlist__badge">{{ t('update.latest-badge') }}</span>
-          <span class="fwlist__chev">↓</span>
-        </a>
-        <button
-          v-if="v === latest && canFlashLatest && phase !== 'done'"
-          class="fwlist__flash"
-          type="button"
-          @click="flash(sku, v)"
-        >
-          {{ t('update.flash-cta-short') }} ⟳
-        </button>
-      </li>
-    </ul>
+    <template v-else>
+      <div class="fwlist__archive-head">
+        <CkEyebrow color="var(--ck-dim)" block>
+          {{ t('update.archive-eyebrow') }}
+        </CkEyebrow>
+        <p class="fwlist__archive-sub">
+          {{ t('update.archive-sub') }}
+        </p>
+      </div>
+
+      <ul class="fwlist__items">
+        <li v-for="v in files" :key="v" class="fwlist__row">
+          <a class="fwlist__link" :href="downloadHref(v)" download>
+            <span class="fwlist__ver">{{ v }}</span>
+            <span v-if="v === latest" class="fwlist__badge">{{ t('update.latest-badge') }}</span>
+            <span class="fwlist__dl">{{ t('update.archive-download') }}</span>
+          </a>
+          <button
+            v-if="canInstall"
+            class="fwlist__flash"
+            :class="{ 'fwlist__flash--current': v === fwUpdate.current.value }"
+            type="button"
+            :disabled="v === fwUpdate.current.value"
+            @click="flash(sku, v)"
+          >
+            {{ v === fwUpdate.current.value ? t('update.archive-installed') : t('update.archive-install') }}
+          </button>
+        </li>
+      </ul>
+    </template>
   </section>
 </template>
 
@@ -92,11 +106,27 @@ function downloadHref(version: string) {
   text-transform: uppercase;
 }
 
+/* The archive is a secondary surface: a header explains that these are raw
+ * files, and the rows below are quiet so they stop reading as "the button". */
+.fwlist__archive-head {
+  padding: 22px 22px 10px;
+  background: var(--ck-bg);
+}
+
+.fwlist__archive-sub {
+  font-size: 12px;
+  color: var(--ck-dim);
+  line-height: 1.5;
+  margin: 6px 0 0;
+  max-width: 540px;
+}
+
 .fwlist__items {
   list-style: none;
   margin: 0;
   padding: 0;
   background: var(--ck-paper);
+  border-top: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
 .fwlist__row {
@@ -111,8 +141,8 @@ function downloadHref(version: string) {
 
 .fwlist__flash {
   padding: 0 18px;
-  background: var(--ck-signal);
-  color: var(--ck-on-signal);
+  background: var(--ck-paper);
+  color: var(--ck-ink);
   border: none;
   border-left: var(--ck-stroke-rule) solid var(--ck-ink);
   font-family: var(--ck-font-mono);
@@ -124,28 +154,45 @@ function downloadHref(version: string) {
   white-space: nowrap;
 }
 
+.fwlist__flash:hover {
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+}
+
 .fwlist__link {
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 14px;
-  padding: 16px 22px;
+  padding: 13px 22px;
   background: var(--ck-paper);
   color: var(--ck-ink);
   text-decoration: none;
   font-family: var(--ck-font-mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: var(--ck-track-data);
 }
 
 .fwlist__link:hover {
   background: var(--ck-bg-deep);
-  color: var(--ck-signal);
 }
 
 .fwlist__ver {
-  font-size: 16px;
+  font-size: 14px;
+}
+
+/* Spells out that the row downloads a file — an unlabelled ↓ chevron on a
+ * full-width row was being read as "install". */
+.fwlist__dl {
+  font-size: 10px;
+  color: var(--ck-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fwlist__link:hover .fwlist__dl {
+  color: var(--ck-signal);
 }
 
 .fwlist__badge {
@@ -156,11 +203,6 @@ function downloadHref(version: string) {
   font-weight: 700;
   letter-spacing: var(--ck-track-data);
   text-transform: uppercase;
-}
-
-.fwlist__chev {
-  font-family: var(--ck-font-mono);
-  font-weight: 700;
 }
 
 .fwlist__empty {

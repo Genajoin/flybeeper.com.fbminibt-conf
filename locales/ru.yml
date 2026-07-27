@@ -33,7 +33,7 @@ home:
   link-settings: Настройки
   link-cockpit: Кокпит
   link-terminal: Терминал
-  link-update: Прошивка
+  link-update: Обновить прошивку
 
 local:
   disconnected-banner: Устройство отключено — настройки сохранены локально, звук переключён на браузер.
@@ -184,7 +184,7 @@ dashboard:
   hub-simulator: СИМУЛЯТОР
   hub-simulator-sub: задать значение
   hub-firmware: ПРОШИВКА
-  hub-firmware-sub: 'fw {v}'
+  hub-firmware-sub: 'обновить · fw {v}'
   hub-terminal: ТЕРМИНАЛ
   hub-terminal-sub: лог BLE
   back-dashboard: ← ДАШБОРД
@@ -210,7 +210,8 @@ device:
   firmware-eyebrow: ПРОШИВКА
   firmware-title: 'FW {latest}'
   firmware-body: '{count} публичных сборок — полная история ниже.'
-  firmware-download: ↓ Скачать .bin
+  firmware-update-cta: Обновить прибор →
+  firmware-download: ↓ Скачать файл .bin
   firmware-all-builds: Все сборки →
   firmware-empty: Публичных сборок прошивки пока нет.
   changelog-title: История изменений
@@ -426,8 +427,28 @@ update:
   fallback-body: 'В Safari на iOS нет Web Bluetooth. Используйте браузер Bluefy — там эта страница работает как обычно, — либо скачайте .bin и залейте его через nRF Connect Device Manager от Nordic.'
   cta-ios: nRF · iOS ↗
   cta-android: nRF · Android ↗
-  cta-firmware: Скачать прошивку ↓
+  cta-firmware: Обновить прибор →
+  cta-download: Скачать .bin ↓
+  page-title: 'Обновление прошивки — {model}'
+  archive-eyebrow: Все сборки · файлы
+  archive-sub: Скачивать .bin нужно только для Safari на iOS или для нативного MCUmgr-клиента. Обновлению выше эти файлы не требуются.
+  archive-download: ↓ файл .bin
+  archive-install: Установить
+  archive-installed: Стоит сейчас
+  wizard-connect: Подключить
+  wizard-install: Установить
+  wizard-done: Готово
   flash-eyebrow: Обновление по Bluetooth
+  flash-connect-title: 'Подключите {model}'
+  flash-connect-lead: 'Опубликована FW {latest}. Подключите прибор — и её можно поставить прямо с этой страницы.'
+  flash-connect-cta: ● Подключить прибор
+  flash-connect-other: Подключить другой прибор
+  flash-other-device-title: Подключён другой прибор
+  flash-install-title: 'Установить FW {latest}'
+  flash-uptodate-title: Обновление не требуется
+  flash-uptodate-hint: Чтобы вернуться на более раннюю сборку, нажмите «Установить» рядом с ней в списке ниже.
+  flash-unsupported-title: Браузер не умеет Bluetooth
+  flash-download-instead: 'Скачать FW {version} файлом'
   flash-connect-first: Подключите прибор, чтобы прошить его из браузера.
   flash-other-device: 'Подключён {model}. Для этой прошивки подключите {expected}.'
   flash-uptodate: 'На приборе уже FW {version}.'
@@ -454,7 +475,7 @@ update:
   flash-dismiss: Закрыть
   flash-unsupported: Для обновления из браузера нужен браузер с Web Bluetooth — см. запасной путь ниже.
   changelog: Протокол изменений
-  firmware: Прошивка
+  firmware: Версии прошивки
   descr: лучшее решение для обновления прошивки. Установите и запустите приложение. На вкладке `Scan` найдите устройство и нажмите кнопку `connect`. На открывшейся вкладке, рядом с кнопкой `disconnect`, нажмите на значок `DFU`. Выберите ранее загруженный файл прошивки `app_update.bin` в файловой системе. Выберите `Test and Confirm` и нажмите `Ok`. Через 15 секунд файл будет передан, проверен, и устройство перезагрузится. Батарея должна быть новой.
   descr2: Начиная с версии прошивки 0.21 вы можете использовать более простое и интуитивно понятное приложение для обновления прошивки
   update-first: Пожалуйста сначала обновите прошивку

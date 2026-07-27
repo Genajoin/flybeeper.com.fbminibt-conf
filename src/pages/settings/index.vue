@@ -4,6 +4,7 @@ import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSetti
 
 const { t } = useI18n()
 const bt = useBluetoothStore()
+const fwUpdate = useFirmwareUpdate()
 const { canInstall, install } = useInstallPrompt()
 
 const fw = computed(() => (bt.dis.firmwareRevisionString.value as string | null) ?? '—')
@@ -44,7 +45,7 @@ const rows = computed<Row[]>(() => {
     { to: '/settings/tas', label: t('sett.group-tas'), sub: t('sett.group-tas-desc'), conditionalGroup: 'tas' },
     { to: '/settings/power', label: t('dashboard.hub-power'), sub: t('dashboard.hub-power-sub'), conditionalGroup: 'power' },
     { to: '/settings/uart', label: t('dashboard.hub-uart'), sub: t('dashboard.hub-uart-sub'), conditionalGroup: 'uart' },
-    { to: '/update', label: t('dashboard.hub-firmware'), sub: t('dashboard.hub-firmware-sub', { v: fw.value }) },
+    { to: fwUpdate.updatePath.value, label: t('dashboard.hub-firmware'), sub: t('dashboard.hub-firmware-sub', { v: fw.value }) },
     { to: '/terminal', label: t('dashboard.hub-terminal'), sub: t('dashboard.hub-terminal-sub') },
   ].filter(r => !r.conditionalGroup || presentGroups.value.has(r.conditionalGroup))
   if (canInstall.value) {

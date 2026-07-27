@@ -61,7 +61,7 @@ const StlViewer = defineAsyncComponent(() => import('~/components/StlComponent.v
 
     <div class="device__actions">
       <RouterLink class="device__btn device__btn--signal" :to="firmwareListPath">
-        {{ t('update.firmware') }} ↓
+        {{ t('device.firmware-update-cta') }}
       </RouterLink>
       <a v-if="device.marketUrl" class="device__btn" :href="device.marketUrl" target="_blank" rel="noopener">
         {{ t('about.link-market') }} ↗
@@ -80,16 +80,16 @@ const StlViewer = defineAsyncComponent(() => import('~/components/StlComponent.v
           {{ t('device.firmware-body', { count: fwCount }) }}
         </p>
         <div class="device__fw-ctas">
+          <RouterLink class="device__btn device__btn--signal" :to="firmwareListPath">
+            {{ t('device.firmware-update-cta') }}
+          </RouterLink>
           <a
-            class="device__btn device__btn--signal"
+            class="device__btn"
             :href="fwDownloadHref"
             :download="`app_update.${latestFw}.bin`"
           >
             {{ t('device.firmware-download') }}
           </a>
-          <RouterLink class="device__btn" :to="firmwareListPath">
-            {{ t('device.firmware-all-builds') }}
-          </RouterLink>
         </div>
       </template>
       <p v-else class="device__fw-empty-line">

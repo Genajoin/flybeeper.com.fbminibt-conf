@@ -20,3 +20,40 @@ body {
 html.dark {
   color-scheme: dark;
 }
+
+/**
+ * Desktop shell.
+ *
+ * Every layout wraps its banners + page + footer in this so the whole app
+ * reads as one centred column instead of a full-bleed stripe on a wide
+ * monitor. The rules only bite past the cap, so the mobile layout — where
+ * edge-to-edge is the point — is untouched.
+ */
+.ck-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100dvh;
+  max-width: var(--ck-shell-max);
+  margin-inline: auto;
+  background: var(--ck-bg);
+}
+
+/* Keep the footer at the bottom on short pages instead of leaving it
+ * floating halfway up a tall desktop viewport. */
+.ck-shell > main {
+  flex: 1 0 auto;
+}
+
+@media (min-width: 1120px) {
+  body {
+    /* A hair darker than the paper column, so the shell edge is legible
+     * without drawing a hard frame around the whole app. */
+    background: var(--ck-bg-deep);
+  }
+
+  .ck-shell {
+    border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+    border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  }
+}

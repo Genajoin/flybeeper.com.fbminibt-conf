@@ -221,7 +221,7 @@ const banner = computed(() => {
           </div>
           <span>→</span>
         </RouterLink>
-        <RouterLink to="/update" class="dash__hub-row">
+        <RouterLink :to="fwUpdate.updatePath.value" class="dash__hub-row">
           <div>
             <div class="dash__hub-label">
               {{ t('dashboard.hub-firmware') }}

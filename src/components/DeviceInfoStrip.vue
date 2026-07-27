@@ -111,7 +111,7 @@ const hasAny = computed(() => !!(name.value || fw.value || batText.value))
     <RouterLink
       v-if="fw && fwUpdate.hasUpdate.value"
       class="dev__cell dev__cell--update"
-      to="/update"
+      :to="fwUpdate.updatePath.value"
       :title="t('dashboard.fw-update-warn')"
     >
       ⚠ FW {{ fwUpdate.current.value || fw }} → {{ fwUpdate.latest.value }}
