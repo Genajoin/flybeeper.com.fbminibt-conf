@@ -89,7 +89,7 @@ Characteristics UUID for service `0x1819` LNS
 
 | Name              | UUID                                 | Size  | Exponent | Unit |
 | ----------------- | ------------------------------------ | ----- | -------- | ---- |
-| Vario by pressure | b4df8385-d9d6-4037-b2ed-2e14e1f4fa27 | INT16 | -2       | m/s  |
+| Vario by pressure | b4df8385-16d2-4037-b2ed-2e14e1f4fa27 | INT16 | -2       | m/s  |
 
 Characteristics UUID of the service `0x1815` AIOS. The device has 4 buttons. This is defined in descriptor 0x2909 Number of Digitals. Each two bits represent the state of one button starting from the least significant bit. 0b00000001 means button 1 is pressed; if all buttons are pressed simultaneously, the value will be 0b01010101. This means the entire array fits in one byte. Only the states 0b00 (released) and 0b01 (pressed) are used. For more information about the states, see the Automation IO Service 1.0 Specification (section 3.1.1). Notifications are sent on change, meaning a separate notification for pressing and releasing a button. This allows for detecting long clicks, double clicks, and simultaneous holding of multiple buttons.
 

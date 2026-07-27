@@ -2,7 +2,7 @@
 
 Browser-based Web Bluetooth configurator and demo cockpit for the [**FlyBeeper**](https://alpisto.eu/flybeeper) line of Bluetooth-LE wearables for paragliding and hang-gliding pilots — variometers, FANET radios, TAS sensors and remote controls. Pair the device, tweak audio curves and thresholds, preview the buzzer in the browser, save back to the device.
 
-Live at **[fbminibt-conf.flybeeper.com](https://fbminibt-conf.flybeeper.com)** — install as a PWA on Android / desktop, or use directly in the browser. No accounts, no cloud, settings stay on the device.
+Live at **[config.flybeeper.com](https://config.flybeeper.com)** — install as a PWA on Android / desktop, or use directly in the browser. No accounts, no cloud, settings stay on the device.
 
 Released under **MIT** as a reference implementation and community contribution to the paragliding hardware ecosystem.
 
