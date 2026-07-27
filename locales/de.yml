@@ -317,26 +317,54 @@ audio:
 update:
   how-to: Wie man aktualisiert
   eyebrow: Firmware-Update
-  title-line1: Nutze nRF Connect.
-  title-line2: Es funktioniert einfach.
-  intro: 'Wir liefern kein In-Browser-OTA. Nordics kostenloses nRF Connect for Mobile ist das Standard-Tool für nRF52-Firmware-Updates — erprobt, mit Recovery, auf beiden Plattformen verfügbar. Nimm es.'
-  callout-eyebrow: Warum nicht im Browser?
-  callout-body: 'Ein fehlgeschlagenes OTA kann ein Vario unbrauchbar machen. Native MCUmgr-Clients beherrschen Retry, Recovery und Signaturprüfung. Eine Web-App über instabiles BLE kann das nicht sicher. Solange SMP-over-WebBLE keinen Recovery-Pfad hat — nimm das native Tool.'
-  step-1-title: nRF Connect Mobile installieren
-  step-1-desc: Kostenlos, offiziell von Nordic. iOS App Store + Google Play. Ohne Account.
-  step-2-title: mini BT einschalten
-  step-2-desc: Lange drücken, bis die LED orange atmet.
-  step-3-title: Device Manager öffnen
-  step-3-desc: Wähle dein mini BT aus der Scan-Liste. Die Device-Manager-Karte erscheint.
-  step-4-title: Firmware Upgrade tippen
-  step-4-desc: Wähle die .bin-Datei von flybeeper.com/firmware. Auf Start tippen.
-  step-5-title: 60–90 Sekunden warten
-  step-5-desc: Fortschrittsbalken läuft auf 100%. Gerät bootet einmal neu. nRF Connect zeigt „complete".
-  step-6-title: Konfigurator neu öffnen
-  step-6-desc: Erneut verbinden und prüfen, dass die Firmware-Version in der Statuszeile passt.
+  title-line1: Update direkt im Browser.
+  title-line2: Ohne zusätzliche App.
+  intro: 'Die Firmware wird direkt von dieser Seite installiert — über die bereits offene Bluetooth-Verbindung. Gerät verbinden, Firmware-Liste öffnen, „Aktualisieren" drücken. Das Image ist signiert, wird testweise installiert und automatisch zurückgerollt, wenn es nicht startet.'
+  callout-eyebrow: Warum das sicher ist
+  callout-body: 'Der Bootloader prüft die RSA-Signatur jedes Images — fremde Firmware startet gar nicht erst. Der neue Build wird im Testmodus installiert und bestätigt sich erst nach erfolgreichem Start: ein fehlgeschlagenes Update kehrt von selbst zur vorherigen Version zurück.'
+  step-1-title: Gerät einschalten
+  step-1-desc: Taste halten, bis die Melodie spielt. Gerät nahe am Telefon oder Laptop halten.
+  step-2-title: Aus dieser App verbinden
+  step-2-desc: „Verbinden" drücken und das Gerät im Browser-Dialog wählen. Kein Koppeln in den Systemeinstellungen nötig.
+  step-3-title: Firmware-Liste öffnen
+  step-3-desc: „Geräte" → dein Gerät → „Firmware", oder das Banner „Update verfügbar" in der Kopfzeile.
+  step-4-title: „Aktualisieren" drücken
+  step-4-desc: Der neueste veröffentlichte Build wird über die offene Verbindung übertragen. Der Fortschritt läuft in Prozent.
+  step-5-title: Neustart abwarten
+  step-5-desc: Die Übertragung dauert einige Zehn Sekunden, danach startet das Gerät neu und die App verbindet sich erneut, um zu prüfen, was gebootet ist.
+  step-6-title: Version prüfen
+  step-6-desc: In der Statuszeile erscheint die neue Firmware-Version — sobald das Gerät das Image bestätigt hat.
+  fallback-eyebrow: Alternative — Safari unter iOS
+  fallback-body: Safari unter iOS hat kein Web Bluetooth. Nutze den Browser Bluefy — dort funktioniert diese Seite wie gewohnt — oder lade die .bin herunter und installiere sie mit Nordics nRF Connect Device Manager.
   cta-ios: nRF · iOS ↗
   cta-android: nRF · Android ↗
   cta-firmware: Firmware laden ↓
+  flash-eyebrow: Update über Bluetooth
+  flash-connect-first: Gerät verbinden, um die Firmware aus dem Browser zu installieren.
+  flash-other-device: 'Verbunden ist {model}. Für diese Firmware ein {expected} verbinden.'
+  flash-uptodate: 'Das Gerät läuft bereits auf FW {version}.'
+  flash-available: 'Das Gerät läuft auf FW {current}. FW {latest} ist installationsbereit.'
+  flash-ready: 'FW {latest} ist installationsbereit.'
+  flash-cta: 'Auf {version} aktualisieren'
+  flash-cta-short: Aktualisieren
+  flash-preparing: Image und Slot-Zustand werden gelesen…
+  flash-uploading: Firmware wird übertragen
+  flash-marking: Image wird für den nächsten Start markiert…
+  flash-rebooting: Gerät wird neu gestartet…
+  flash-verifying: Es wird geprüft, was gebootet ist…
+  flash-keep-close: Gerät eingeschaltet und in der Nähe lassen. Diesen Tab nicht schließen.
+  flash-cancel: Abbrechen
+  flash-awaiting-title: Zum Abschluss neu verbinden
+  flash-awaiting-body: Das Gerät hat neu gestartet. Verbinde erneut, damit die App den Start der neuen Firmware bestätigen kann.
+  flash-reconnect-cta: Verbinden und prüfen
+  flash-done-title: Firmware installiert
+  flash-done-body: 'Das Gerät läuft auf FW {version} und hat das Image bestätigt.'
+  flash-error-title: Update fehlgeschlagen
+  flash-error-rc: 'Fehlercode des Geräts: {code}.'
+  flash-error-security: Der Zugriff auf dieses Gerät wurde der Seite erteilt, bevor es Updates im Browser gab. Trenne die Verbindung und verbinde erneut über die Geräteauswahl, um Zugriff auf den Update-Dienst zu gewähren.
+  flash-retry: Erneut versuchen
+  flash-dismiss: Schließen
+  flash-unsupported: Für das Update im Browser wird ein Browser mit Web Bluetooth benötigt — siehe Alternative unten.
   changelog: Änderungsprotokoll
   firmware: Firmware
   descr: ist die beste Lösung zum Aktualisieren der Firmware. Installieren und starten Sie die Anwendung. Auf der Registerkarte `Scan` suchen Sie nach einem Gerät und klicken Sie auf die Schaltfläche `connect`. Auf der geöffneten Registerkarte, neben der Schaltfläche `disconnect`, klicken Sie auf das Symbol `DFU`. Wählen Sie die zuvor heruntergeladene Firmware-Datei `app_update.bin` im Dateisystem aus. Wählen Sie `Test and Confirm` und drücken Sie `Ok`. Nach 15 Sekunden wird die Datei übertragen, überprüft und das Gerät wird neu gestartet. Der Akku muss voll sein.

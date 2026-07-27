@@ -15,8 +15,11 @@ const { t } = useI18n()
 // "CONNECTING… / READING…" progress. If the attempt fails, isConnecting /
 // isFetching drop back to false while still !isConnected, so the banner
 // reappears on its own.
+// isFlashing: a firmware update ends with a deliberate reboot, so the
+// disconnect it causes is part of the flow — the update UI owns that state.
 const show = computed(() =>
-  bt.hasConnectedThisSession && !bt.isConnected && !bt.isConnecting && !bt.isFetching && !dismissed.value,
+  bt.hasConnectedThisSession && !bt.isConnected && !bt.isConnecting && !bt.isFetching
+  && !bt.isFlashing && !dismissed.value,
 )
 
 watch(() => bt.isConnected, (now) => {

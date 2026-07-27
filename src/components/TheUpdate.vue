@@ -77,6 +77,15 @@ const showAvailable = computed(() => {
       </div>
     </div>
 
+    <div class="upd__callout">
+      <CkEyebrow color="var(--ck-dim)">
+        {{ t('update.fallback-eyebrow') }}
+      </CkEyebrow>
+      <p class="upd__callout-body">
+        {{ t('update.fallback-body') }}
+      </p>
+    </div>
+
     <div class="upd__ctas">
       <a class="upd__cta" href="https://apps.apple.com/app/nrf-connect-for-mobile/id1054362403" target="_blank" rel="noopener">{{ t('update.cta-ios') }}</a>
       <a class="upd__cta" href="https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp" target="_blank" rel="noopener">{{ t('update.cta-android') }}</a>

@@ -3,13 +3,23 @@ import { computed } from 'vue'
 
 const route = useRoute()
 const { t } = useI18n()
+const bt = useBluetoothStore()
 const { bySku } = useDeviceCatalog()
 const fwIndex = useFirmwareIndex()
+const fwUpdate = useFirmwareUpdate()
+const { phase, isActive, flash } = useFirmwareFlash()
 
 const sku = computed(() => String(route.params.sku || ''))
 const device = computed(() => bySku(sku.value))
 const files = computed(() => fwIndex.filesFor(sku.value))
 const latest = computed(() => fwIndex.latestFor(sku.value))
+
+// The row-level CTA only appears for the latest build and only when THIS
+// device is on the other end of the link — flashing an FBFV image into an
+// FBTAS is exactly the mistake worth designing out.
+const canFlashLatest = computed(() =>
+  bt.isConnected && fwUpdate.sku.value === sku.value && !!latest.value && !isActive.value,
+)
 const breadcrumbTo = computed(() => (sku.value ? `/devices/${sku.value}` : '/devices'))
 const breadcrumbLabel = computed(() => {
   const name = device.value?.displayName || sku.value
@@ -34,6 +44,8 @@ function downloadHref(version: string) {
       </template>
     </PageHeader>
 
+    <FirmwareFlashPanel v-if="files.length" :sku="sku" :latest="latest" />
+
     <div v-if="files.length === 0" class="fwlist__empty">
       <CkEyebrow color="var(--ck-dim)" block>
         {{ t('update.no-public-firmware-eyebrow') }}
@@ -50,6 +62,14 @@ function downloadHref(version: string) {
           <span v-if="v === latest" class="fwlist__badge">{{ t('update.latest-badge') }}</span>
           <span class="fwlist__chev">↓</span>
         </a>
+        <button
+          v-if="v === latest && canFlashLatest && phase !== 'done'"
+          class="fwlist__flash"
+          type="button"
+          @click="flash(sku, v)"
+        >
+          {{ t('update.flash-cta-short') }} ⟳
+        </button>
       </li>
     </ul>
   </section>
@@ -80,7 +100,28 @@ function downloadHref(version: string) {
 }
 
 .fwlist__row {
+  display: flex;
+  align-items: stretch;
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.fwlist__row > .fwlist__link {
+  flex: 1;
+}
+
+.fwlist__flash {
+  padding: 0 18px;
+  background: var(--ck-signal);
+  color: var(--ck-on-signal);
+  border: none;
+  border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .fwlist__link {

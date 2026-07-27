@@ -408,26 +408,54 @@ audio:
 update:
   how-to: How to update
   eyebrow: Firmware update
-  title-line1: Use nRF Connect.
-  title-line2: It just works.
-  intro: 'We don''t ship in-browser OTA. Nordic''s free nRF Connect for Mobile is the industry-standard tool for nRF52 firmware updates — battle-tested, recoverable, supported on both platforms. Use it.'
-  callout-eyebrow: Why not in-browser?
-  callout-body: 'A failed OTA on a vario can brick it. Native MCUmgr clients handle retry, error recovery and signature validation. A web app over flaky BLE can''t match that safely. Until SMP-over-WebBLE has a recovery path — use the native tool.'
-  step-1-title: Install nRF Connect Mobile
-  step-1-desc: Free, Nordic-official. iOS App Store + Google Play. Works without an account.
-  step-2-title: Power on your mini BT
-  step-2-desc: Long-press until the LED breathes signal-orange.
-  step-3-title: Open Device Manager tab
-  step-3-desc: Select your mini BT from the scan list. The Device Manager card pops up.
-  step-4-title: Tap Firmware Upgrade
-  step-4-desc: Choose the .bin file you downloaded from flybeeper.com/firmware. Tap Start.
-  step-5-title: Wait 60–90 seconds
-  step-5-desc: Progress bar runs to 100%. The device reboots once. nRF Connect shows "complete".
-  step-6-title: Reopen this configurator
-  step-6-desc: Reconnect to verify the firmware version in the status bar matches.
+  title-line1: Update from the browser.
+  title-line2: No app needed.
+  intro: 'Firmware is installed straight from this page over the Bluetooth connection you already have. Connect the device, open its firmware list and press Update — the image is signed, installed on trial and rolled back automatically if it fails to start.'
+  callout-eyebrow: What makes it safe
+  callout-body: 'The bootloader checks the RSA signature of every image, so nothing but genuine FlyBeeper firmware runs. The new build is installed in test mode and confirms itself only after it has booted — a failed update reverts to the previous firmware on its own.'
+  step-1-title: Power on the device
+  step-1-desc: Hold the button until the melody plays. Keep it close to the phone or laptop.
+  step-2-title: Connect from this app
+  step-2-desc: Press Connect and pick your device from the browser''s chooser. No pairing in system settings.
+  step-3-title: Open the firmware list
+  step-3-desc: Devices → your device → Firmware, or the "update available" banner in the header.
+  step-4-title: Press Update
+  step-4-desc: The latest published build is installed over the open connection. Progress runs in percent.
+  step-5-title: Wait for the reboot
+  step-5-desc: The upload takes tens of seconds, then the device restarts and the app reconnects to check what booted.
+  step-6-title: Check the version
+  step-6-desc: The status bar shows the new firmware revision once the device has confirmed the image.
+  fallback-eyebrow: Fallback — iOS Safari
+  fallback-body: 'Safari on iOS has no Web Bluetooth at all. Use the Bluefy browser, where this page works as usual — or download the .bin and install it with Nordic''s nRF Connect Device Manager.'
   cta-ios: nRF · iOS ↗
   cta-android: nRF · Android ↗
   cta-firmware: Get firmware ↓
+  flash-eyebrow: Update over Bluetooth
+  flash-connect-first: Connect the device to install firmware from the browser.
+  flash-other-device: 'Connected device is {model}. Connect a {expected} to install this firmware.'
+  flash-uptodate: 'The device already runs FW {version}.'
+  flash-available: 'The device runs FW {current}. FW {latest} is ready to install.'
+  flash-ready: 'FW {latest} is ready to install.'
+  flash-cta: 'Update to {version}'
+  flash-cta-short: Update
+  flash-preparing: Reading the image and the device slots…
+  flash-uploading: Uploading firmware
+  flash-marking: Marking the image for the next boot…
+  flash-rebooting: Rebooting the device…
+  flash-verifying: Checking what actually booted…
+  flash-keep-close: Keep the device powered and close by. Do not close this tab.
+  flash-cancel: Cancel
+  flash-awaiting-title: Reconnect to finish
+  flash-awaiting-body: The device rebooted. Reconnect so the app can confirm the new firmware started.
+  flash-reconnect-cta: Reconnect and check
+  flash-done-title: Firmware installed
+  flash-done-body: 'The device runs FW {version} and confirmed the image.'
+  flash-error-title: Update failed
+  flash-error-rc: 'Device error code {code}.'
+  flash-error-security: This device was granted to the site before in-browser updates existed. Disconnect and connect again through the device chooser to grant access to the update service.
+  flash-retry: Try again
+  flash-dismiss: Close
+  flash-unsupported: In-browser update needs a browser with Web Bluetooth — see the fallback below.
   changelog: Changelog
   firmware: Firmware
   descr: is the best solution to use for update firmware. Install and launch the application. On the tab `Scan`, look for a device and click `connect` button. On the tab that opens, close to the button `disconnect`, click on the icon `DFU`. Select the previously downloaded firmware file `app_update.bin` in the file system. Select the `Test and Confirm` and press `Ok`. After 15 seconds the file will be transferred, verified and the device will reboot. Battery mist be full.

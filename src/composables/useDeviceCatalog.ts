@@ -83,7 +83,7 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     stlPath: '/fbfv-model.stl',
     // Enclosure is 28 × 92 × 16 mm, centred in X/Y — this camera looks at the
     // solar-panel face from slightly above and off to one side.
-    stlPos: { x: 55, y: -35, z: 150 },
+    stlPos: { x: 45, y: -28, z: 112 },
     iconName: 'satellite',
   },
 ]

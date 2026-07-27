@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import log from 'loglevel'
+import { SMP_CHARACTERISTIC_UUID, SMP_SERVICE_UUID } from '~/lib/smp'
 import { BleCharacteristicImpl, normalizeUuid } from '~/utils/BleCharacteristic'
 import { useSettingsStore } from '~/stores/settings'
 import type { SettingsLocal } from '~/stores/settings'
@@ -72,6 +73,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     fetchTotal: 0,
     isDisconnecting: false,
     isSubscribed: false,
+    /**
+     * A firmware flash is in flight on this connection. The device reboots as
+     * the last step, so the disconnect it produces is expected — banners that
+     * normally shout "you lost the device" stay quiet while this is true.
+     */
+    isFlashing: false,
     /**
      * True once this session has reached a successful connect. Used by
      * DisconnectBanner to distinguish "you just lost the device" from
@@ -326,6 +333,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           'device_information',
           'automation_io',
           '904baf04-5814-11ee-8c99-0242ac120000',
+          // SMP (MCUmgr) — firmware update over the same connection. It must be
+          // listed HERE, at pairing time: Chrome scopes GATT access to the
+          // services granted by requestDevice, and a device paired before this
+          // line existed will refuse getPrimaryService(SMP) until re-picked.
+          SMP_SERVICE_UUID,
         ],
       })
         .then(device => this.connectToDevice(device))
@@ -464,6 +476,24 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       // Swap back to demo slot so the panels (still mounted via virtual
       // chars) show a sane offline state instead of stale device data.
       void useSettingsStore().loadSlot('__demo__')
+    },
+
+    /**
+     * Resolve the SMP (MCUmgr) characteristic on the LIVE connection.
+     *
+     * Deliberately not part of the connect-time discovery: the SMP service has
+     * no CPF descriptors and nothing to show in the settings / terminal UI, so
+     * wrapping it in a BleCharacteristicImpl would only pollute those lists.
+     * Firmware flashing resolves it on demand and reuses the open link — the
+     * device accepts a single connection and plays a melody on every connect,
+     * so opening a second one just to flash is both impossible and rude.
+     */
+    async getSmpCharacteristic(): Promise<BluetoothRemoteGATTCharacteristic> {
+      const gatt = this.device?.gatt
+      if (!this.isConnected || !gatt?.connected)
+        throw new Error('Device is not connected')
+      const service = await gatt.getPrimaryService(SMP_SERVICE_UUID)
+      return await service.getCharacteristic(SMP_CHARACTERISTIC_UUID)
     },
 
     /**
