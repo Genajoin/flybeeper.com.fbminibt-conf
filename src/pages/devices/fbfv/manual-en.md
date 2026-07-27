@@ -6,6 +6,18 @@
 
 The device combines two functions: a FANET radio transceiver and a sensitive variometer with sound. It sends and receives FANET packets without an internet connection, sounds climb and sink through its own piezo buzzer, and at the same time serves as a source of barometric altitude for flight apps on your phone. It runs on a built-in battery topped up by a solar panel.
 
+### What is in the box
+
+The device, a safety cord and a quick-start card. A `USB Type-C` cable and a mount are not included: any cable will do, and everyone picks the mounting to suit their own harness.
+
+The cord goes through the hole in the upper part of the enclosure and ties to your harness or cockpit — the device is carried on the outside, and a leash costs less than a new unit.
+
+### Serial number
+
+The serial number of your unit is the `FBFV.XXXX` on the label, where `XXXX` is unique to your device. The same number is what the device broadcasts in the Bluetooth device list: the name you pick in the app _is_ its serial number. You do not have to hunt for the label — just switch the device on and see what it calls itself on the air.
+
+Quote this number whenever you contact support or claim the warranty.
+
 ### Controls
 
 The button, the LED and the `USB Type-C` connector sit on the bottom end of the device. Next to the LED there is a small hole: sound comes out of it and air reaches the barometer through it. There is a single button — every mode is chosen by how long you hold it.
@@ -44,6 +56,18 @@ The device charges two ways.
 From the `USB Type-C` connector — with an ordinary charger or a computer port. Chargers that only speak Power Delivery will not work.
 
 From the solar panel — continuous trickle charging in daylight. In a normal flying scenario the panel offsets the consumption and noticeably extends the time between mains charges.
+
+### Battery, storage and transport
+
+Inside there is a lithium-polymer cell, with the usual requirements that come with this chemistry.
+
+Charge the device while somebody is around, and do not leave it charging overnight. Keep it below 60 °C: a closed car in the sun and a dashboard behind a windscreen are exactly that case. Do not charge it in freezing weather — lithium must not be charged below 0 °C, let the device warm up first. Do not open the enclosure, and do not puncture or crush the cell: the `USB Type-C` connector is the only service point.
+
+If the enclosure swells, the device gets hot while charging or you smell something, stop the charge, move it away from anything flammable and write to us.
+
+For storage and transport the device has to be **switched off completely** — a long press with the `Bluetooth never sleep` setting off; in that mode it draws microamps. For air travel this is also what the rules require: devices with a lithium battery travel in the cabin and switched off, never in checked baggage. The cell is about 900 mAh (roughly 3.4 Wh), far below any threshold, so no airline approval is needed.
+
+Long storage is easier on a half-charged cell. Top the device up every few months, or simply let it sit in daylight — a deep discharge shortens the battery's life. There is no need to run it flat "for calibration".
 
 ### Connecting and disconnecting over Bluetooth
 
@@ -173,6 +197,16 @@ Behaviour and power settings:
 `Bluetooth never sleep` — chooses what a long press does: off means a full power-off, on means "go silent but stay reachable" (see "Controls").
 
 `Power off timeout` — set in seconds, 0 disables auto power-off.
+
+### Support and warranty
+
+Questions, remarks and anything that went wrong — the chat at [t.me/flybeeperchat](https://t.me/flybeeperchat) or an email to [info@alpisto.eu](mailto:info@alpisto.eu). Firmware news lives in the [t.me/flybeeper](https://t.me/flybeeper) channel. Quote the serial number `FBFV.XXXX` and the firmware version — both are visible in the `Update firmware` section of the configurator.
+
+The warranty is two years under Slovenian and European law: free repair or replacement. Returns — 14 days from delivery for any reason, with the money back within 14 days of the device arriving to us. Either through [market.flybeeper.com](https://market.flybeeper.com) or by the same email.
+
+The warranty does not cover mechanical damage, an opened enclosure, or the consequences of charging the device in some improvised way. Updating the firmware is entirely fine and does not affect the warranty — the bootloader itself provides the rollback to the previous version.
+
+Sold by Alpisto d.o.o., Slovenia.
 
 <route lang="yaml">
 meta:
