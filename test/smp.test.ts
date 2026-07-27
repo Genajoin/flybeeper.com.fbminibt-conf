@@ -136,8 +136,8 @@ function fakeCharacteristic(respond: (req: ReturnType<typeof decodeMessage>) => 
       if (i >= 0)
         listeners.splice(i, 1)
     },
-    startNotifications: vi.fn(async () => characteristic),
-    stopNotifications: vi.fn(async () => characteristic),
+    startNotifications: vi.fn(async (): Promise<any> => characteristic),
+    stopNotifications: vi.fn(async (): Promise<any> => characteristic),
     writeValueWithoutResponse: vi.fn(async (chunk: BufferSource) => {
       const bytes = chunk instanceof ArrayBuffer ? new Uint8Array(chunk) : new Uint8Array((chunk as ArrayBufferView).buffer)
       const merged = new Uint8Array(rx.length + bytes.length)

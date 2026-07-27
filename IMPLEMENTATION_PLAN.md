@@ -145,7 +145,7 @@ Pending receipt of visual mockups (FlyBeeper own brand, NOT alpisto brutalist).
 | 5   | Saved devices | Own registry + auto-scan + per-device auto-connect toggle + click-to-retry fallback                                          |
 | 6   | Branding      | Own FlyBeeper visual system (NOT alpisto brutalist)                                                                          |
 | 7   | Pairing       | 2-screen wizard (explainer → connect), one-time per user                                                                     |
-| 8   | Curve editor  | Draggable SVG chart + climbrate simulator slider + Demo ▶                                                                   |
+| 8   | Curve editor  | Draggable SVG chart + climbrate simulator slider + Demo ▶                                                                    |
 | 9   | Multi-device  | mini BT focused UI; architecture supports PS1/RC4/TAS via config + UI variants                                               |
 | 10  | PWA           | Manifest + SW kept. Silent update + unobtrusive banner. Contextual install (toast + footer icon).                            |
 | ★   | Local-first   | Settings = first-class objects in IndexedDB. Disconnect ≠ data loss. Web Audio fallback. Source toggle [Device/Browser/Off]. |

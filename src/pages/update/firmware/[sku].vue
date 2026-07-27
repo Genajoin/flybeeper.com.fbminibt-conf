@@ -9,7 +9,7 @@ const fwIndex = useFirmwareIndex()
 const fwUpdate = useFirmwareUpdate()
 const { phase, isActive, flash } = useFirmwareFlash()
 
-const sku = computed(() => String(route.params.sku || ''))
+const sku = computed(() => String(('sku' in route.params ? route.params.sku : '') || ''))
 const device = computed(() => bySku(sku.value))
 const files = computed(() => fwIndex.filesFor(sku.value))
 const latest = computed(() => fwIndex.latestFor(sku.value))

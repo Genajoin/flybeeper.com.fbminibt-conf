@@ -1,4 +1,5 @@
 import path from 'node:path'
+import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import generateSitemap from 'vite-ssg-sitemap'
@@ -6,7 +7,6 @@ import Layouts from 'vite-plugin-vue-layouts'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Markdown from 'unplugin-vue-markdown/vite'
-import VueMacros from 'unplugin-vue-macros/vite'
 import VueI18n from '@intlify/unplugin-vue-i18n/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
@@ -32,16 +32,12 @@ export default defineConfig(({ command }) => {
     plugins: [
       vitePluginFirmwareIndex(),
 
-      VueMacros({
-        plugins: {
-          vue: Vue({
-            include: [/\.vue$/, /\.md$/],
-            template: {
-              compilerOptions: {
-                isCustomElement: tag => ['stripe-buy-button'].includes(tag),
-              },
-            },
-          }),
+      Vue({
+        include: [/\.vue$/, /\.md$/],
+        template: {
+          compilerOptions: {
+            isCustomElement: tag => ['stripe-buy-button'].includes(tag),
+          },
         },
       }),
 

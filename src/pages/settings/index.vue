@@ -38,7 +38,7 @@ const presentGroups = computed<Set<SettingsGroupKey>>(() => {
 })
 
 const rows = computed<Row[]>(() => {
-  const out: Row[] = [
+  const all: Row[] = [
     { to: '/settings/audio', label: t('dashboard.hub-sound'), sub: t('dashboard.hub-sound-sub'), conditionalGroup: 'audio' },
     { to: '/settings/behaviour', label: t('dashboard.hub-behaviour'), sub: t('dashboard.hub-behaviour-sub'), conditionalGroup: 'behaviour' },
     { to: '/settings/fanet', label: t('sett.group-fanet'), sub: t('sett.group-fanet-desc'), conditionalGroup: 'fanet' },
@@ -47,7 +47,8 @@ const rows = computed<Row[]>(() => {
     { to: '/settings/uart', label: t('dashboard.hub-uart'), sub: t('dashboard.hub-uart-sub'), conditionalGroup: 'uart' },
     { to: fwUpdate.updatePath.value, label: t('dashboard.hub-firmware'), sub: t('dashboard.hub-firmware-sub', { v: fw.value }) },
     { to: '/terminal', label: t('dashboard.hub-terminal'), sub: t('dashboard.hub-terminal-sub') },
-  ].filter(r => !r.conditionalGroup || presentGroups.value.has(r.conditionalGroup))
+  ]
+  const out = all.filter(r => !r.conditionalGroup || presentGroups.value.has(r.conditionalGroup))
   if (canInstall.value) {
     out.push({
       label: t('install.hub-row'),

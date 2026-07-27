@@ -6,6 +6,18 @@
 
 Das Gerät vereint zwei Funktionen: einen FANET-Funktransceiver und ein empfindliches Variometer mit Ton. Es sendet und empfängt FANET-Pakete ohne Internetverbindung, vertont Steigen und Sinken über den eigenen Piezosummer und dient gleichzeitig als Quelle barometrischer Höhe für Flug-Apps auf dem Smartphone. Die Energie liefert ein eingebauter Akku, der über ein Solarpanel nachgeladen wird.
 
+### Lieferumfang
+
+Das Gerät, eine Sicherungsschnur und eine Kurzanleitungskarte. Ein `USB-Type-C`-Kabel und eine Halterung gehören nicht dazu: jedes Kabel passt, und die Art der Befestigung wählt jeder passend zu seinem Gurtzeug.
+
+Die Schnur wird durch die Durchgangsbohrung im oberen Teil des Gehäuses gezogen und am Gurtzeug oder am Cockpit befestigt — das Gerät wird außen getragen, und eine Sicherung kostet weniger als ein neues Gerät.
+
+### Seriennummer
+
+Die Seriennummer Ihres Exemplars ist das `FBFV.XXXX` auf dem Aufkleber, wobei `XXXX` für Ihr Gerät eindeutig ist. Dieselbe Nummer sendet das Gerät in der Bluetooth-Geräteliste: der Name, den Sie in der App auswählen, _ist_ seine Seriennummer. Sie müssen den Aufkleber also gar nicht suchen — schalten Sie das Gerät ein und sehen Sie nach, wie es sich auf dem Äther nennt.
+
+Nennen Sie diese Nummer bei jeder Anfrage an den Support und im Garantiefall.
+
 ### Bedienung
 
 An der unteren Stirnseite befinden sich Taste, LED und die `USB-Type-C`-Buchse. Neben der LED sitzt eine kleine Öffnung: durch sie tritt der Ton aus, und durch sie gelangt Luft zum Barometer. Es gibt nur eine Taste — alle Betriebsarten werden über die Haltedauer gewählt.
@@ -44,6 +56,18 @@ Das Gerät lädt auf zwei Wegen.
 Über die `USB-Type-C`-Buchse — an einem gewöhnlichen Ladegerät oder einem Computeranschluss. Ladegeräte, die ausschließlich Power Delivery beherrschen, funktionieren nicht.
 
 Über das Solarpanel — dauerhaftes Nachladen bei Tageslicht. Im normalen Flugbetrieb gleicht das Panel den Verbrauch aus und verlängert die Zeit zwischen zwei Ladungen an der Steckdose deutlich.
+
+### Akku, Lagerung und Transport
+
+Im Inneren sitzt ein Lithium-Polymer-Akku, für den die bei dieser Chemie üblichen Regeln gelten.
+
+Laden Sie das Gerät, solange jemand in der Nähe ist, und lassen Sie es nicht über Nacht am Ladegerät. Halten Sie es unter 60 °C: ein geschlossenes Auto in der Sonne und das Armaturenbrett hinter der Windschutzscheibe sind genau dieser Fall. Laden Sie nicht bei Frost — unter 0 °C darf Lithium nicht geladen werden, lassen Sie das Gerät erst aufwärmen. Öffnen Sie das Gehäuse nicht, und durchstechen oder quetschen Sie den Akku nicht: die `USB-Type-C`-Buchse ist der einzige Servicezugang.
+
+Wenn sich das Gehäuse aufbläht, das Gerät beim Laden heiß wird oder es riecht, brechen Sie den Ladevorgang ab, bringen Sie es von brennbarem Material weg und schreiben Sie uns.
+
+Zur Lagerung und für den Transport muss das Gerät **vollständig ausgeschaltet** werden — langer Tastendruck bei ausgeschalteter Einstellung `Bei Bluetooth nicht einschlafen`; in diesem Zustand liegt der Verbrauch im Mikroampere-Bereich. Für Flugreisen verlangen die Vorschriften dasselbe: Geräte mit Lithium-Akku gehören ausgeschaltet ins Handgepäck, niemals in den aufgegebenen Koffer. Der Akku hat rund 900 mAh (etwa 3,4 Wh) und liegt damit weit unter allen Grenzwerten — eine Genehmigung der Fluggesellschaft ist nicht nötig.
+
+Eine lange Lagerung übersteht ein halb geladener Akku am besten. Laden Sie das Gerät alle paar Monate nach oder legen Sie es einfach ins Tageslicht — Tiefentladung verkürzt die Lebensdauer. Ein vollständiges Entladen "zur Kalibrierung" ist nicht nötig.
 
 ### Verbinden und Trennen über Bluetooth
 
@@ -173,6 +197,16 @@ Einstellungen für Verhalten und Energie:
 `Bluetooth schläft nie` — legt fest, was ein langer Tastendruck bewirkt: aus bedeutet vollständiges Ausschalten, ein bedeutet „verstummen, aber erreichbar bleiben" (siehe „Bedienung").
 
 `Zeit bis zur automatischen Abschaltung` — in Sekunden, 0 deaktiviert die automatische Abschaltung.
+
+### Support und Garantie
+
+Fragen, Anmerkungen und alles, was schiefgelaufen ist — in den Chat [t.me/flybeeperchat](https://t.me/flybeeperchat) oder per E-Mail an [info@alpisto.eu](mailto:info@alpisto.eu). Neuigkeiten zur Firmware stehen im Kanal [t.me/flybeeper](https://t.me/flybeeper). Nennen Sie dabei die Seriennummer `FBFV.XXXX` und die Firmware-Version — beides steht im Bereich `Update firmware` des Konfigurators.
+
+Die Garantie beträgt nach slowenischem und europäischem Recht zwei Jahre: kostenlose Reparatur oder Austausch. Rückgabe — 14 Tage ab Erhalt ohne Angabe von Gründen, die Erstattung erfolgt innerhalb von 14 Tagen nach Eingang des Geräts bei uns. Abwicklung über [market.flybeeper.com](https://market.flybeeper.com) oder per derselben E-Mail.
+
+Nicht abgedeckt sind mechanische Beschädigungen, ein geöffnetes Gehäuse und die Folgen improvisierter Ladeversuche. Firmware-Updates sind ausdrücklich erlaubt und berühren die Garantie nicht — den Rückfall auf die vorherige Version leistet der Bootloader selbst.
+
+Verkauf: Alpisto d.o.o., Slowenien.
 
 <route lang="yaml">
 meta:

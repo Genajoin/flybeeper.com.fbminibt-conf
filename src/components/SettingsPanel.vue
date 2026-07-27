@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from 'lodash.clonedeep'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
 import {

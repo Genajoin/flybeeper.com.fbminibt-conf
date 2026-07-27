@@ -31,7 +31,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 }
 
 interface BtCh {
-  characteristic: object | null
+  characteristic: BluetoothRemoteGATTCharacteristic | null
   value: number | string | null
 }
 
@@ -60,7 +60,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      */
     bleAvailable: false,
     bleUnavailableReason: 'browser' as 'insecure' | 'browser' | null,
-    device: null as BluetoothDevice,
+    device: null as BluetoothDevice | null,
     isConnected: false,
     isConnecting: false,
     isFetching: false,
@@ -137,7 +137,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         await this.connectToRequestDevice()
     },
 
-    async connectToDevice(device) {
+    async connectToDevice(device: BluetoothDevice) {
       if (!this.bleAvailable || this.isConnected || this.isConnecting)
         return
 
@@ -146,7 +146,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.fetchTotal = 0
       this.isConnecting = true
       this.device = device
-      this.devName = this.device.name
+      this.devName = device.name ?? ''
       const gen = ++this.connectGen
       log.info('Connecting to', this.devName)
 
@@ -154,12 +154,18 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       // BEFORE any CPF read happens. If we have a previous local for it,
       // it survives — otherwise applyDeviceSnapshot below will seed local
       // from what we read off the device.
-      if (this.device.id)
-        await useSettingsStore().loadSlot(this.device.id)
+      if (device.id)
+        await useSettingsStore().loadSlot(device.id)
+
+      if (!device.gatt) {
+        this.isConnecting = false
+        this.errorMessage = 'This device exposes no GATT server'
+        return
+      }
 
       try {
         const server = await withTimeout(
-          this.device.gatt.connect(),
+          device.gatt.connect(),
           CONNECT_TIMEOUT_MS,
           'Connection timed out — is the device powered on and in range?',
         )
@@ -254,7 +260,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         const FSS = servicesByUuid.get(FSS_UUID)
         if (FSS) {
           const characteristics = await FSS.getCharacteristics()
-          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => normalizeUuid(ch.uuid) === '904baf04-5814-11ee-8c99-0242ac120002')
+          this.fss.miniBtSimulation.characteristic = characteristics.find(ch => normalizeUuid(ch.uuid) === '904baf04-5814-11ee-8c99-0242ac120002') ?? null
         }
 
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected)
@@ -314,7 +320,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         }
         catch { /* device already gone */ }
         this.bleCharacteristics = []
-        this.device = null as unknown as BluetoothDevice
+        this.device = null
         this.isConnected = false
       }
     },
@@ -410,7 +416,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       try {
         this.isDisconnecting = true
         this.isConnected = false
-        await this.device.gatt.disconnect()
+        this.device?.gatt?.disconnect()
       }
       catch (error) {
         log.error('Error disconnecting from the device:', error)
@@ -436,7 +442,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       }
       catch { /* device already gone or never paired */ }
       this.bleCharacteristics = []
-      this.device = null as unknown as BluetoothDevice
+      this.device = null
       this.isConnecting = false
       this.isFetching = false
       this.isConnected = false
@@ -465,7 +471,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
       this.isConnected = false
       this.isDisconnecting = false
-      this.device = null as unknown as BluetoothDevice
+      this.device = null
       this.dis.firmwareRevisionString = { characteristic: null, value: null }
       this.fss.miniBtSimulation = { characteristic: null, value: null }
       this.subscribedCharacteristics = []
@@ -511,7 +517,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         useSettingsStore().restartPending = true
     },
 
-    async SendSimulationVarioValue(value) {
+    async SendSimulationVarioValue(value: number) {
       if (!this.fss.miniBtSimulation.characteristic)
         return
 

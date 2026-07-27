@@ -106,6 +106,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
 
   private onNotification = async (event: Event) => {
     const characteristic = event.target as BluetoothRemoteGATTCharacteristic
+    if (!characteristic.value)
+      return
     this.value = characteristic.value
     this.formattedValue = this.formatValue(characteristic.value)
     if (!this.isBlockNotify) {
@@ -281,7 +283,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return (-1) ** exponent * (1 + mantissa / 2 ** 23) * 2 ** (exponent - 127)
   }
 
-  private exponentFormat(exponent, value): number {
+  private exponentFormat(exponent: number | null, value: number): number {
     switch (exponent) {
       case null:
       case 0:
@@ -297,8 +299,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  formatValueByFormat(value, format, exponent) {
-    const dots = []
+  formatValueByFormat(value: DataView, format: number, exponent: number | null): any {
+    const dots: number[] = []
 
     switch (format) {
       case 0x01: // bool
@@ -344,7 +346,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  formatValueByUUID(val, uuid) {
+  formatValueByUUID(val: DataView, uuid: string): number | null {
     switch (uuid) {
       case '00002a6d-0000-1000-8000-00805f9b34fb': // pressure
         return val.getUint32(0, true) / 10
@@ -364,7 +366,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  formatValue(value): any {
+  formatValue(value: DataView): any {
     const valByUUID = this.formatValueByUUID(value, this.characteristic.uuid)
     if (valByUUID !== null)
       return valByUUID
@@ -431,8 +433,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     return true
   }
 
-  private convertFormattedValueToDataView(_formattedValue: any, format: number, exponent: number): DataView {
-    let dataView: DataView
+  private convertFormattedValueToDataView(_formattedValue: any, format: number, exponent: number): DataView<ArrayBuffer> {
+    let dataView: DataView<ArrayBuffer>
 
     switch (format) {
       case 0x01: // bool

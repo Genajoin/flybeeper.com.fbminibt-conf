@@ -8,9 +8,13 @@ const dismissed = ref(false)
 const isIosSafariWithoutBluetooth = computed(() => {
   if (typeof navigator === 'undefined')
     return false
+  // Read the UA first: @types/web-bluetooth declares `bluetooth` as a
+  // required Navigator member, so the negative `in` branch narrows
+  // `navigator` itself to never.
+  const ua = navigator.userAgent
   if ('bluetooth' in navigator)
     return false
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  return /iPhone|iPad|iPod/i.test(ua)
 })
 
 const show = computed(() => isIosSafariWithoutBluetooth.value && !dismissed.value)
