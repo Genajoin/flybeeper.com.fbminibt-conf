@@ -87,10 +87,18 @@ describe('mCUboot image parsing', () => {
     expect(image.data.length).toBe(189200)
   })
 
-  it('computes the hash for the 0.24.1 test image', async () => {
-    const bin = await readFile(`${FIRMWARE_DIR}/test-app_update.0.24.1.bin`)
-    const image = await parseMcubootImage(new Uint8Array(bin))
-    expect(hex(image.hash)).toBe('4eb530c745e27ad5a70c4323f6323f52b78bfdf12cc2fe9daa04beeb8a203148')
+  it('is not the sha256 of the file — the distinction the spec got wrong', async () => {
+    const bin = new Uint8Array(await readFile(`${FIRMWARE_DIR}/app_update.0.24.0.bin`))
+    const image = await parseMcubootImage(bin)
+    const fileHash = new Uint8Array(await crypto.subtle.digest('SHA-256', bin))
+    expect(hex(fileHash)).toBe('1546a5cb739d7b252b979a70f5e9da1b4f6d22316bc05a949dfbc1e28941cb6c')
+    expect(hex(image.hash)).not.toBe(hex(fileHash))
+  })
+
+  it('rejects an image whose payload no longer matches its SHA256 TLV', async () => {
+    const bin = new Uint8Array(await readFile(`${FIRMWARE_DIR}/app_update.0.24.0.bin`))
+    bin[1024] ^= 0xFF
+    await expect(parseMcubootImage(bin)).rejects.toThrow(/inconsistent/)
   })
 
   it('rejects a file that is not an MCUboot update image', async () => {
