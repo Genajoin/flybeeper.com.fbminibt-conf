@@ -17,7 +17,7 @@ Each row links to the product page on [alpisto.eu/flybeeper](https://alpisto.eu/
 | [**FlyBeeper mini BT**](https://alpisto.eu/flybeeper)     | Pocket-sized acoustic variometer with BLE — flagship product |
 | [**FlyBeeper Solar Vario**](https://alpisto.eu/flybeeper) | Supercapacitor + solar variometer, no battery to charge      |
 | [**FlyBeeper TAS**](https://alpisto.eu/flybeeper)         | Autonomous true-airspeed sensor with Pitot tube              |
-| [**FlyBeeper FANET radio**](https://alpisto.eu/flybeeper) | Bluetooth ↔ FANET (868 MHz LoRa) bridge for live tracking   |
+| [**FlyBeeper FANET radio**](https://alpisto.eu/flybeeper) | Bluetooth ↔ FANET (868 MHz LoRa) bridge for live tracking    |
 | [**FlyBeeper FANET Vario**](https://alpisto.eu/flybeeper) | FANET radio + variometer in a single device                  |
 | [**FlyBeeper RC4**](https://alpisto.eu/flybeeper)         | 4-button BLE remote for flight apps                          |
 | [**FlyBeeper PS1**](https://alpisto.eu/flybeeper)         | Pressure-sensor reference device                             |
