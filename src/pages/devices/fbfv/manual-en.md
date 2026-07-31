@@ -200,7 +200,7 @@ Behaviour and power settings:
 
 ### Support and warranty
 
-Questions, remarks and anything that went wrong — the chat at [t.me/flybeeperchat](https://t.me/flybeeperchat) or an email to [info@alpisto.eu](mailto:info@alpisto.eu). Firmware news lives in the [t.me/flybeeper](https://t.me/flybeeper) channel. Quote the serial number `FBFV.XXXX` and the firmware version — both are visible in the `Update firmware` section of the configurator.
+Questions, remarks and anything that went wrong — the chat at [t.me/flybeeperchat](https://t.me/flybeeperchat) or an email to [flybeeper@alpisto.eu](mailto:flybeeper@alpisto.eu). Firmware news lives in the [t.me/flybeeper](https://t.me/flybeeper) channel. Quote the serial number `FBFV.XXXX` and the firmware version — both are visible in the `Update firmware` section of the configurator.
 
 The warranty is two years under Slovenian and European law: free repair or replacement. Returns — 14 days from delivery for any reason, with the money back within 14 days of the device arriving to us. Either through [market.flybeeper.com](https://market.flybeeper.com) or by the same email.
 

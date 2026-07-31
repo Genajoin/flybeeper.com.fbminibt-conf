@@ -200,7 +200,7 @@ Web Bluetooth не работает в Safari на iOS — там использ
 
 ### Поддержка и гарантия
 
-Вопросы, замечания и всё, что пошло не так, — в чат [t.me/flybeeperchat](https://t.me/flybeeperchat) или письмом на [info@alpisto.eu](mailto:info@alpisto.eu). Новости о прошивках — в канале [t.me/flybeeper](https://t.me/flybeeper). Назовите серийный номер `FBFV.XXXX` и версию прошивки — их видно в разделе `Update firmware` конфигуратора.
+Вопросы, замечания и всё, что пошло не так, — в чат [t.me/flybeeperchat](https://t.me/flybeeperchat) или письмом на [flybeeper@alpisto.eu](mailto:flybeeper@alpisto.eu). Новости о прошивках — в канале [t.me/flybeeper](https://t.me/flybeeper). Назовите серийный номер `FBFV.XXXX` и версию прошивки — их видно в разделе `Update firmware` конфигуратора.
 
 Гарантия — два года по словенскому и европейскому законодательству: бесплатный ремонт или замена. Возврат — 14 дней с получения по любой причине, деньги возвращаются в течение 14 дней после того, как прибор придёт обратно. Оформление — через [market.flybeeper.com](https://market.flybeeper.com) или тем же письмом.
 
