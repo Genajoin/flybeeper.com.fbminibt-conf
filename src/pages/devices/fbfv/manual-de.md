@@ -200,7 +200,7 @@ Einstellungen für Verhalten und Energie:
 
 ### Support und Garantie
 
-Fragen, Anmerkungen und alles, was schiefgelaufen ist — in den Chat [t.me/flybeeperchat](https://t.me/flybeeperchat) oder per E-Mail an [info@alpisto.eu](mailto:info@alpisto.eu). Neuigkeiten zur Firmware stehen im Kanal [t.me/flybeeper](https://t.me/flybeeper). Nennen Sie dabei die Seriennummer `FBFV.XXXX` und die Firmware-Version — beides steht im Bereich `Update firmware` des Konfigurators.
+Fragen, Anmerkungen und alles, was schiefgelaufen ist — in den Chat [t.me/flybeeperchat](https://t.me/flybeeperchat) oder per E-Mail an [flybeeper@alpisto.eu](mailto:flybeeper@alpisto.eu). Neuigkeiten zur Firmware stehen im Kanal [t.me/flybeeper](https://t.me/flybeeper). Nennen Sie dabei die Seriennummer `FBFV.XXXX` und die Firmware-Version — beides steht im Bereich `Update firmware` des Konfigurators.
 
 Die Garantie beträgt nach slowenischem und europäischem Recht zwei Jahre: kostenlose Reparatur oder Austausch. Rückgabe — 14 Tage ab Erhalt ohne Angabe von Gründen, die Erstattung erfolgt innerhalb von 14 Tagen nach Eingang des Geräts bei uns. Abwicklung über [market.flybeeper.com](https://market.flybeeper.com) oder per derselben E-Mail.
 
