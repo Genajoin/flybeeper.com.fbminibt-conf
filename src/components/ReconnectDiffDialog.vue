@@ -1,7 +1,16 @@
 <script setup lang="ts">
 const bt = useBluetoothStore()
 const settings = useSettingsStore()
-const { t } = useI18n()
+const { t, te } = useI18n()
+
+/**
+ * Human label for a characteristic. `sett.<uuid>` labels already exist in
+ * every locale — the dialog just wasn't using them, so it listed raw UUIDs
+ * and left the user guessing which setting was in conflict.
+ */
+function keyLabel(key: string): string {
+  return te(`sett.${key}`) ? t(`sett.${key}`) : key
+}
 
 const open = ref(false)
 const seenForConnection = ref(false)
@@ -35,16 +44,35 @@ function formatValue(v: unknown): string {
 }
 
 const isApplying = ref(false)
+const applyErrors = ref<{ key: string, message: string }[]>([])
 
 async function applyLocal() {
   if (!settings.local || !bt.isConnected)
     return
   isApplying.value = true
+  applyErrors.value = []
+  const written: string[] = []
+  const failed: { key: string, message: string }[] = []
   try {
-    for (const entry of diffEntries.value)
-      await bt.writeCharacteristic(entry.key, entry.local)
-    settings.markSynced()
-    open.value = false
+    // Snapshot: diffEntries is a computed over the store and shrinks as
+    // writes are confirmed.
+    for (const entry of [...diffEntries.value]) {
+      try {
+        await bt.writeCharacteristic(entry.key, entry.local)
+        written.push(entry.key)
+      }
+      catch (err) {
+        failed.push({ key: entry.key, message: err instanceof Error ? err.message : String(err) })
+      }
+    }
+    // Only confirmed writes count. Closing the dialog on failures — as the
+    // unconditional markSynced() used to do — is what made the device look
+    // updated while it kept the old values, then re-raised the same dialog
+    // on the next connect.
+    settings.markSyncedKeys(written)
+    applyErrors.value = failed
+    if (!failed.length)
+      open.value = false
   }
   finally {
     isApplying.value = false
@@ -96,7 +124,7 @@ function dismiss() {
 
           <ul class="modal-diff">
             <li v-for="entry in diffEntries" :key="entry.key" class="modal-diff__row">
-              <code class="modal-diff__key">{{ entry.key }}</code>
+              <span class="modal-diff__key" :title="entry.key">{{ keyLabel(entry.key) }}</span>
               <span class="modal-diff__values">
                 <span class="modal-diff__local">{{ formatValue(entry.local) }}</span>
                 <span class="modal-diff__arrow">↔</span>
@@ -104,6 +132,11 @@ function dismiss() {
               </span>
             </li>
           </ul>
+
+          <div v-if="applyErrors.length" class="modal-errors" role="alert">
+            <span class="modal-errors__head">{{ t('sett.apply-failed', { count: applyErrors.length }) }}</span>
+            <code v-for="e in applyErrors" :key="e.key" class="modal-errors__row">{{ e.message }}</code>
+          </div>
 
           <div class="modal-actions">
             <button class="modal-btn modal-btn--signal" type="button" :disabled="isApplying || !bt.isConnected" @click="applyLocal">
@@ -254,6 +287,31 @@ function dismiss() {
 
 .modal-diff__device {
   color: var(--ck-dim);
+}
+
+.modal-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: var(--ck-stroke-rule) solid var(--ck-signal);
+  background: var(--ck-bg-deep);
+}
+
+.modal-errors__head {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+}
+
+.modal-errors__row {
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  color: var(--ck-dim);
+  word-break: break-word;
 }
 
 .modal-actions {

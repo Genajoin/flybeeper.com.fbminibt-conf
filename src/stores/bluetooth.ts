@@ -94,6 +94,13 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      */
     connectGen: 0,
     devName: '',
+    /**
+     * FSS characteristics that never produced a usable value this session
+     * (no CPF and/or no successful read after retries). Settings for these
+     * cannot be trusted or written — surfaced so the UI can say so instead
+     * of pretending everything is in sync.
+     */
+    incompleteChars: [] as string[],
     errorMessage: '',
     characteristicsData: {},
     subscribedCharacteristics: [],
@@ -144,6 +151,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.errorMessage = ''
       this.fetchProgress = 0
       this.fetchTotal = 0
+      this.incompleteChars = []
       this.isConnecting = true
       this.device = device
       this.devName = device.name ?? ''
@@ -271,6 +279,12 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // an empty bleCharacteristics list before CPF descriptors land.
         const fssChars = this.bleCharacteristics.filter(c => c.characteristic.service.uuid === FSS_UUID)
         this.fetchTotal = fssChars.length
+        // Every GATT call inside initialize() goes through the shared
+        // gattQueue, so these run one at a time even though they are started
+        // together — a BLE central can only have one request outstanding, and
+        // firing ~80 of them at once is what left Android with characteristics
+        // that had no CPF and no value (holes in the device snapshot → Apply
+        // silently skipped those fields).
         await Promise.allSettled(
           fssChars.map(c => c.initialize().finally(() => {
             if (gen === this.connectGen)
@@ -279,6 +293,26 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         )
         if (gen !== this.connectGen)
           return
+
+        // Second and third chances for whatever came back incomplete. A
+        // characteristic that never yields a value would otherwise stay
+        // un-writable for the whole session.
+        for (let round = 0; round < 2; round++) {
+          const incomplete = fssChars.filter(c => !c.isInitialized)
+          if (!incomplete.length)
+            break
+          log.warn(`retrying ${incomplete.length} incomplete characteristic(s), round ${round + 1}`)
+          await new Promise(resolve => setTimeout(resolve, 250))
+          for (const c of incomplete)
+            await c.initialize().catch(err => log.warn('retry failed', c.characteristic.uuid, err))
+          if (gen !== this.connectGen)
+            return
+        }
+        this.incompleteChars = fssChars
+          .filter(c => !c.isInitialized)
+          .map(c => c.characteristic.uuid)
+        if (this.incompleteChars.length)
+          log.error('characteristics without a device value:', this.incompleteChars)
         this.isFetching = false
         this.isConnected = true
         // After isConnected, so DisconnectBanner's `hasConnectedThisSession
@@ -448,6 +482,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.isConnected = false
       this.fetchProgress = 0
       this.fetchTotal = 0
+      this.incompleteChars = []
       void useSettingsStore().loadSlot('__demo__')
     },
     onDisconnected() {
@@ -477,6 +512,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.subscribedCharacteristics = []
       this.characteristicsData = {}
       this.bleCharacteristics = []
+      this.incompleteChars = []
 
       useSettingsStore().restartPending = false
       // Swap back to demo slot so the panels (still mounted via virtual
@@ -503,16 +539,30 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
 
     /**
-     * Writes a single FSS characteristic. Convenience wrapper used by URL-share
-     * preset import: given a UUID and a formatted value, find the char, set the
-     * value through its codec, and (if a restart-required UUID) flag the banner.
+     * Writes a single FSS characteristic and confirms it landed on the device.
+     *
+     * THROWS on every failure — missing characteristic, un-encodable value,
+     * rejected or unverified write. Callers must not report success unless
+     * this resolves: the previous silent `return` for an unknown UUID (and
+     * setFormattedValue's silent no-op) is what let the configurator claim
+     * "applied" while the device kept its old settings.
      */
     async writeCharacteristic(uuid: string, value: unknown): Promise<void> {
       const ch = this.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
       if (!ch)
-        return
+        throw new Error(`${uuid}: characteristic not present on this device`)
+      const previous = ch.formattedValue
       ch.formattedValue = value
-      await ch.setFormattedValue()
+      try {
+        await ch.setFormattedValue()
+      }
+      catch (err) {
+        // Keep the in-memory char honest: it must reflect the device, not the
+        // value we failed to write.
+        if (ch.formattedValue === value)
+          ch.formattedValue = previous
+        throw err
+      }
       if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
         useSettingsStore().restartPending = true
     },

@@ -294,6 +294,7 @@ sett:
   reset: Standard
   reset-confirm: Diese Gruppe auf Werkseinstellungen zurücksetzen?
   no-changes: Keine lokalen Änderungen
+  apply-failed: '{count} Einstellung(en) konnten NICHT auf das Gerät geschrieben werden — sie gelten weiterhin als geändert. Gehe näher an das Gerät, verbinde neu und versuche es erneut.'
   unsynced: '{count} lokale Änderung(en) ausstehend'
 
 audio:
@@ -440,6 +441,8 @@ dashboard:
   press: DRUCK
   temp: TEMP
   bat: AKKU
+  copy-device-id: Vollständige Geräte-ID kopieren
+  copied: KOPIERT
   settings-title: Einstellungen
   synced: ONLINE
   dirty: ● UNSYNCED

@@ -89,8 +89,34 @@ onBeforeUnmount(() => {
     detach(uuid)
 })
 
-const name = computed(() => (bt.dis.modelNumberString.value as string | null) || null)
+/**
+ * Full device identity, e.g. `FBFV.9BFC`. The BLE advertising name is
+ * `{DEVICE_NAME}.{last 4 hex of the hardware id}`, and that four-character
+ * code is what support (and the FANET registry) need. The strip used to show
+ * `modelNumberString` alone — the SKU, e.g. `FBFV` — so once the browser's
+ * device chooser had closed, the code was reachable nowhere in the UI.
+ */
+const model = computed(() => (bt.dis.modelNumberString.value as string | null) || null)
+const name = computed(() => bt.devName || model.value)
 const fw = computed(() => (bt.dis.firmwareRevisionString.value as string | null) || null)
+
+const copied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Support asks for this string constantly — make it one tap to copy. */
+async function copyName() {
+  if (!name.value)
+    return
+  try {
+    await navigator.clipboard?.writeText(name.value)
+    copied.value = true
+    clearTimeout(copyTimer)
+    copyTimer = setTimeout(() => (copied.value = false), 1500)
+  }
+  catch { /* clipboard blocked (insecure context / permission) — it is on screen anyway */ }
+}
+
+onBeforeUnmount(() => clearTimeout(copyTimer))
 
 const fwUpdate = useFirmwareUpdate()
 
@@ -107,7 +133,16 @@ const hasAny = computed(() => !!(name.value || fw.value || batText.value))
 
 <template>
   <template v-if="hasAny">
-    <span v-if="name" class="dev__cell dev__cell--name">{{ name }}</span>
+    <button
+      v-if="name"
+      type="button"
+      class="dev__cell dev__cell--name"
+      :title="t('dashboard.copy-device-id')"
+      @click="copyName"
+    >
+      {{ copied ? t('dashboard.copied') : name }}
+    </button>
+    <span v-if="model && name !== model" class="dev__cell dev__cell--model">{{ model }}</span>
     <RouterLink
       v-if="fw && fwUpdate.hasUpdate.value"
       class="dev__cell dev__cell--update"
@@ -142,6 +177,16 @@ const hasAny = computed(() => !!(name.value || fw.value || batText.value))
 
 .dev__cell--name {
   color: var(--ck-signal);
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-bottom: none;
+  cursor: pointer;
+  letter-spacing: var(--ck-track-data);
+}
+
+.dev__cell--model {
+  color: var(--ck-dim);
 }
 
 .dev__cell--update {

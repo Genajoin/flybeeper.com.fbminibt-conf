@@ -1,5 +1,17 @@
 import { defineStore } from 'pinia'
 import { get as idbGet, set as idbSet } from 'idb-keyval'
+import { CPF_UUID_TO_GROUP } from '~/composables/useSettingsGroups'
+
+/**
+ * Keys that are settings. `local` used to accumulate non-UUID junk — most
+ * notably `buzzer_simulate_vario_value`, written by useSimulation on every
+ * slider move. The device snapshot can never contain such a key, so `diff()`
+ * reported it as changed forever: the reconnect dialog popped on EVERY
+ * connect with a phantom entry that no write could ever satisfy.
+ */
+function isSettingKey(key: string): boolean {
+  return key in CPF_UUID_TO_GROUP
+}
 
 // structuredClone() chokes on Pinia reactive proxies ("could not be cloned").
 // JSON.parse(JSON.stringify) strips proxies and the resulting plain object is
@@ -84,7 +96,16 @@ export const useSettingsStore = defineStore('settingsStore', {
     hasUnsyncedChanges(state): boolean {
       if (!state.local || !state.lastDeviceSnapshot)
         return false
-      return JSON.stringify(state.local) !== JSON.stringify(state.lastDeviceSnapshot)
+      // Compare settings only, and only where we actually know the device
+      // value — a key missing from the snapshot means the read failed, not
+      // that the user changed something.
+      for (const key in state.local) {
+        if (!isSettingKey(key) || state.lastDeviceSnapshot[key] === undefined)
+          continue
+        if (JSON.stringify(state.local[key]) !== JSON.stringify(state.lastDeviceSnapshot[key]))
+          return true
+      }
+      return false
     },
   },
   actions: {
@@ -128,6 +149,7 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.history = history ?? []
       this.lastSyncedAt = null
       this.restartPending = false
+      this.pruneLocal()
     },
 
     pushHistory(source: 'local' | 'device', settings?: SettingsLocal): void {
@@ -163,12 +185,23 @@ export const useSettingsStore = defineStore('settingsStore', {
       this.pushHistory('local')
     },
 
+    /**
+     * Settings whose local value differs from the reference (device) value.
+     *
+     * Only real setting keys, and only keys the reference actually knows —
+     * `reference[key] === undefined` means "we could not read it off the
+     * device", which is a read failure to fix, not a change to apply. Listing
+     * those produced the "08 fields changed / ↔ —" dialog that no Apply could
+     * ever clear.
+     */
     diff(other?: SettingsLocal): SettingsDiffEntry[] {
       const reference = other ?? this.lastDeviceSnapshot
       if (!this.local || !reference)
         return []
       const out: SettingsDiffEntry[] = []
       for (const key in this.local) {
+        if (!isSettingKey(key) || reference[key] === undefined)
+          continue
         if (JSON.stringify(this.local[key]) !== JSON.stringify(reference[key])) {
           out.push({ key, local: this.local[key], device: reference[key] })
         }
@@ -185,11 +218,54 @@ export const useSettingsStore = defineStore('settingsStore', {
       return true
     },
 
+    /**
+     * Declare the whole local state as matching the device.
+     *
+     * DANGEROUS unless every field really was written — this is what used to
+     * be called unconditionally after Apply, so a write that silently did
+     * nothing still ended up marked as synced. Prefer markSyncedKeys() with
+     * the keys that were actually confirmed on the wire.
+     */
     markSynced(): void {
       if (!this.local)
         return
       this.lastDeviceSnapshot = cloneJson(this.local)
       this.lastSyncedAt = Date.now()
+    },
+
+    /**
+     * Record that exactly these keys are now confirmed to hold the local
+     * value on the device. Keys that failed to write keep their old snapshot
+     * value, so they stay visibly dirty instead of silently "applied".
+     */
+    markSyncedKeys(keys: string[]): void {
+      if (!this.local || !keys.length)
+        return
+      const snap: SettingsLocal = { ...(this.lastDeviceSnapshot ?? {}) }
+      for (const key of keys)
+        snap[key] = cloneJson(this.local[key])
+      this.lastDeviceSnapshot = snap
+      this.lastSyncedAt = Date.now()
+    },
+
+    /**
+     * Drop keys that are not settings (legacy junk such as
+     * `buzzer_simulate_vario_value` persisted by older builds). Runs on load
+     * so an old IDB slot cannot keep the reconnect dialog permanently armed.
+     */
+    pruneLocal(): void {
+      if (!this.local)
+        return
+      const cleaned: SettingsLocal = {}
+      let dropped = 0
+      for (const key in this.local) {
+        if (isSettingKey(key))
+          cleaned[key] = this.local[key]
+        else
+          dropped++
+      }
+      if (dropped)
+        this.local = cleaned
     },
 
     diffGroup(keys: string[]): SettingsDiffEntry[] {

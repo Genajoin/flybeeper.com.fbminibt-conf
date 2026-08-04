@@ -83,8 +83,12 @@ function cpfIsCharDirty(ch: BleCharacteristic): boolean {
   const uuid = ch.characteristic.uuid
   const live = ch.formattedValue
   const snap = snapshotValue(uuid)
+  // No snapshot value = the connect-time read for this characteristic failed.
+  // Treating that as "clean" used to make Apply skip the field entirely (the
+  // user edited it, the button did nothing). We cannot know the device value,
+  // so offer to write ours — the write itself is verified by read-back.
   if (snap === undefined)
-    return false
+    return live !== null && live !== undefined
   return JSON.stringify(live) !== JSON.stringify(snap)
 }
 
@@ -97,25 +101,43 @@ const isDirty = computed(() => dirtyCount.value > 0)
 const isBusy = ref(false)
 const isOffline = computed(() => !bt.isConnected)
 
+const applyErrors = ref<{ uuid: string, message: string }[]>([])
+
 async function apply() {
   if (!isDirty.value || !bt.isConnected)
     return
   isBusy.value = true
+  applyErrors.value = []
+  const written: string[] = []
+  const failed: { uuid: string, message: string }[] = []
   try {
     let restartNeeded = false
-    for (const ch of cpfDirtyChars.value) {
+    // Snapshot the list: cpfDirtyChars shrinks as writes land, and iterating
+    // a computed that mutates under you skips entries.
+    for (const ch of [...cpfDirtyChars.value]) {
       const uuid = ch.characteristic.uuid
-      if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
-        restartNeeded = true
       // Source of truth lives in settings.local (via the virtual char
       // getter). Route the actual GATT write through writeCharacteristic
-      // — which finds the real BLE char and calls setFormattedValue on it
+      // — which finds the real BLE char, writes it and verifies by read-back
       // — instead of the virtual char's setFormattedValue no-op.
-      await bt.writeCharacteristic(uuid, ch.formattedValue)
+      try {
+        await bt.writeCharacteristic(uuid, ch.formattedValue)
+        written.push(uuid)
+        if (CPF_RESTART_REQUIRED_UUIDS.includes(uuid))
+          restartNeeded = true
+      }
+      catch (err) {
+        // One bad field must not abort the rest — and must not be reported
+        // as applied. Both were wrong before: the loop threw out of apply()
+        // and markSynced() had already been reached on the happy path.
+        failed.push({ uuid, message: err instanceof Error ? err.message : String(err) })
+      }
     }
     if (restartNeeded)
       settings.restartPending = true
-    settings.markSynced()
+    // Only fields confirmed on the wire count as synced.
+    settings.markSyncedKeys(written)
+    applyErrors.value = failed
   }
   finally {
     isBusy.value = false
@@ -189,6 +211,13 @@ function resetGroupToDefaults() {
           </div>
           <div class="acc__body">
             <slot />
+            <!-- A write that did not reach the device must be visible. The old
+                 code reported success unconditionally, which is how settings
+                 could look applied while the vario kept its old thresholds. -->
+            <div v-if="applyErrors.length" class="panel__errors" role="alert">
+              <span class="panel__errors-head">{{ t('sett.apply-failed', { count: applyErrors.length }) }}</span>
+              <code v-for="e in applyErrors" :key="e.uuid" class="panel__errors-row">{{ e.message }}</code>
+            </div>
             <footer class="panel__footer" :class="{ 'panel__footer--dirty': isDirty }">
               <button
                 class="panel__btn"
@@ -250,6 +279,32 @@ function resetGroupToDefaults() {
   margin: 0;
   padding: 0;
   background: var(--ck-paper);
+}
+
+.panel__errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 22px 14px;
+  padding: 12px 14px;
+  border: var(--ck-stroke-rule) solid var(--ck-signal);
+  background: var(--ck-bg-deep);
+}
+
+.panel__errors-head {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--ck-track-data);
+  text-transform: uppercase;
+  color: var(--ck-signal);
+}
+
+.panel__errors-row {
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  color: var(--ck-dim);
+  word-break: break-word;
 }
 
 .acc__row {

@@ -1,6 +1,8 @@
 // BleCharacteristic.ts
 
 import log from 'loglevel'
+import { gattOp } from '~/utils/gattQueue'
+import { VIRTUAL_CPF_FORMAT } from '~/composables/useDemoSnapshot'
 
 /**
  * Canonicalise a BLE UUID to the spec form: lowercase, 128-bit.
@@ -45,6 +47,12 @@ function uuidNormalizingProxy<T extends object>(target: T): T {
   })
 }
 
+function bytesToHex(v: DataView): string {
+  return [...new Uint8Array(v.buffer, v.byteOffset, v.byteLength)]
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export interface LogEntry {
   timestamp: number // Метка времени
   value: any // Значение
@@ -67,6 +75,8 @@ export interface BleCharacteristic {
     namespace: number
     description?: string
   } | null
+  /** Last initialize()/read failure, kept so callers can retry or surface it. */
+  initError?: unknown
   getValue: () => Promise<any>
   subscribeToNotifications: () => Promise<void>
   unsubscribeFromNotifications: () => Promise<void>
@@ -93,6 +103,8 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     namespace: number
     description?: string
   } | null = null
+
+  initError: unknown = null
 
   // Список подписчиков
   private subscribers: ((value: any) => void)[] = []
@@ -179,7 +191,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
         )
 
         if (userFormatDescriptor) {
-          const val = await userFormatDescriptor.readValue()
+          const val = await gattOp('readCUD', () => userFormatDescriptor.readValue())
           const enc = new TextDecoder('utf-8')
           this.userFormatDescriptor = enc.decode(val.buffer)
           log.debug('Characteristic User Format Descriptor:', this.userFormatDescriptor)
@@ -224,15 +236,41 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  async readPresentationFormatDescriptor(): Promise<void> {
-    if (this.descriptors.length === 0)
+  /**
+   * Static CPF for this UUID, used when the device's own descriptor could not
+   * be read. Without it the characteristic stays format-less, and a
+   * format-less characteristic used to make every subsequent write a silent
+   * no-op — the root of "Apply does nothing on the device" (settings looked
+   * applied in the UI, reconnect showed them as unsaved again).
+   */
+  private applyFallbackCpf(reason: string): void {
+    if (this.presentationFormatDescriptor)
       return
+    const fallback = VIRTUAL_CPF_FORMAT[this.characteristic.uuid]
+    if (!fallback) {
+      log.warn(`no CPF for ${this.characteristic.uuid} (${reason}) and no static fallback — writes will be rejected`)
+      return
+    }
+    this.presentationFormatDescriptor = {
+      format: fallback.format,
+      exponent: fallback.exponent,
+      unit: fallback.unit ?? '',
+      namespace: 1,
+    }
+    log.warn(`CPF fallback applied for ${this.characteristic.uuid} (${reason})`)
+  }
+
+  async readPresentationFormatDescriptor(): Promise<void> {
+    if (this.descriptors.length === 0) {
+      this.applyFallbackCpf('no descriptors')
+      return
+    }
     const presentationFormatDescriptor = this.descriptors.find(
       descriptor => normalizeUuid(descriptor.uuid) === '00002904-0000-1000-8000-00805f9b34fb',
     )
 
     if (presentationFormatDescriptor) {
-      const value = await presentationFormatDescriptor.readValue()
+      const value = await gattOp('readCPF', () => presentationFormatDescriptor.readValue())
       const dataView = new DataView(value.buffer)
 
       // Распаковка значений CPFD
@@ -255,6 +293,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
     else {
       log.debug('Characteristic Presentation Format Descriptor не найден.')
+      this.applyFallbackCpf('descriptor absent')
     }
   }
 
@@ -384,11 +423,17 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (!this.characteristic.properties.read)
       return null
     try {
-      this.value = await this.characteristic.readValue()
+      this.value = await gattOp(`read ${this.characteristic.uuid}`, () => this.characteristic.readValue())
+      this.initError = null
       return this.value
     }
     catch (error) {
-      log.error('Error reading value:', error)
+      // Remembered, not swallowed: initialize() leaves the characteristic
+      // un-initialised so the connect path can retry it. A characteristic
+      // that never yields a value is what leaves the device snapshot with
+      // holes, and holes are what made Apply skip fields.
+      this.initError = error
+      log.error('Error reading value:', this.characteristic.uuid, error)
       return null
     }
   }
@@ -404,13 +449,49 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
   }
 
-  async setFormattedValue() {
-    if (this.presentationFormatDescriptor === null || this.formattedValue === null)
+  /**
+   * Write `formattedValue` to the device and CONFIRM it landed.
+   *
+   * Every failure mode here used to be silent: no CPF → early return, write
+   * rejection → an unhandled `.then()` chain, characteristic gone → nothing.
+   * The caller then marked the settings as synced, so the UI claimed success
+   * while the device kept its old value — exactly the bug Lennart reported.
+   * Now anything that prevents the value from reaching the device throws.
+   */
+  async setFormattedValue(): Promise<void> {
+    if (this.formattedValue === null || this.formattedValue === undefined)
+      throw new Error(`${this.characteristic.uuid}: no value to write`)
+    if (this.presentationFormatDescriptor === null)
+      throw new Error(`${this.characteristic.uuid}: no presentation format — cannot encode value`)
+    if (!this.characteristic.properties?.write && !this.characteristic.properties?.writeWithoutResponse)
+      throw new Error(`${this.characteristic.uuid}: characteristic is not writable`)
+
+    const value = this.convertFormattedValueToDataView(
+      this.formattedValue,
+      this.presentationFormatDescriptor.format,
+      this.presentationFormatDescriptor.exponent,
+    )
+    // An identical payload is a no-op by definition — but only when we know
+    // what the device currently holds (this.value populated by a real read).
+    if (this.value && this.compareValues(value, this.value))
       return
-    const value = this.convertFormattedValueToDataView(this.formattedValue, this.presentationFormatDescriptor.format, this.presentationFormatDescriptor.exponent)
-    if (!this.compareValues(value, this.value)) {
-      this.characteristic.writeValue(value)
-        .then(() => this.value = value)
+
+    await gattOp(`write ${this.characteristic.uuid}`, () => this.characteristic.writeValue(value))
+
+    // Read back: a write can be ACKed by the stack and still not stick (wrong
+    // length, firmware clamping, characteristic write silently ignored). The
+    // read is the only honest confirmation we can give the user.
+    if (this.characteristic.properties?.read) {
+      const readBack = await gattOp(`verify ${this.characteristic.uuid}`, () => this.characteristic.readValue())
+      if (!this.compareValues(value, readBack)) {
+        this.value = readBack
+        this.formattedValue = this.formatValue(readBack)
+        throw new Error(`${this.characteristic.uuid}: device did not accept the value (wrote ${bytesToHex(value)}, read back ${bytesToHex(readBack)})`)
+      }
+      this.value = readBack
+    }
+    else {
+      this.value = value
     }
   }
 
@@ -433,6 +514,16 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     return true
   }
 
+  /**
+   * Undo the CPF exponent. Must round, not truncate: `1.15 / 10**-2` is
+   * 114.99999999999999 in IEEE-754, and DataView.setInt16 truncates toward
+   * zero — so 1.15 m/s used to reach the device as 1.14 m/s (and 0.29 as
+   * 0.28). Every affected value was a user-visible off-by-one-hundredth.
+   */
+  private scaleForWire(value: number, exponent: number): number {
+    return Math.round(value / (10 ** exponent))
+  }
+
   private convertFormattedValueToDataView(_formattedValue: any, format: number, exponent: number): DataView<ArrayBuffer> {
     let dataView: DataView<ArrayBuffer>
 
@@ -445,25 +536,25 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       case 0x04: // uint8
         // Преобразовать 8-битное целое значение
         dataView = new DataView(new ArrayBuffer(1))
-        dataView.setUint8(0, _formattedValue / (10 ** exponent))
+        dataView.setUint8(0, this.scaleForWire(_formattedValue, exponent))
         break
 
       case 0x0C: // sint8
         // Преобразовать 8-битное целое значение
         dataView = new DataView(new ArrayBuffer(1))
-        dataView.setInt8(0, _formattedValue / (10 ** exponent))
+        dataView.setInt8(0, this.scaleForWire(_formattedValue, exponent))
         break
 
       case 0x0E: // sint16
         // Преобразовать 16-битное целое значение
         dataView = new DataView(new ArrayBuffer(2))
-        dataView.setInt16(0, _formattedValue / (10 ** exponent), true) // true для little-endian
+        dataView.setInt16(0, this.scaleForWire(_formattedValue, exponent), true) // true для little-endian
         break
 
       case 0x08: // uint32
         // Преобразовать 32-битное беззнаковое значение
         dataView = new DataView(new ArrayBuffer(4))
-        dataView.setUint32(0, _formattedValue / (10 ** exponent), true) // true для little-endian
+        dataView.setUint32(0, this.scaleForWire(_formattedValue, exponent), true) // true для little-endian
         break
 
       case 0x1B: // structure (array)
@@ -493,22 +584,45 @@ export class BleCharacteristicImpl implements BleCharacteristic {
 
   private async getDescriptors(): Promise<any> {
     try {
-      this.descriptors = await this.characteristic.getDescriptors()
+      this.descriptors = await gattOp(`descriptors ${this.characteristic.uuid}`, () => this.characteristic.getDescriptors())
     }
-    catch {
+    catch (error) {
       this.descriptors = []
-      log.warn('Descriptors is missing')
+      this.initError = error
+      log.warn('Descriptors is missing', this.characteristic.uuid, error)
     }
   }
 
+  /**
+   * Read descriptors + current value. `isInitialized` flips to true ONLY when
+   * the characteristic is actually usable — it has a presentation format and,
+   * for readable characteristics, a value read off the device. A half-baked
+   * characteristic stays un-initialised so `connectToDevice` can retry it
+   * instead of silently shipping an incomplete device snapshot.
+   */
   async initialize(): Promise<void> {
     if (this.isInitialized)
       return
+    this.initError = null
     await this.getDescriptors()
     await this.getUserFormatDescriptor()
-    await this.readPresentationFormatDescriptor()
+    try {
+      await this.readPresentationFormatDescriptor()
+    }
+    catch (error) {
+      this.initError = error
+      log.warn('CPF read failed', this.characteristic.uuid, error)
+      this.applyFallbackCpf('CPF read failed')
+    }
     await this.getFormattedValue()
-    this.isInitialized = true
-    log.debug('характеристика инициализирована', this.characteristic.uuid)
+
+    const needsValue = !!this.characteristic.properties?.read
+    const usable = this.presentationFormatDescriptor !== null
+      && (!needsValue || (this.value !== null && this.formattedValue !== null))
+    this.isInitialized = usable
+    if (usable)
+      log.debug('характеристика инициализирована', this.characteristic.uuid)
+    else
+      log.warn('характеристика инициализирована ЧАСТИЧНО', this.characteristic.uuid, this.initError)
   }
 }

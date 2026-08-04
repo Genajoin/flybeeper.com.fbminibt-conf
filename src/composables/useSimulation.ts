@@ -33,24 +33,35 @@ let pendingCmS: number | null = null
  */
 const previewCmS = ref(0)
 
+/**
+ * Simulator position while no device is connected. Module-scope so the banner
+ * and the page agree, and deliberately NOT persisted into settings.local —
+ * the simulator is a transient audition, not a setting.
+ */
+const offlineCmS = ref(0)
+
 export function useSimulation() {
   const bt = useBluetoothStore()
-  const settings = useSettingsStore()
 
   function getSimChar() {
     return bt.bleCharacteristics.find(c => c.characteristic.uuid === SIM_UUID)
   }
 
-  /** Current simulation value in m/s, or 0 if not simulating. */
+  /**
+   * Current simulation value in m/s, or 0 if not simulating.
+   *
+   * Offline the value lives in this module (`offlineCmS`), NOT in
+   * `settings.local`. It used to be persisted there under the non-UUID key
+   * `buzzer_simulate_vario_value`: the device snapshot can never contain such
+   * a key, so it registered as a permanent unsynced change and popped the
+   * "unsaved changes" dialog on every single reconnect — with an entry no
+   * Apply could ever clear.
+   */
   const valueMs = computed<number>(() => {
     const ch = getSimChar()
     if (ch && typeof ch.formattedValue === 'number')
       return ch.formattedValue
-    if (settings.local) {
-      const v = settings.local.buzzer_simulate_vario_value
-      return typeof v === 'number' ? v / 100 : 0
-    }
-    return 0
+    return offlineCmS.value / 100
   })
 
   const isActive = computed(() => valueMs.value !== 0)
@@ -92,8 +103,7 @@ export function useSimulation() {
     const ch = getSimChar()
     if (ch)
       ch.formattedValue = cmS / 100
-    if (settings.local)
-      settings.local.buzzer_simulate_vario_value = cmS
+    offlineCmS.value = cmS
 
     if (!bt.isConnected || !ch)
       return

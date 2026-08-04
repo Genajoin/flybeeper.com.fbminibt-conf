@@ -168,6 +168,8 @@ dashboard:
   press: PRESS
   temp: TEMP
   bat: BAT
+  copy-device-id: Copy the full device id
+  copied: COPIED
   settings-title: Settings
   synced: ONLINE
   dirty: ● UNSYNCED
@@ -386,6 +388,7 @@ sett:
   reset: Defaults
   reset-confirm: Reset this group to factory defaults?
   no-changes: No local changes
+  apply-failed: '{count} setting(s) could NOT be written to the device — they are still shown as changed. Move closer to the device, reconnect and try again.'
   unsynced: '{count} local change(s) pending'
 
 audio:
