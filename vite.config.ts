@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
@@ -29,13 +29,24 @@ import { vitePluginFirmwareIndex } from './scripts/vite-firmware-index'
  */
 function buildVersion(): string {
   try {
-    const git = (cmd: string) =>
-      execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
-    const hash = git('git rev-parse --short HEAD')
-    // Tracked files only. A plain `git status --porcelain` also lists
-    // untracked files, and CI grows those during install/build — which
-    // marked every release build dirty and defeated the point of the flag.
-    const dirty = git('git status --porcelain --untracked-files=no') !== ''
+    const git = (...args: string[]) =>
+      execFileSync('git', args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    const hash = git('rev-parse', '--short', 'HEAD')
+    // Tracked sources only:
+    //  - untracked files are excluded because CI grows them during install
+    //    and build, which marked every release build dirty;
+    //  - public/firmware/index.json is excluded because the firmware-index
+    //    plugin rewrites it on every build, and its committed form cannot be
+    //    reproduced in a fresh clone (it carries an `fbsv` entry for an empty
+    //    directory, and git does not store empty directories).
+    const dirty = git(
+      'status',
+      '--porcelain',
+      '--untracked-files=no',
+      '--',
+      '.',
+      ':(exclude)public/firmware/index.json',
+    ) !== ''
     return dirty ? `${hash}+` : hash
   }
   catch {
