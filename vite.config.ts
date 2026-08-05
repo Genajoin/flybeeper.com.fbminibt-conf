@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { execSync } from 'node:child_process'
 import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
@@ -18,10 +19,34 @@ import VueRouter from 'unplugin-vue-router/vite'
 import { VueRouterAutoImports } from 'unplugin-vue-router'
 import { vitePluginFirmwareIndex } from './scripts/vite-firmware-index'
 
+/**
+ * Build identity shown in the footer and asked for by support.
+ *
+ * There are no release tags and no `version` field in package.json, so the
+ * commit hash is the only thing that identifies a build unambiguously. A
+ * trailing `+` marks a build made from a dirty working tree (local/preview),
+ * so a screenshot from a user can never be mistaken for a released build.
+ */
+function buildVersion(): string {
+  try {
+    const git = (cmd: string) =>
+      execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    const hash = git('git rev-parse --short HEAD')
+    const dirty = git('git status --porcelain') !== ''
+    return dirty ? `${hash}+` : hash
+  }
+  catch {
+    // Building outside a git checkout (tarball, CI without history).
+    return 'unknown'
+  }
+}
+
 export default defineConfig(({ command }) => {
   const config = {
     define: {
       __DEBUG__: `${command !== 'build'}`,
+      __APP_VERSION__: JSON.stringify(buildVersion()),
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
     },
     resolve: {
       alias: {

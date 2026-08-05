@@ -494,6 +494,8 @@ device:
   manual-open-standalone: Im neuen Tab ↗
 
 footer:
+  build: Build
+  copy-build: Build-Kennung kopieren (danach fragt der Support)
   about: Über FlyBeeper
   devices: Geräte
   firmware-update: Firmware-Update

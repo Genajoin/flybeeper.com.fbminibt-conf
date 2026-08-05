@@ -493,6 +493,8 @@ update:
   latest-badge: LATEST
 
 footer:
+  build: Build
+  copy-build: Copy the build id (support asks for it)
   about: About FlyBeeper
   devices: Devices
   firmware-update: Firmware update

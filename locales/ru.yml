@@ -490,6 +490,8 @@ update:
   latest-badge: ПОСЛЕДНЯЯ
 
 footer:
+  build: Сборка
+  copy-build: Скопировать идентификатор сборки (его спрашивает поддержка)
   about: О FlyBeeper
   devices: Устройства
   firmware-update: Обновление прошивки
