@@ -15,3 +15,7 @@ cypress/downloads
 # Local-only scratch directories (formerly tracked, moved out of the repo)
 /.claude/
 /.design/
+
+# Generated on every build by scripts/vite-firmware-index.ts — scanned from
+# the app_update.*.bin files next to it, never edited by hand.
+public/firmware/index.json

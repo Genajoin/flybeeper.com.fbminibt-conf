@@ -32,21 +32,9 @@ function buildVersion(): string {
     const git = (...args: string[]) =>
       execFileSync('git', args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
     const hash = git('rev-parse', '--short', 'HEAD')
-    // Tracked sources only:
-    //  - untracked files are excluded because CI grows them during install
-    //    and build, which marked every release build dirty;
-    //  - public/firmware/index.json is excluded because the firmware-index
-    //    plugin rewrites it on every build, and its committed form cannot be
-    //    reproduced in a fresh clone (it carries an `fbsv` entry for an empty
-    //    directory, and git does not store empty directories).
-    const dirty = git(
-      'status',
-      '--porcelain',
-      '--untracked-files=no',
-      '--',
-      '.',
-      ':(exclude)public/firmware/index.json',
-    ) !== ''
+    // Tracked sources only — CI grows untracked files while installing and
+    // building, and counting those marked every release build dirty.
+    const dirty = git('status', '--porcelain', '--untracked-files=no') !== ''
     return dirty ? `${hash}+` : hash
   }
   catch {
