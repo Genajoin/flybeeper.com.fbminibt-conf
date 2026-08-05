@@ -32,7 +32,10 @@ function buildVersion(): string {
     const git = (cmd: string) =>
       execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
     const hash = git('git rev-parse --short HEAD')
-    const dirty = git('git status --porcelain') !== ''
+    // Tracked files only. A plain `git status --porcelain` also lists
+    // untracked files, and CI grows those during install/build — which
+    // marked every release build dirty and defeated the point of the flag.
+    const dirty = git('git status --porcelain --untracked-files=no') !== ''
     return dirty ? `${hash}+` : hash
   }
   catch {
