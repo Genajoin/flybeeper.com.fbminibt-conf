@@ -1,6 +1,6 @@
-# FlyBeeper Sun Vario
+# FlyBeeper SunVario
 
-![FlyBeeper Sun Vario — solarbetriebenes Variometer mit Superkondensator-Speicher](/manual-media/fbsv/01-overview.jpg)
+![FlyBeeper SunVario — akustisches Variometer mit Solarpanel und Kondensator statt Akku](/manual-media/fbsv/01-overview.jpg)
 
 ## Handbuch
 
@@ -35,6 +35,38 @@ Für Fälle, in denen der Ladestand noch hoch ist, das Gerät aber komplett ausg
 für den Lufttransport. Auf der Rückseite finden Sie die Öffnung für die Taste `Reset`.
 Drücken Sie einmal und drücken Sie 2 Sekunden nach dem einmaligen Blinken der LED erneut. Zum Verlassen des Modus drücken Sie `Reset` einmal.
 
+### Stromversorgung, Laden und Laufzeit
+
+Die Energie speichert ein Lithium-Ionen-Kondensator mit 10 F — kein Akku. Ein
+gezieltes Laden ist nicht vorgesehen: Das Solarpanel deckt einen Flugtag ab, der
+Kondensator überbrückt Gleitflüge im Schatten und den Abend. USB-C ist für den
+Fall gedacht, dass das Gerät monatelang im dunklen Rucksack lag.
+
+Die Werte unten wurden an einem Gerät der Revision 8 gemessen (16.08.2026). Das Arbeitsfenster
+des Speichers ist 3,8 → 2,7 V (11 C, 3,1 mAh); bis zur oberen Grenze kommt nur die Sonne, USB-C
+hebt auf etwa 3,5 V. Die Laufzeiten in der Tabelle sind ab 3,6 V gerechnet, also konservativ.
+
+| Betriebsart                                            | Laufzeit |
+| ------------------------------------------------------ | -------- |
+| Still, ohne Bluetooth, Barometer gestoppt              | ≈ 52 h   |
+| Ton ohne Telefon, seltenes Piepen                      | ≈ 18 h   |
+| Telefon verbunden und abonniert, Ton aus               | ≈ 10 h   |
+| Telefon verbunden, Lautstärke 1, halbe Zeit im Steigen | ≈ 8,5 h  |
+| Telefon verbunden, Lautstärke 2                        | ≈ 7 h    |
+| Telefon verbunden, Lautstärke 3                        | ≈ 5,4 h  |
+
+Das Laden von leer auf voll dauerte in schräger August-Morgensonne 35 Minuten,
+in der Mittagssonne etwa fünf Minuten. Über USB-C füllt sich das gesamte
+Arbeitsfenster in deutlich unter einer Minute, die letzten Prozent dauern aber
+spürbar länger als die ersten: oben fließt der Ladestrom nicht mehr konstant.
+
+Der größte Verbraucher ist nicht der Ton, sondern die Barometerabfrage: 62
+Messungen pro Sekunde kosten rund 141 µA, die erste Lautstärkestufe dagegen
+106 µA. Deshalb stoppt der Sensor automatisch, wenn die Lautstärke null ist und
+kein Telefon verbunden ist — das Gerät hält dann etwa doppelt so lange.
+
+Angegebene Betriebstemperatur: −5 °C und darüber. Darunter funktioniert das Gerät sehr wahrscheinlich weiterhin — die untere Grenze bestimmt das Verhalten des Kondensators, nicht die Elektronik —, aber je kälter es ist, desto mehr Arbeit übernimmt die Sonne.
+
 ### Liste der Flugprogramme mit direkter Unterstützung
 
 - xcTrack v.0.9.11.10+
@@ -68,9 +100,9 @@ Charakteristiken-UUIDs für Dienst `0x180A` DevInfo
 
 | Name              | UUID   | Size   | Value     |
 | ----------------- | ------ | ------ | --------- |
-| Model Number      | 0x2A24 | STRING | FBPS      |
+| Model Number      | 0x2A24 | STRING | FBSV      |
 | Manufacturer Name | 0x2A29 | STRING | FlyBeeper |
-| Firmware Revision | 0x2A26 | STRING | 0.01      |
+| Firmware Revision | 0x2A26 | STRING | 0.24      |
 
 <route lang="yaml">
 meta:

@@ -59,10 +59,11 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
   },
   {
     sku: 'fbsv',
-    displayName: 'FlyBeeper Solar Vario',
+    displayName: 'FlyBeeper SunVario',
     aboutKey: 'about.fbsv-p1',
     stlPath: '/fbsv-model.stl',
     stlPos: { x: -30, y: -30, z: 60 },
+    marketUrl: 'https://market.flybeeper.com/device/sun-vario',
     iconName: 'sun',
   },
   {
