@@ -5,16 +5,21 @@
 /manifest.webmanifest
   Content-Type: application/manifest+json
 
-# Long-cache Vite's hashed asset bundles — in the BROWSER. The edge gets a
-# deliberately short TTL via `cdn-cache-control`, which Cloudflare honours in
-# preference to `cache-control` for its own cache.
+# Long-cache Vite's hashed asset bundles. The name carries a content hash, so
+# a year is safe for anything that actually exists.
 #
-# Why the split: the file name carries a content hash, so a browser can hold
-# it forever without risk. Cloudflare's shared cache is the dangerous one —
-# whatever it stores, it serves to everybody on that PoP. If a bad response
-# ever lands under an asset URL again (a 404 during deploy propagation, an
-# origin hiccup), a 10-minute edge TTL makes it a blip instead of the 20-hour
-# outage of 2026-08-18. Cost is a few more origin hits; Pages is free.
+# Deliberately NO `cdn-cache-control` here. Pages answers a missing asset with
+# `cache-control: no-store`, which keeps Cloudflare from caching that 404 at
+# all — so the deploy-propagation race (a PoP asked for a chunk seconds before
+# it had the new version) self-heals on the very next request. An earlier
+# revision set `cdn-cache-control: max-age=600` as a safety net and got the
+# opposite: it overrode the no-store and pinned those 404s on the edge for ten
+# minutes, breaking the site on that PoP for exactly as long.
+#
+# The safety net is no longer needed anyway: what made 2026-08-18 a 20-hour
+# outage was a *200* — the SPA catch-all answering an /assets/*.js request with
+# index.html, which then cached for a year. There is no catch-all any more
+# (see public/_redirects), so the only cacheable response left under this path
+# is a real file.
 /assets/*
   cache-control: public, max-age=31536000, immutable
-  cdn-cache-control: public, max-age=600
