@@ -1,6 +1,24 @@
 @import './tokens.css';
 @import './markdown.css';
 
+/**
+ * Generation counter for the global stylesheet's content hash.
+ *
+ * Bumping this number changes the bytes of the built `assets/app-*.css`, so
+ * Vite gives it a new file name and every cache — browser and CDN alike —
+ * has to fetch it fresh. It exists because a stylesheet whose source has not
+ * changed keeps its hash across builds forever: on 2026-08-18 Cloudflare's
+ * edge cached an HTML error page under `app-CAzZLKui.css` (see
+ * public/_redirects for how), and no amount of redeploying could dislodge it
+ * while the name stayed the same. Purging the zone cache is the proper fix;
+ * this is the lever when the dashboard is out of reach.
+ *
+ * Only bump it for that reason, and say so in the commit message.
+ */
+:root {
+  --fb-style-generation: 2;
+}
+
 html,
 body,
 #app {
