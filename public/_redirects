@@ -24,4 +24,8 @@
 #
 # `_redirects` cannot express a 404 itself: Pages supports 301/302/303/307/
 # 308 and 200-rewrites, and silently ignores any other status.
-/update/firmware/*  /update/firmware.html  200
+# Destination without the `.html`: Pages canonicalises `/foo.html` to `/foo`
+# with a 308, and that redirect fires on the rewrite too — pointing this at
+# `/update/firmware.html` bounced the browser to /update/firmware and threw
+# the SKU away.
+/update/firmware/*  /update/firmware  200
