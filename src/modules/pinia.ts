@@ -20,9 +20,10 @@ export const install: UserModule = async ({ isClient, initialState, app }) => {
   if (!isClient)
     return
 
-  // Re-detect Web Bluetooth against the real navigator. The SSR snapshot
-  // we just restored always says bleAvailable=false / reason='browser'
-  // because the prerender has no navigator / window.
+  // Re-detect Web Bluetooth against the real navigator. The SSR snapshot we
+  // just restored always says bleAvailable=false / reason='unknown' because
+  // the prerender has no navigator / window — until this runs, no view is
+  // allowed to tell the user their browser lacks BLE.
   useBluetoothStore(pinia).detectBleAvailability()
 
   // Hydrate the local-first settings store from IndexedDB before the first

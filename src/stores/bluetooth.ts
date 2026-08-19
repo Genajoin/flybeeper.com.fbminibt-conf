@@ -57,9 +57,17 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      * the SSR snapshot), where the live navigator + window.isSecureContext
      * are both available. See the action below for what 'insecure' /
      * 'browser' / null mean.
+     *
+     * The default reason is 'unknown', NOT 'browser': the prerender has not
+     * looked at any navigator, so it must not accuse the visitor's browser of
+     * anything. On 2026-08-18 a poisoned edge cache stopped a route chunk from
+     * loading, hydration never ran, and the frozen snapshot told every visitor
+     * "Web Bluetooth not available" on a browser that supports it perfectly —
+     * a wrong diagnosis is worse than none. Views branch on `bleBlocked`, so
+     * 'unknown' renders the normal UI and only a real detection can say no.
      */
     bleAvailable: false,
-    bleUnavailableReason: 'browser' as 'insecure' | 'browser' | null,
+    bleUnavailableReason: 'unknown' as 'insecure' | 'browser' | 'unknown' | null,
     device: null as BluetoothDevice | null,
     isConnected: false,
     isConnecting: false,
@@ -115,6 +123,17 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       miniBtSimulation: { characteristic: null, value: null } as BtCh,
     },
   }),
+  getters: {
+    /**
+     * True only when detection actually ran and came back negative. Guards
+     * every "your browser can't do BLE" message, so the prerendered snapshot
+     * ('unknown') never shows one. `bleAvailable` alone can't express this —
+     * it is false both for "no BLE" and for "not checked yet".
+     */
+    bleBlocked: (state): boolean =>
+      state.bleUnavailableReason === 'browser' || state.bleUnavailableReason === 'insecure',
+  },
+
   actions: {
     /**
      * Re-evaluate Web Bluetooth availability against the live `navigator`
@@ -360,6 +379,11 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
     },
 
     async connectToRequestDevice() {
+      // Reached the button before/without hydration running detection? Check
+      // now rather than bailing silently — a no-op click is the hardest kind
+      // of bug to report.
+      if (this.bleUnavailableReason === 'unknown')
+        this.detectBleAvailability()
       if (!this.bleAvailable || this.isConnected || this.isConnecting)
         return
       this.errorMessage = ''

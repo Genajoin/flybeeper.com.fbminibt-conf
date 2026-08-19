@@ -191,8 +191,8 @@ function start() {
         </button>
       </template>
 
-      <!-- ---------- step 1: no Web Bluetooth at all ---------- -->
-      <template v-else-if="!bt.bleAvailable">
+      <!-- ---------- step 1: no Web Bluetooth at all (confirmed) ---------- -->
+      <template v-else-if="bt.bleBlocked">
         <h2 class="flash__title">
           {{ t('update.flash-unsupported-title') }}
         </h2>

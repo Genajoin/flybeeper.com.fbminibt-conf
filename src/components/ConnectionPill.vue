@@ -46,7 +46,7 @@ function onClick() {
       'pill--off': !bt.isConnected && !busy,
       'pill--busy': busy,
     }"
-    :disabled="!bt.bleAvailable && !bt.isConnected"
+    :disabled="bt.bleBlocked && !bt.isConnected"
     @click="onClick"
   >
     <span class="pill__text">{{ label }}</span>

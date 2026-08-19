@@ -86,7 +86,7 @@ function connect() {
         <button
           type="button"
           class="btn-primary"
-          :disabled="!bt.bleAvailable"
+          :disabled="bt.bleBlocked"
           @click="connect"
         >
           <span>{{ connectLabel }}</span><CkDots v-if="isBusyConnecting" />

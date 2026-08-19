@@ -66,8 +66,10 @@ const isBusy = computed(() => bt.isConnecting || bt.isFetching)
     />
   </section>
 
-  <!-- Browser itself doesn't expose Web Bluetooth (iOS Safari, Firefox) -->
-  <section v-else-if="!bt.bleAvailable" class="wizard">
+  <!-- Browser itself doesn't expose Web Bluetooth (iOS Safari, Firefox).
+       `bleBlocked`, not `!bleAvailable` — the latter is also false before
+       detection has run, and the prerender must not claim a verdict. -->
+  <section v-else-if="bt.bleBlocked" class="wizard">
     <PageHeader
       hide-utils
       :eyebrow="t('pair.no-ble-eyebrow')"
