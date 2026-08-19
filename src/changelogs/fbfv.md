@@ -1,5 +1,14 @@
 ## Changelog
 
+**Version:** 0.26.0 | **Date:** 19.08.2026 | [**Download**](/firmware/fbfv/app_update.0.26.0.bin)
+
+- _Power-on confirmation now actually works:_ A short press could still switch the device on. The hold check ran only after the radio stack was up — by then a brief touch was long over and the device booted as if the button had never been checked. The device now recognises a button wake-up from the hardware reset reason, so a touch shorter than the hold is refused and it goes straight back to sleep.
+- _Ticks during the power-on hold are audible again:_ The buzzer got its volume setting only after the countdown had finished, so the amplifier stayed silent while you were holding the button.
+- _Lower idle current:_ The internal DC/DC regulator of the nRF52 is now enabled. Measured on a live device: 298 → 236 µA, 21 % less. The choke has been on the board from the start; the firmware had simply never switched the regulator on.
+- _Barometer polling follows the volume:_ The sensor stops being polled when the sound is off and nobody is subscribed. Polling the barometer is the single most expensive thing the device does, and it no longer runs for nothing.
+- _Battery reading:_ Refreshed every 5 minutes instead of every 10 while connected.
+- _Auto power-off floor:_ The inactivity timeout can no longer be set below 5 minutes.
+
 **Version:** 0.24.0 | **Date:** 27.07.2026 | [**Download**](/firmware/fbfv/app_update.0.24.0.bin)
 
 - _Power-on confirmation:_ The device powers on only after the button is held for 3 seconds — an accidental touch in a pocket no longer wakes it. The hold is accompanied by ticks with a rising rate, so you hear how much longer to hold. Release earlier and the device goes straight back to sleep.
