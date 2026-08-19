@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { copyFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
@@ -195,6 +196,12 @@ export default defineConfig(({ command }) => {
         generateSitemap({
           hostname: 'https://config.flybeeper.com/',
         })
+        // Cloudflare Pages serves dist/404.html for anything it cannot match.
+        // Handing it the prerendered shell keeps the pages/[...all].vue screen
+        // (and the app chrome) on unknown URLs while the status stays an
+        // honest 404 — which is also what makes a missing /assets/* bundle
+        // fail loudly instead of masquerading as HTML. See public/_redirects.
+        copyFileSync('dist/index.html', 'dist/404.html')
       },
     },
 

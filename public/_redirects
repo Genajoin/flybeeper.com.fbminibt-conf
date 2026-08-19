@@ -1,21 +1,27 @@
 # FANET Vario was published as /devices/fbfanetvario before the SKU was renamed
 # to fbfv (the name the device itself reports in DIS). Keep the old address
-# alive — it may have been linked or indexed. Must stay ABOVE the SPA fallback.
+# alive — it may have been linked or indexed. Must stay above the rewrite below.
 /devices/fbfanetvario      /devices/fbfv            301
 /devices/fbfanetvario/*    /devices/fbfv/:splat     301
 /update/firmware/fbfanetvario  /update/firmware/fbfv  301
 
-# A hashed asset that is NOT on disk must fail loudly with a 404 — it must
-# never fall through to the SPA rule below and come back as index.html with a
-# 200. That happened on 2026-08-18: a request raced the deploy propagation,
-# got index.html under an /assets/*.js URL, and the `immutable` rule in
-# `_headers` pinned that HTML in Cloudflare's edge cache for a year. Every
-# visitor on the affected PoP then got a dead page — the dynamic import threw
-# (nosniff blocks text/html as a module), Vue never hydrated, and the
-# prerendered snapshot claimed "Web Bluetooth not available".
-# Must stay ABOVE the SPA fallback.
-/assets/*  /404-asset.html  404
-
-# Cloudflare Pages SPA fallback — every unmatched path serves index.html with
-# a 200 so the Vue client router can resolve the route on hydration.
-/*  /index.html  200
+# NO catch-all `/*  /index.html  200` here, on purpose.
+#
+# A catch-all also swallows requests for hashed bundles: ask for an
+# /assets/*.js that isn't on disk and Pages answers index.html with a 200.
+# On 2026-08-18 exactly that happened — a request raced deploy propagation,
+# and the `immutable` rule in `_headers` pinned that HTML in Cloudflare's
+# edge cache under a .js URL for a year. `nosniff` then blocked it as a
+# module, Vue never hydrated, and the frozen prerender told every visitor
+# on the affected PoP that their browser has no Web Bluetooth.
+#
+# vite-ssg prerenders every static route to its own .html, so Pages serves
+# them directly and no fallback is needed. What is left is the one dynamic
+# route (`update/firmware/[sku]`) plus the 404 page, which Pages picks up
+# from dist/404.html — a copy of the SPA shell (see vite.config.ts), so an
+# unknown URL still renders the pages/[...all].vue screen, only with an
+# honest 404 instead of a 200.
+#
+# `_redirects` cannot express a 404 itself: Pages supports 301/302/303/307/
+# 308 and 200-rewrites, and silently ignores any other status.
+/update/firmware/*  /update/firmware.html  200
