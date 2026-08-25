@@ -140,6 +140,13 @@ preset:
   url-eyebrow: URL
   copy-url: 📋 Copy URL
   download-json: ↓ JSON
+  upload-json: ↑ JSON
+  import-error: Not a FlyBeeper preset file
+  skipped: SKIPPED
+  via-file: via JSON file
+  format-v2: current format
+  format-cpf-list: old format (fw ≥0.15)
+  format-legacy-struct: old format (fw ≤0.15, cm/s converted)
   preset-name: Preset name
   preset-by: By
   privacy-note: Privacy · URL fragment is client-only · never sent to server

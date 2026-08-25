@@ -2,7 +2,23 @@
 const { t } = useI18n()
 
 const sharePreset = useSharePreset()
-const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, presetName, presetBy } = sharePreset
+const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, importJsonFile, presetName, presetBy } = sharePreset
+
+// Hidden <input type=file> driven by the visible button — the native
+// control cannot be styled to match the rest of the strip.
+const fileInput = ref<HTMLInputElement | null>(null)
+const importError = ref(false)
+
+async function onPickFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Reset first: picking the same file twice in a row fires no change
+  // event otherwise, and a failed import could never be retried.
+  input.value = ''
+  if (!file)
+    return
+  importError.value = !(await importJsonFile(file))
+}
 
 // Truncated URL preview (mono block keeps it ergonomic at 420+ chars).
 const urlHead = computed(() => {
@@ -69,6 +85,19 @@ const urlTail = computed(() => {
             <button class="share__url-cta" type="button" @click="downloadJson()">
               {{ t('preset.download-json') }}
             </button>
+            <button class="share__url-cta" type="button" @click="fileInput?.click()">
+              {{ t('preset.upload-json') }}
+            </button>
+            <input
+              ref="fileInput"
+              class="share__file"
+              type="file"
+              accept=".json,application/json"
+              @change="onPickFile"
+            >
+          </div>
+          <div v-if="importError" class="share__error">
+            {{ t('preset.import-error') }}
           </div>
         </div>
 
@@ -96,6 +125,19 @@ const urlTail = computed(() => {
   background: var(--ck-bg);
   color: var(--ck-ink);
   font-family: var(--ck-font-body);
+}
+
+.share__file {
+  display: none;
+}
+
+.share__error {
+  margin-top: 8px;
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ck-signal);
 }
 
 .share__display {

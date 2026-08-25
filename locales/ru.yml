@@ -140,6 +140,13 @@ preset:
   url-eyebrow: URL
   copy-url: 📋 Скопировать URL
   download-json: ↓ JSON
+  upload-json: ↑ JSON
+  import-error: Это не файл пресета FlyBeeper
+  skipped: ПРОПУЩЕНО
+  via-file: из файла JSON
+  format-v2: текущий формат
+  format-cpf-list: старый формат (прошивка ≥0.15)
+  format-legacy-struct: старый формат (прошивка ≤0.15, см/с пересчитаны)
   preset-name: Название пресета
   preset-by: Автор
   privacy-note: Приватность · фрагмент URL остаётся в клиенте · никогда не отправляется

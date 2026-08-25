@@ -11,7 +11,13 @@ const { t } = useI18n()
 async function apply() {
   if (!shared.pending)
     return
-  settings.replaceLocal(shared.pending.settings)
+  // A file preset is partial by nature (old dumps carry no climb-off /
+  // sink-off / UART-duplication entries), so it is merged on top of local.
+  // URL presets keep the original replace semantics.
+  if (shared.pending.source === 'file')
+    settings.mergeLocal(shared.pending.settings)
+  else
+    settings.replaceLocal(shared.pending.settings)
   shared.clear()
   // The QR-scan landing is /share, which is the *export* page — staying
   // there hides the change. Jump to the most visual settings page so the
@@ -25,6 +31,21 @@ async function apply() {
 function discard() {
   shared.clear()
 }
+
+const fieldCount = computed(() => Object.keys(shared.pending?.settings ?? {}).length)
+
+/**
+ * "via URL fragment" / "via JSON file · <shape>" — the shape matters when
+ * an old file imports: it tells the user whether the legacy cm/s → m/s
+ * conversion was applied.
+ */
+const sourceLabel = computed(() => {
+  const p = shared.pending
+  if (!p || p.source !== 'file')
+    return t('preset.via-url')
+  const fmt = p.format ? t(`preset.format-${p.format}`) : ''
+  return fmt ? `${t('preset.via-file')} · ${fmt}` : t('preset.via-file')
+})
 </script>
 
 <template>
@@ -39,7 +60,10 @@ function discard() {
           {{ shared.pending.name || t('preset.import-default-name') }}
         </div>
         <div class="banner-row__sub">
-          {{ shared.pending.bytes }} {{ t('preset.bytes') }} · {{ t('preset.via-url') }}
+          {{ fieldCount }} {{ t('preset.fields') }} · {{ shared.pending.bytes }} {{ t('preset.bytes') }} · {{ sourceLabel }}
+          <template v-if="shared.pending.skipped">
+            · {{ shared.pending.skipped }} {{ t('preset.skipped') }}
+          </template>
         </div>
         <div class="banner-row__actions">
           <button class="banner-row__primary" type="button" @click="apply">

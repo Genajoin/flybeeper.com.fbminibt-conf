@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import { computed, ref, watch } from 'vue'
 import QRCode from 'qrcode'
 import { buildShareUrl } from '~/utils/preset-share'
+import { parsePresetJson, presetNameFromFilename } from '~/utils/preset-import'
 import { CPF_UUID_TO_GROUP, type SettingsGroupKey } from '~/composables/useSettingsGroups'
 
 /**
@@ -98,6 +99,36 @@ export function useSharePreset(groupKeys?: Ref<SettingsGroupKey[] | null>) {
     URL.revokeObjectURL(a.href)
   }
 
+  /**
+   * Read a picked JSON file and stage it for the import banner.
+   *
+   * Nothing is written to the settings store here — the parsed preset goes
+   * to `sharedPreset.pending` so the user gets the same Apply / Discard
+   * prompt a scanned QR code produces. Returns false when the file is not
+   * a preset we recognise, so the caller can surface an error.
+   */
+  async function importJsonFile(file: File): Promise<boolean> {
+    let text: string
+    try {
+      text = await file.text()
+    }
+    catch {
+      return false
+    }
+    const preset = parsePresetJson(text, presetNameFromFilename(file.name))
+    if (!preset)
+      return false
+    shared.stage({
+      name: preset.name,
+      bytes: preset.bytes,
+      settings: preset.settings,
+      source: 'file',
+      format: preset.format,
+      skipped: preset.skipped,
+    })
+    return true
+  }
+
   return {
     url,
     byteSize,
@@ -105,6 +136,7 @@ export function useSharePreset(groupKeys?: Ref<SettingsGroupKey[] | null>) {
     qrSvg,
     copyUrl,
     downloadJson,
+    importJsonFile,
     presetName: computed({
       get: () => shared.exportName,
       set: (v: string) => { shared.exportName = v },

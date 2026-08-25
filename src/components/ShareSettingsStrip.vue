@@ -35,7 +35,25 @@ watch(() => route.path, () => {
   expanded.value = false
 })
 const sharePreset = useSharePreset(activeGroups)
-const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, presetName } = sharePreset
+const { url, byteSize, fieldCount, qrSvg, copyUrl, downloadJson, importJsonFile, presetName } = sharePreset
+
+// Hidden <input type=file> driven by the visible button.
+const fileInput = ref<HTMLInputElement | null>(null)
+const importError = ref(false)
+
+async function onPickFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  // Reset first so re-picking the same file still fires a change event.
+  input.value = ''
+  if (!file)
+    return
+  importError.value = !(await importJsonFile(file))
+  // Collapse so the staged-preset banner at the top of the layout is
+  // visible instead of being pushed below an expanded QR panel.
+  if (!importError.value)
+    expanded.value = false
+}
 
 /**
  * True when local has at least one value that differs from factory
@@ -141,6 +159,20 @@ const urlTail = computed(() => {
           <button class="share-strip__cta-btn" type="button" @click="downloadJson()">
             {{ t('preset.download-json') }}
           </button>
+          <button class="share-strip__cta-btn" type="button" @click="fileInput?.click()">
+            {{ t('preset.upload-json') }}
+          </button>
+          <input
+            ref="fileInput"
+            class="share-strip__file"
+            type="file"
+            accept=".json,application/json"
+            @change="onPickFile"
+          >
+        </div>
+
+        <div v-if="importError" class="share-strip__error">
+          {{ t('preset.import-error') }}
         </div>
       </div>
     </Transition>
@@ -317,6 +349,19 @@ const urlTail = computed(() => {
 .share-strip__actions {
   display: flex;
   border: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.share-strip__file {
+  display: none;
+}
+
+.share-strip__error {
+  margin-top: 8px;
+  font-family: var(--ck-font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ck-signal);
 }
 
 .share-strip__cta-btn {

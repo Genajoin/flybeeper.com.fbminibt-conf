@@ -186,6 +186,19 @@ export const useSettingsStore = defineStore('settingsStore', {
     },
 
     /**
+     * Apply a partial preset on top of the current local values.
+     *
+     * File imports are partial by nature — an old ≤0.15 dump has no
+     * `climb-off` / `sink-off` / UART-duplication entries at all — so
+     * replacing the whole bag would silently reset every key the file
+     * happens not to mention back to the factory demo value.
+     */
+    mergeLocal(patch: SettingsLocal): void {
+      this.local = { ...(this.local ?? {}), ...cloneJson(patch) }
+      this.pushHistory('local')
+    },
+
+    /**
      * Settings whose local value differs from the reference (device) value.
      *
      * Only real setting keys, and only keys the reference actually knows —

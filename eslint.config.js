@@ -7,6 +7,9 @@ export default antfu(
     formatters: true,
     ignores: [
       'design/**',
+      // Verbatim device exports — reformatting them would defeat the point
+      // of testing the importer against a real-world file.
+      'test/fixtures/**',
     ],
   },
 )
