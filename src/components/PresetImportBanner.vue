@@ -11,13 +11,12 @@ const { t } = useI18n()
 async function apply() {
   if (!shared.pending)
     return
-  // A file preset is partial by nature (old dumps carry no climb-off /
-  // sink-off / UART-duplication entries), so it is merged on top of local.
-  // URL presets keep the original replace semantics.
-  if (shared.pending.source === 'file')
-    settings.mergeLocal(shared.pending.settings)
-  else
-    settings.replaceLocal(shared.pending.settings)
+  // Presets are always partial: a QR from /settings/audio carries only the
+  // audio + curves group, and an old file dump has no climb-off / sink-off /
+  // UART-duplication entries at all. Merging is what "apply a preset" means —
+  // replacing the bag would reset every key the preset omits back to the
+  // factory demo value.
+  settings.mergeLocal(shared.pending.settings)
   shared.clear()
   // The QR-scan landing is /share, which is the *export* page — staying
   // there hides the change. Jump to the most visual settings page so the

@@ -16,6 +16,11 @@ cypress/downloads
 /.claude/
 /.design/
 
+# Preset files collected from users for import testing — real device dumps,
+# kept out of the repo. Anything the importer must keep passing lives in
+# test/fixtures/ instead.
+/.specs/
+
 # Generated on every build by scripts/vite-firmware-index.ts — scanned from
 # the app_update.*.bin files next to it, never edited by hand.
 public/firmware/index.json

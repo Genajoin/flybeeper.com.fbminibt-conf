@@ -13,19 +13,22 @@ import { CPF_UUID_TO_GROUP } from '~/composables/useSettingsGroups'
  * 2. `cpf-list` — the v1 configurator, firmware ≥0.15 path
  *    (`CharacteristicForm15.vue > downloadJson`):
  *      `[{ uuid, name, value }, …]`
- *    Values are already *formatted* (CPF exponent applied), i.e. the same
- *    scale `SettingsLocal` uses — no unit conversion needed. Real-world files
- *    also carry junk entries for the Generic Attribute services
+ *    Values are CPF-formatted, so scalars line up with `SettingsLocal` as-is.
+ *    Two entries in files found in the field do not, and are repaired by
+ *    `repairCpfValue()` — see its comment. Real-world files also carry junk
+ *    entries for the Generic Attribute services
  *    (`00000001-0000-1000-8000-00805f9b34fb` with `value: {}`); they are
  *    dropped by the UUID whitelist below.
  *
  * 3. `legacy-struct` — the v1 configurator, firmware ≤0.15 path
  *    (`CharacteristicForm.vue > downloadJson`): a dump of `iFbMiniBtSettings`
  *    keyed by field name, with the four curves nested under `curves`.
- *    These are **raw struct values**: thresholds and vario breakpoints are
- *    Int16 cm/s and must be divided by 100 to become the m/s the CPF UI
- *    speaks. Frequency (Hz), cycle (ms) and duty (%) are already in their
- *    display units.
+ *    Raw struct values throughout: the four thresholds are Int16 cm/s where
+ *    the CPF UI wants m/s (exponent -2), so they are divided by 100. The
+ *    curves are NOT touched — format 0x1B bypasses the CPF exponent, so
+ *    `SettingsLocal` stores vario breakpoints as raw cm/s too, and the write
+ *    path (`BleCharacteristic.convertFormattedValueToDataView`) pushes them
+ *    to the wire with a bare `setInt16`.
  *
  * Unknown keys are dropped rather than fatal: an old file is expected to be
  * a partial match, and a single unrecognised entry must not lose the rest.
@@ -64,15 +67,18 @@ const LEGACY_FIELD_TO_UUID: Record<string, string> = {
 }
 
 /**
- * UUIDs stored as Int16 cm/s in the ≤0.15 struct but shown in m/s by the CPF
- * UI. Only these get the /100; Hz / ms / % curves must pass through untouched.
+ * Scalars stored as Int16 cm/s in the ≤0.15 struct but held in m/s by
+ * `SettingsLocal` (CPF exponent -2). Only these get the /100.
+ *
+ * Deliberately excludes the vario breakpoint curve: it is format 0x1B, which
+ * bypasses the exponent on both read and write, so cm/s is what the store
+ * and the wire both expect.
  */
 const LEGACY_CM_PER_S_UUIDS = new Set([
   'fcb14ed9-06e7-4a9e-b311-6eee676a2f48', // climb on
   '1673f137-66c1-4ff0-8db3-69b9ed7c33e0', // climb off
   'b713f438-42fe-46fe-b052-371a3b9e433a', // sink on
   '8a78979b-1425-4160-b34b-ac5aadddeb21', // sink off
-  '512d6d89-7a6f-461c-983e-902b68d40f56', // vario breakpoints
 ])
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -103,6 +109,39 @@ function cmToM(v: number): number {
   return Math.round(v) / 100
 }
 
+const VARIO_DOTS_UUID = '512d6d89-7a6f-461c-983e-902b68d40f56'
+const POWER_OFF_UUID = '9a560750-0bca-4d0c-a1fc-21bbc574d5a6'
+
+/**
+ * Two `cpf-list` values in the wild are not on the scale the store keeps.
+ *
+ * - **Vario breakpoints.** Files exported around 2024-2025 hold them in m/s
+ *   (`[-10, -2, -1.99, …]`), while the store — and the wire, via a bare
+ *   `setInt16` — wants raw cm/s. Importing them verbatim would truncate the
+ *   whole curve to a handful of cm/s and silence the vario. Detected by
+ *   shape, not by file date: a raw curve is always integral and spans
+ *   hundreds, so a fractional entry, or a whole curve inside ±50, means m/s.
+ *   A genuine cm/s curve whose full span is under 0.5 m/s would be
+ *   misread — such a curve is not something a vario can be flown with.
+ *
+ * - **Power-off timeout.** The old characteristic was named
+ *   `power_off_timeout_hour` and carried hours; the store keeps seconds.
+ *   Anything from 1 to 24 is read as hours (0 means "never", and no one
+ *   sets a 24-second power-off).
+ */
+function repairCpfValue(uuid: string, value: unknown): unknown {
+  if (uuid === VARIO_DOTS_UUID && Array.isArray(value)) {
+    const dots = value as number[]
+    const looksLikeMetres
+      = dots.some(v => !Number.isInteger(v))
+      || dots.every(v => Math.abs(v) <= 50)
+    return looksLikeMetres ? dots.map(v => Math.round(v * 100)) : dots
+  }
+  if (uuid === POWER_OFF_UUID && typeof value === 'number' && value > 0 && value <= 24)
+    return value * 3600
+  return value
+}
+
 function fromCpfList(list: unknown[]): { settings: SettingsLocal, skipped: number } {
   const settings: SettingsLocal = {}
   let skipped = 0
@@ -116,7 +155,7 @@ function fromCpfList(list: unknown[]): { settings: SettingsLocal, skipped: numbe
       skipped++
       continue
     }
-    settings[uuid] = value
+    settings[uuid] = repairCpfValue(uuid, value)
   }
   return { settings, skipped }
 }

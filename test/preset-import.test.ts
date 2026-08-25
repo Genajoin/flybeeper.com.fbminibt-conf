@@ -16,6 +16,7 @@ const SILENT = 'daadb8a9-a566-450e-97d0-990a0c8487dd'
 const HID_OFF = '86591053-2856-4f25-a35c-b753f0deea8f'
 const NEVER_SLEEP = 'd9eec180-344e-41e3-8c18-adf312dce8bb'
 const UART = '84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b'
+const POWER_OFF = '9a560750-0bca-4d0c-a1fc-21bbc574d5a6'
 const SIMULATOR = '904baf04-5814-11ee-8c99-0242ac120002'
 
 describe('preset-import: current (v2) format', () => {
@@ -33,6 +34,19 @@ describe('preset-import: current (v2) format', () => {
     expect(p?.settings[VOLUME]).toBe(2)
     expect(p?.settings[SILENT]).toBe(true)
     expect(p?.skipped).toBe(0)
+  })
+
+  it('reads a real file exported by the current app', () => {
+    const path = resolve(process.cwd(), 'test/fixtures/current-v2.json')
+    const p = parsePresetJson(readFileSync(path, 'utf-8'))
+    expect(p?.format).toBe('v2')
+    expect(p?.name).toBe('Calm-Alps')
+    expect(p?.skipped).toBe(0)
+    // Thresholds in m/s, curve in raw cm/s — both pass through untouched.
+    expect(p?.settings[CLIMB_ON]).toBe(0.35)
+    expect(p?.settings[SINK_ON]).toBe(-2.5)
+    expect(p?.settings[VARIO_DOTS]).toEqual([-1400, -800, -100, 0, 39, 40, 100, 225, 500, 800, 1390, 2000])
+    expect(Object.keys(p!.settings)).toHaveLength(10)
   })
 
   it('accepts a bare UUID bag (hand-edited file)', () => {
@@ -58,8 +72,23 @@ describe('preset-import: old cpf-list format (v1, fw ≥0.15)', () => {
     expect(p?.settings[SINK_ON]).toBe(-2)
     expect(p?.settings[HID_OFF]).toBe(true)
     expect(p?.settings[SILENT]).toBe(false)
-    expect(p?.settings[VARIO_DOTS]).toEqual([-10, -2, -1.99, -1.11, -1.08, -0.02, -0.01, 0.3, 1.05, 1.89, 3.49, 10])
+    // The file holds the curve in m/s; the store (and the wire) want raw
+    // cm/s, so it is scaled back up on import.
+    expect(p?.settings[VARIO_DOTS]).toEqual([-1000, -200, -199, -111, -108, -2, -1, 30, 105, 189, 349, 1000])
     expect(p?.settings[FREQ_DOTS]).toEqual([200, 294, 294, 320, 250, 420, 443, 536, 633, 702, 799, 1060])
+    // power_off_timeout_hour: 8 hours → seconds.
+    expect(p?.settings[POWER_OFF]).toBe(8 * 3600)
+  })
+
+  it('leaves a curve that is already raw cm/s alone', () => {
+    const raw = [-1400, -800, -100, 0, 39, 40, 100, 200, 300, 450, 1200, 2000]
+    const text = JSON.stringify([{ uuid: VARIO_DOTS, name: 'buzzer_vario_dots_array', value: raw }])
+    expect(parsePresetJson(text)?.settings[VARIO_DOTS]).toEqual(raw)
+  })
+
+  it('leaves a power-off timeout already in seconds alone', () => {
+    const text = JSON.stringify([{ uuid: POWER_OFF, name: 'power_off_timeout', value: 14400 }])
+    expect(parsePresetJson(text)?.settings[POWER_OFF]).toBe(14400)
   })
 
   it('drops the Generic Attribute junk entries these files carry', () => {
@@ -105,18 +134,20 @@ describe('preset-import: legacy struct format (v1, fw ≤0.15)', () => {
     hid_keyboard_off: true,
   }
 
-  it('converts cm/s thresholds and vario breakpoints to m/s', () => {
+  it('converts the cm/s scalar thresholds to m/s', () => {
     const p = parsePresetJson(JSON.stringify(legacy))
     expect(p?.format).toBe('legacy-struct')
     expect(p?.settings[CLIMB_ON]).toBe(0.1)
     expect(p?.settings[CLIMB_OFF]).toBe(0.05)
     expect(p?.settings[SINK_ON]).toBe(-1.5)
     expect(p?.settings[SINK_OFF]).toBe(-1)
-    expect(p?.settings[VARIO_DOTS]).toEqual([-14, -8, -1, 0, 0.05, 0.2, 1, 2, 3, 4.5, 12, 20])
   })
 
-  it('leaves Hz / ms / % curves untouched', () => {
+  it('leaves all four curves untouched — 0x1B bypasses the CPF exponent', () => {
     const p = parsePresetJson(JSON.stringify(legacy))
+    // Vario breakpoints stay raw cm/s: the store keeps them that way and the
+    // write path pushes them with a bare setInt16.
+    expect(p?.settings[VARIO_DOTS]).toEqual(legacy.curves.buzzer_vario_dots)
     expect(p?.settings[FREQ_DOTS]).toEqual(legacy.curves.buzzer_frequency_dots)
     expect(p?.settings[CYCLE_DOTS]).toEqual(legacy.curves.buzzer_cycle_dots)
     expect(p?.settings[DUTY_DOTS]).toEqual(legacy.curves.buzzer_duty_dots)
