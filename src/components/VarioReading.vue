@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+import { formatSpanSec, traceStats } from '~/utils/traceStats'
 
 /**
  * Live vario reading. Prefers the native vario characteristic; if the
@@ -204,6 +205,28 @@ const sparkPath = computed(() => {
   }).join(' ')
 })
 
+// Status line under the readout: the sparkline auto-fits its own min/max, so
+// without these numbers there is no scale on either axis — neither how far the
+// trace swings nor how long the window is.
+function signed(v: number): string {
+  const s = v.toFixed(2)
+  return v > 0 ? `+${s}` : s.replace('-', '−')
+}
+
+// Parts, not one string: they wrap as whole atoms on a narrow screen instead
+// of breaking a number in half.
+const traceParts = computed<string[] | null>(() => {
+  const st = traceStats(samples.value)
+  if (!st)
+    return null
+  return [
+    `${t('dashboard.trace-min')} ${signed(st.min)}`,
+    `${t('dashboard.trace-max')} ${signed(st.max)}`,
+    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)} ${t('dashboard.trace-sec')}`,
+    `${t('dashboard.trace-count')} ${st.count}`,
+  ]
+})
+
 const zeroY = computed(() => {
   const s = samples.value
   if (s.length < 2)
@@ -251,6 +274,9 @@ const zeroY = computed(() => {
     </div>
     <div class="vario__axis">
       <span>−5</span><span>0</span><span>+10</span>
+    </div>
+    <div v-if="traceParts" class="vario__trace">
+      <span v-for="p in traceParts" :key="p">{{ p }}</span>
     </div>
   </div>
 </template>
@@ -347,6 +373,22 @@ const zeroY = computed(() => {
   width: 2px;
   margin-left: -1px;
   background: var(--ck-ink);
+}
+
+.vario__trace {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 2px;
+  margin-top: 6px;
+  position: relative;
+  font-family: var(--ck-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ck-dim);
+  letter-spacing: 0.6px;
+  font-variant-numeric: tabular-nums;
 }
 
 .vario__axis {

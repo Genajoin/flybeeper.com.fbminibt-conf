@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
+import { formatSpanSec, traceStats } from '~/utils/traceStats'
 
 const bt = useBluetoothStore()
 const { t } = useI18n()
@@ -156,11 +157,29 @@ function buildSparkPath(trace: { t: number, v: number }[]): string {
   }).join(' ')
 }
 
+// Status line under each readout: the sparkline auto-fits its own min/max, so
+// the same-looking wiggle can be 0.2 Pa or 40 Pa. These numbers name the scale
+// of both axes — value extent, window length, sample count.
+// Parts, not one string: in a half-width cell they wrap as whole atoms instead
+// of breaking a number in half.
+function traceParts(trace: { t: number, v: number }[], digits: number): string[] | null {
+  const st = traceStats(trace)
+  if (!st)
+    return null
+  return [
+    `${t('dashboard.trace-min')} ${st.min.toFixed(digits)}`,
+    `${t('dashboard.trace-max')} ${st.max.toFixed(digits)}`,
+    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)} ${t('dashboard.trace-sec')}`,
+    `${t('dashboard.trace-count')} ${st.count}`,
+  ]
+}
+
 const cellViews = computed(() => [
   {
     label: t('dashboard.alt'),
     value: fmt(alt.value, 0),
     unit: 'M',
+    digits: 0,
     trace: cells.value[ALT_UUID].trace.length > 1
       ? cells.value[ALT_UUID].trace
       : cells.value[PRESS_UUID].trace.map(p => ({ t: p.t, v: altFromPressurePa(p.v) })),
@@ -169,21 +188,24 @@ const cellViews = computed(() => [
     label: t('dashboard.press'),
     value: fmt(pressPa.value, 1),
     unit: 'PA',
+    digits: 1,
     trace: cells.value[PRESS_UUID].trace,
   },
   {
     label: t('dashboard.temp'),
     value: fmt(temp.value, 0),
     unit: '°C',
+    digits: 0,
     trace: cells.value[TEMP_UUID].trace,
   },
   {
     label: t('dashboard.bat'),
     value: fmt(bat.value, 2),
     unit: 'V',
+    digits: 2,
     trace: cells.value[BAT_UUID].trace.length > 1 ? cells.value[BAT_UUID].trace : cells.value[BAT_LVL_UUID].trace,
   },
-].map(c => ({ ...c, path: buildSparkPath(c.trace) })))
+].map(c => ({ ...c, path: buildSparkPath(c.trace), traceRow: traceParts(c.trace, c.digits) })))
 </script>
 
 <template>
@@ -212,6 +234,9 @@ const cellViews = computed(() => [
       <div class="stats__value-row">
         <span class="stats__value">{{ s.value }}</span>
         <span class="stats__unit">{{ s.unit }}</span>
+      </div>
+      <div v-if="s.traceRow" class="stats__trace">
+        <span v-for="p in s.traceRow" :key="p">{{ p }}</span>
       </div>
     </div>
   </div>
@@ -268,6 +293,22 @@ const cellViews = computed(() => [
   font-size: 26px;
   letter-spacing: -0.8px;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats__trace {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 2px;
+  margin-top: 6px;
+  position: relative;
+  font-family: var(--ck-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ck-dim);
+  letter-spacing: 0.4px;
   font-variant-numeric: tabular-nums;
 }
 
