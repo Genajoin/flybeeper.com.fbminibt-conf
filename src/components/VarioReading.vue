@@ -223,7 +223,6 @@ const traceParts = computed<string[] | null>(() => {
     `${t('dashboard.trace-min')} ${signed(st.min)}`,
     `${t('dashboard.trace-max')} ${signed(st.max)}`,
     `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)} ${t('dashboard.trace-sec')}`,
-    `${t('dashboard.trace-count')} ${st.count}`,
   ]
 })
 

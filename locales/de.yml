@@ -451,7 +451,6 @@ dashboard:
   trace-min: MIN
   trace-max: MAX
   trace-span: Δt
-  trace-count: N
   trace-sec: s
   copy-device-id: Vollständige Geräte-ID kopieren
   copied: KOPIERT
