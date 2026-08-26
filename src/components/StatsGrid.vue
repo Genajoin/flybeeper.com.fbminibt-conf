@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
-import { formatSpanSec, traceStats } from '~/utils/traceStats'
+import { formatSpanSec, sparkGeometry, traceStats } from '~/utils/traceStats'
 
 const bt = useBluetoothStore()
 const { t } = useI18n()
@@ -125,38 +125,6 @@ function fmt(v: number | null, digits = 1): string {
   return v === null ? '—' : v.toFixed(digits)
 }
 
-// Sparkline path builder shared by every cell.
-const SVG_W = 200
-const SVG_H = 60
-function buildSparkPath(trace: { t: number, v: number }[]): string {
-  if (trace.length < 2)
-    return ''
-  const t0 = trace[0].t
-  const tN = trace[trace.length - 1].t
-  const span = Math.max(tN - t0, 1)
-  let lo = Infinity
-  let hi = -Infinity
-  for (const p of trace) {
-    if (p.v < lo)
-      lo = p.v
-    if (p.v > hi)
-      hi = p.v
-  }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo === hi) {
-    lo -= 1
-    hi += 1
-  }
-  const pad = (hi - lo) * 0.15
-  lo -= pad
-  hi += pad
-  const yScale = SVG_H / (hi - lo)
-  return trace.map((p, i) => {
-    const x = ((p.t - t0) / span) * SVG_W
-    const y = SVG_H - (p.v - lo) * yScale
-    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-}
-
 // Scale of the sparkline, pinned to three corners of the cell instead of a row
 // under the readout: the sparkline auto-fits its own min/max, so the same-
 // looking wiggle can be 0.2 Pa or 40 Pa. A single row does not fit a
@@ -206,7 +174,7 @@ const cellViews = computed(() => [
     digits: 2,
     trace: cells.value[BAT_UUID].trace.length > 1 ? cells.value[BAT_UUID].trace : cells.value[BAT_LVL_UUID].trace,
   },
-].map(c => ({ ...c, path: buildSparkPath(c.trace), corners: traceCorners(c.trace, c.digits) })))
+].map(c => ({ ...c, spark: sparkGeometry(c.trace), corners: traceCorners(c.trace, c.digits) })))
 </script>
 
 <template>
@@ -221,14 +189,27 @@ const cellViews = computed(() => [
       }"
     >
       <svg
-        v-if="s.path"
+        v-if="s.spark"
         class="stats__spark"
-        :viewBox="`0 0 ${SVG_W} ${SVG_H}`"
+        viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path :d="s.path" />
+        <path :d="s.spark.path" />
       </svg>
+      <!-- Dots as positioned elements, not <circle>: the svg is stretched by
+           preserveAspectRatio="none", which would squash a circle into an
+           ellipse. -->
+      <template v-if="s.spark">
+        <i
+          class="stats__dot stats__dot--max"
+          :style="{ left: `${s.spark.max.x}%`, top: `${s.spark.max.y}%` }"
+        />
+        <i
+          class="stats__dot stats__dot--min"
+          :style="{ left: `${s.spark.min.x}%`, top: `${s.spark.min.y}%` }"
+        />
+      </template>
       <CkEyebrow color="var(--ck-dim)">
         {{ s.label }}
       </CkEyebrow>
@@ -277,6 +258,24 @@ const cellViews = computed(() => [
   height: 100%;
   pointer-events: none;
   opacity: 0.16;
+}
+
+.stats__dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.stats__dot--max {
+  background: var(--ck-signal);
+}
+
+.stats__dot--min {
+  background: var(--ck-cold);
 }
 
 .stats__spark path {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatSpanSec, traceStats } from '../src/utils/traceStats'
+import { formatSpanSec, sparkGeometry, traceStats } from '../src/utils/traceStats'
 
 describe('traceStats', () => {
   it('needs at least two points to have an extent', () => {
@@ -30,5 +30,47 @@ describe('traceStats', () => {
     expect(formatSpanSec(2.34)).toBe('2.3')
     expect(formatSpanSec(9.96)).toBe('10.0')
     expect(formatSpanSec(29.7)).toBe('30')
+  })
+})
+
+describe('sparkGeometry', () => {
+  const trace = [
+    { t: 0, v: 0 },
+    { t: 1000, v: 2 },
+    { t: 2000, v: -1 },
+  ]
+
+  it('needs two points, same as traceStats', () => {
+    expect(sparkGeometry([{ t: 0, v: 1 }])).toBeNull()
+  })
+
+  it('puts the marker dots on the drawn line', () => {
+    const g = sparkGeometry(trace, 0)!
+    // No padding: the extremes land on the top and bottom edges of the box,
+    // at the x of the sample they belong to.
+    expect(g.max).toEqual({ x: 50, y: 0 })
+    expect(g.min).toEqual({ x: 100, y: 100 })
+    expect(g.path).toBe('M0.0,66.7 L50.0,0.0 L100.0,100.0')
+  })
+
+  it('padding pulls the extremes off the edges but keeps them on the path', () => {
+    const g = sparkGeometry(trace, 0.15)!
+    expect(g.max.y).toBeCloseTo(11.5, 1)
+    expect(g.min.y).toBeCloseTo(88.5, 1)
+    expect(g.path.startsWith(`M0.0,`)).toBe(true)
+    expect(g.path).toContain(`L50.0,${g.max.y.toFixed(1)}`)
+    expect(g.path).toContain(`L100.0,${g.min.y.toFixed(1)}`)
+  })
+
+  it('reports the zero line only while zero is inside the plotted range', () => {
+    expect(sparkGeometry(trace, 0)!.zeroY).toBeCloseTo(66.7, 1)
+    expect(sparkGeometry([{ t: 0, v: 5 }, { t: 1000, v: 9 }], 0)!.zeroY).toBeNull()
+  })
+
+  it('draws a flat trace mid-box instead of dividing by zero', () => {
+    const g = sparkGeometry([{ t: 0, v: 3 }, { t: 1000, v: 3 }])!
+    expect(g.path).toBe('M0.0,50.0 L100.0,50.0')
+    expect(g.min).toEqual({ x: 0, y: 50 })
+    expect(g.max).toEqual({ x: 0, y: 50 })
   })
 })

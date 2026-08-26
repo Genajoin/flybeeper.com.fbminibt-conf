@@ -27,6 +27,11 @@
   --ck-signal: #ff6a00;
   --ck-on-signal: #ffffff;
 
+  /* Cold counterpart to the signal. NOT a second accent — it exists only
+     where a pair of opposite extremes has to be told apart at a glance
+     (the min dot against the max dot on a sparkline). */
+  --ck-cold: #1f6feb;
+
   /* ── Border roles ──────────────────────────────────────── */
   --ck-border: var(--ck-ink);
   --ck-border-w: 1.5px;
@@ -111,4 +116,5 @@ html.dark {
 
   --ck-signal: #ff6a00;
   --ck-on-signal: #000000;
+  --ck-cold: #5b9bff;
 }

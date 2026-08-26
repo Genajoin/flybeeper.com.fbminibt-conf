@@ -41,3 +41,72 @@ export function traceStats(trace: readonly TracePoint[]): TraceStats | null {
 export function formatSpanSec(sec: number): string {
   return sec >= 10 ? sec.toFixed(0) : sec.toFixed(1)
 }
+
+/** A point on the sparkline, in percent of the plotting box (0..100). */
+export interface SparkPoint { x: number, y: number }
+
+export interface SparkGeometry {
+  /** Path for a `0 0 100 100` viewBox drawn with preserveAspectRatio="none". */
+  path: string
+  /** Where the lowest / highest sample sits, for the marker dots. */
+  min: SparkPoint
+  max: SparkPoint
+  /** Y of the zero line, or null when zero is outside the plotted range. */
+  zeroY: number | null
+}
+
+/**
+ * Geometry of the sparkline in ONE pass: the path and the coordinates of the
+ * extremes, computed against the same scale. Both callers used to build the
+ * path themselves; the marker dots have to land exactly on the drawn line, so
+ * the padding and the scaling now live in a single place.
+ *
+ * `padFrac` is headroom above and below the data, as a fraction of its span —
+ * without it a trace touching its own extremes would be clipped by the box.
+ */
+export function sparkGeometry(trace: readonly TracePoint[], padFrac = 0.15): SparkGeometry | null {
+  if (trace.length < 2)
+    return null
+  let lo = Number.POSITIVE_INFINITY
+  let hi = Number.NEGATIVE_INFINITY
+  let loI = 0
+  let hiI = 0
+  for (let i = 0; i < trace.length; i++) {
+    const v = trace[i].v
+    if (!Number.isFinite(v))
+      continue
+    if (v < lo) {
+      lo = v
+      loI = i
+    }
+    if (v > hi) {
+      hi = v
+      hiI = i
+    }
+  }
+  if (!Number.isFinite(lo) || !Number.isFinite(hi))
+    return null
+  // A flat trace has no span to scale by — give it one so it draws mid-box.
+  if (lo === hi) {
+    lo -= 1
+    hi += 1
+  }
+  else {
+    const pad = (hi - lo) * padFrac
+    lo -= pad
+    hi += pad
+  }
+  const t0 = trace[0].t
+  const span = Math.max(trace[trace.length - 1].t - t0, 1)
+  const x = (i: number) => ((trace[i].t - t0) / span) * 100
+  const y = (v: number) => 100 - ((v - lo) / (hi - lo)) * 100
+  const path = trace
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`)
+    .join(' ')
+  return {
+    path,
+    min: { x: x(loI), y: y(trace[loI].v) },
+    max: { x: x(hiI), y: y(trace[hiI].v) },
+    zeroY: lo <= 0 && hi >= 0 ? y(0) : null,
+  }
+}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
-import { formatSpanSec, traceStats } from '~/utils/traceStats'
+import { formatSpanSec, sparkGeometry, traceStats } from '~/utils/traceStats'
 
 /**
  * Live vario reading. Prefers the native vario characteristic; if the
@@ -172,49 +172,19 @@ const fracPct = computed(() => frac.value * 100)
 const barLeft = computed(() => Math.min(fracPct.value, zeroPct.value))
 const barRight = computed(() => 100 - Math.max(fracPct.value, zeroPct.value))
 
-// Sparkline path over the live vario trace (last 30 s).
-const SVG_W = 300
-const SVG_H = 80
-const sparkPath = computed(() => {
-  const s = samples.value
-  if (s.length < 2)
-    return ''
-  const t0 = s[0].t
-  const tN = s[s.length - 1].t
-  const span = Math.max(tN - t0, 1)
-  let lo = Infinity
-  let hi = -Infinity
-  for (const p of s) {
-    if (p.v < lo)
-      lo = p.v
-    if (p.v > hi)
-      hi = p.v
-  }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo === hi) {
-    lo = -1
-    hi = 1
-  }
-  const pad = (hi - lo) * 0.12
-  lo -= pad
-  hi += pad
-  const yScale = SVG_H / (hi - lo)
-  return s.map((p, i) => {
-    const x = ((p.t - t0) / span) * SVG_W
-    const y = SVG_H - (p.v - lo) * yScale
-    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
-})
+// Sparkline geometry over the live vario trace (last 30 s): path plus where
+// the extremes sit, so the marker dots land on the drawn line.
+const spark = computed(() => sparkGeometry(samples.value, 0.12))
 
-// Status line under the readout: the sparkline auto-fits its own min/max, so
-// without these numbers there is no scale on either axis — neither how far the
-// trace swings nor how long the window is.
+// Scale of that sparkline, pinned to three corners of the block: max
+// top-right, min bottom-right, window length bottom-left. Without them the
+// trace has no axes — it auto-fits its own extremes, so a 0.2 m/s ripple and a
+// 4 m/s dive draw the same shape.
 function signed(v: number): string {
   const s = v.toFixed(2)
   return v > 0 ? `+${s}` : s.replace('-', '−')
 }
 
-// Pinned to three corners of the block, same as the stat cells: max top-right,
-// min bottom-right, window length bottom-left.
 const corners = computed<{ min: string, max: string, span: string } | null>(() => {
   const st = traceStats(samples.value)
   if (!st)
@@ -225,40 +195,27 @@ const corners = computed<{ min: string, max: string, span: string } | null>(() =
     span: `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
   }
 })
-
-const zeroY = computed(() => {
-  const s = samples.value
-  if (s.length < 2)
-    return SVG_H / 2
-  let lo = Infinity
-  let hi = -Infinity
-  for (const p of s) {
-    if (p.v < lo)
-      lo = p.v
-    if (p.v > hi)
-      hi = p.v
-  }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo === hi)
-    return SVG_H / 2
-  const pad = (hi - lo) * 0.12
-  lo -= pad
-  hi += pad
-  return SVG_H - (0 - lo) * (SVG_H / (hi - lo))
-})
 </script>
 
 <template>
   <div class="vario">
     <svg
-      v-if="sparkPath"
+      v-if="spark"
       class="vario__spark"
-      :viewBox="`0 0 ${SVG_W} ${SVG_H}`"
+      viewBox="0 0 100 100"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <line :x1="0" :y1="zeroY" :x2="SVG_W" :y2="zeroY" class="vario__spark-zero" />
-      <path :d="sparkPath" class="vario__spark-path" />
+      <line v-if="spark.zeroY !== null" :x1="0" :y1="spark.zeroY" :x2="100" :y2="spark.zeroY" class="vario__spark-zero" />
+      <path :d="spark.path" class="vario__spark-path" />
     </svg>
+    <!-- Dots as positioned elements, not <circle>: the svg is stretched by
+         preserveAspectRatio="none", which would squash a circle into an
+         ellipse. -->
+    <template v-if="spark">
+      <i class="vario__dot vario__dot--max" :style="{ left: `${spark.max.x}%`, top: `${spark.max.y}%` }" />
+      <i class="vario__dot vario__dot--min" :style="{ left: `${spark.min.x}%`, top: `${spark.min.y}%` }" />
+    </template>
     <CkEyebrow block>
       {{ t('dashboard.vario') }}
     </CkEyebrow>
@@ -299,6 +256,24 @@ const zeroY = computed(() => {
   height: 100%;
   pointer-events: none;
   opacity: 0.18;
+}
+
+.vario__dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.vario__dot--max {
+  background: var(--ck-signal);
+}
+
+.vario__dot--min {
+  background: var(--ck-cold);
 }
 
 .vario__spark-path {
