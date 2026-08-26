@@ -178,7 +178,6 @@ dashboard:
   trace-min: min
   trace-max: max
   trace-span: Δt
-  trace-sec: с
   copy-device-id: Скопировать полный идентификатор прибора
   copied: СКОПИРОВАНО
   settings-title: Настройки

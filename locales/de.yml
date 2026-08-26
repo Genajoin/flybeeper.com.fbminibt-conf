@@ -451,7 +451,6 @@ dashboard:
   trace-min: min
   trace-max: max
   trace-span: Δt
-  trace-sec: s
   copy-device-id: Vollständige Geräte-ID kopieren
   copied: KOPIERT
   settings-title: Einstellungen

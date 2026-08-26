@@ -169,7 +169,7 @@ function traceParts(trace: { t: number, v: number }[], digits: number): string[]
   return [
     `${t('dashboard.trace-min')} ${st.min.toFixed(digits)}`,
     `${t('dashboard.trace-max')} ${st.max.toFixed(digits)}`,
-    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)} ${t('dashboard.trace-sec')}`,
+    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
   ]
 }
 

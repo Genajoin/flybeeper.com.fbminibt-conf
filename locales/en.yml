@@ -178,7 +178,6 @@ dashboard:
   trace-min: min
   trace-max: max
   trace-span: Δt
-  trace-sec: s
   copy-device-id: Copy the full device id
   copied: COPIED
   settings-title: Settings
