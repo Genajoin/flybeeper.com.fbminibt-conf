@@ -7,13 +7,17 @@ import type { SettingsLocal } from '~/stores/settings'
 import { useSavedDevicesStore } from '~/stores/saved-devices'
 import { CPF_RESTART_REQUIRED_UUIDS } from '~/composables/useSettingsGroups'
 
-// Upper bound on a single gatt.connect(). The picker path already confirmed
-// the device is present, so it connects well within this. The chooser-less
-// reconnect / auto-connect paths, by contrast, can target a device that is
-// powered off or out of range — there gatt.connect() would otherwise hang
-// forever. This turns that into a clean, surfaced failure instead of a stuck
-// spinner.
-const CONNECT_TIMEOUT_MS = 12_000
+// Upper bound on a single gatt.connect(). The chooser-less reconnect /
+// auto-connect paths can target a device that is powered off or out of range —
+// there gatt.connect() would otherwise hang forever. This turns that into a
+// clean, surfaced failure instead of a stuck spinner.
+//
+// A minute, not the 12 s this used to be: some of our devices advertise slowly
+// (long advertising interval, weak link, a busy Android stack that queues the
+// connection behind a scan), and on those the connect legitimately takes tens
+// of seconds. The old bound cut them off before they ever had a chance and
+// reported a timeout for a device that was right there.
+const CONNECT_TIMEOUT_MS = 60_000
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {

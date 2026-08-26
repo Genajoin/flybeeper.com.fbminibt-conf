@@ -213,17 +213,17 @@ function signed(v: number): string {
   return v > 0 ? `+${s}` : s.replace('-', '−')
 }
 
-// Parts, not one string: they wrap as whole atoms on a narrow screen instead
-// of breaking a number in half.
-const traceParts = computed<string[] | null>(() => {
+// Pinned to three corners of the block, same as the stat cells: max top-right,
+// min bottom-right, window length bottom-left.
+const corners = computed<{ min: string, max: string, span: string } | null>(() => {
   const st = traceStats(samples.value)
   if (!st)
     return null
-  return [
-    `${t('dashboard.trace-min')} ${signed(st.min)}`,
-    `${t('dashboard.trace-max')} ${signed(st.max)}`,
-    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
-  ]
+  return {
+    min: `${t('dashboard.trace-min')} ${signed(st.min)}`,
+    max: `${t('dashboard.trace-max')} ${signed(st.max)}`,
+    span: `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
+  }
 })
 
 const zeroY = computed(() => {
@@ -274,22 +274,22 @@ const zeroY = computed(() => {
     <div class="vario__axis">
       <span>−5</span><span>0</span><span>+10</span>
     </div>
-    <div v-if="traceParts" class="vario__trace">
-      <span v-for="p in traceParts" :key="p">{{ p }}</span>
-    </div>
+    <template v-if="corners">
+      <span class="vario__corner vario__corner--tr">{{ corners.max }}</span>
+      <span class="vario__corner vario__corner--br">{{ corners.min }}</span>
+      <span class="vario__corner vario__corner--bl">{{ corners.span }}</span>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .vario {
-  padding: 20px 24px;
+  /* Bottom padding leaves a band for the corner numbers under the −5/0/+10
+     axis, so they sit on the rule that closes the block. */
+  padding: 20px 24px 18px;
   background: var(--ck-paper);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   position: relative;
-  /* Same as the stat cells: the status line rides the bottom edge of the block
-     even when the block is given more height than its content needs. */
-  display: flex;
-  flex-direction: column;
 }
 
 .vario__spark {
@@ -378,21 +378,31 @@ const zeroY = computed(() => {
   background: var(--ck-ink);
 }
 
-.vario__trace {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 12px;
-  row-gap: 2px;
-  margin-top: auto;
-  padding-top: 8px;
-  position: relative;
+.vario__corner {
+  position: absolute;
   font-family: var(--ck-font-mono);
   font-size: 9px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1;
   color: var(--ck-dim);
-  letter-spacing: 0.6px;
+  letter-spacing: 0.3px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.vario__corner--tr {
+  top: 5px;
+  right: 6px;
+}
+
+.vario__corner--br {
+  bottom: 5px;
+  right: 6px;
+}
+
+.vario__corner--bl {
+  bottom: 5px;
+  left: 6px;
 }
 
 .vario__axis {

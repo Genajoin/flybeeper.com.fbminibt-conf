@@ -157,20 +157,22 @@ function buildSparkPath(trace: { t: number, v: number }[]): string {
   }).join(' ')
 }
 
-// Status line under each readout: the sparkline auto-fits its own min/max, so
-// the same-looking wiggle can be 0.2 Pa or 40 Pa. These numbers name the scale
-// of both axes — value extent, window length, sample count.
-// Parts, not one string: in a half-width cell they wrap as whole atoms instead
-// of breaking a number in half.
-function traceParts(trace: { t: number, v: number }[], digits: number): string[] | null {
+// Scale of the sparkline, pinned to three corners of the cell instead of a row
+// under the readout: the sparkline auto-fits its own min/max, so the same-
+// looking wiggle can be 0.2 Pa or 40 Pa. A single row does not fit a
+// half-width cell once the numbers get as long as pressure in pascals — it
+// wrapped and squeezed the readout. In the corners each number keeps its own
+// space: max top-right, min bottom-right, window length bottom-left.
+interface Corners { min: string, max: string, span: string }
+function traceCorners(trace: { t: number, v: number }[], digits: number): Corners | null {
   const st = traceStats(trace)
   if (!st)
     return null
-  return [
-    `${t('dashboard.trace-min')} ${st.min.toFixed(digits)}`,
-    `${t('dashboard.trace-max')} ${st.max.toFixed(digits)}`,
-    `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
-  ]
+  return {
+    min: `${t('dashboard.trace-min')} ${st.min.toFixed(digits)}`,
+    max: `${t('dashboard.trace-max')} ${st.max.toFixed(digits)}`,
+    span: `${t('dashboard.trace-span')} ${formatSpanSec(st.spanSec)}`,
+  }
 }
 
 const cellViews = computed(() => [
@@ -204,7 +206,7 @@ const cellViews = computed(() => [
     digits: 2,
     trace: cells.value[BAT_UUID].trace.length > 1 ? cells.value[BAT_UUID].trace : cells.value[BAT_LVL_UUID].trace,
   },
-].map(c => ({ ...c, path: buildSparkPath(c.trace), traceRow: traceParts(c.trace, c.digits) })))
+].map(c => ({ ...c, path: buildSparkPath(c.trace), corners: traceCorners(c.trace, c.digits) })))
 </script>
 
 <template>
@@ -234,9 +236,11 @@ const cellViews = computed(() => [
         <span class="stats__value">{{ s.value }}</span>
         <span class="stats__unit">{{ s.unit }}</span>
       </div>
-      <div v-if="s.traceRow" class="stats__trace">
-        <span v-for="p in s.traceRow" :key="p">{{ p }}</span>
-      </div>
+      <template v-if="s.corners">
+        <span class="stats__corner stats__corner--tr">{{ s.corners.max }}</span>
+        <span class="stats__corner stats__corner--br">{{ s.corners.min }}</span>
+        <span class="stats__corner stats__corner--bl">{{ s.corners.span }}</span>
+      </template>
     </div>
   </div>
 </template>
@@ -249,14 +253,13 @@ const cellViews = computed(() => [
 
 .stats__cell {
   background: var(--ck-paper);
-  padding: 12px 16px;
+  /* Bottom padding leaves the corner row its own band, so the readout never
+     collides with it; min-height keeps that band off the readout in the
+     shortest cells. */
+  padding: 12px 16px 18px;
+  min-height: 96px;
   position: relative;
   overflow: hidden;
-  /* Column + margin-top:auto on the trace line: it sits on the bottom edge of
-     the cell, so all four cells line their status rows up regardless of how
-     tall the readout above them is. */
-  display: flex;
-  flex-direction: column;
 }
 
 .stats__cell--bordr {
@@ -300,21 +303,31 @@ const cellViews = computed(() => [
   font-variant-numeric: tabular-nums;
 }
 
-.stats__trace {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 8px;
-  row-gap: 2px;
-  margin-top: auto;
-  padding-top: 8px;
-  position: relative;
+.stats__corner {
+  position: absolute;
   font-family: var(--ck-font-mono);
   font-size: 9px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1;
   color: var(--ck-dim);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stats__corner--tr {
+  top: 4px;
+  right: 5px;
+}
+
+.stats__corner--br {
+  bottom: 4px;
+  right: 5px;
+}
+
+.stats__corner--bl {
+  bottom: 4px;
+  left: 5px;
 }
 
 .stats__unit {
