@@ -175,8 +175,8 @@ dashboard:
   press: PRESS
   temp: TEMP
   bat: BAT
-  trace-min: MIN
-  trace-max: MAX
+  trace-min: min
+  trace-max: max
   trace-span: Δt
   trace-sec: s
   copy-device-id: Copy the full device id

@@ -286,6 +286,10 @@ const zeroY = computed(() => {
   background: var(--ck-paper);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   position: relative;
+  /* Same as the stat cells: the status line rides the bottom edge of the block
+     even when the block is given more height than its content needs. */
+  display: flex;
+  flex-direction: column;
 }
 
 .vario__spark {
@@ -379,7 +383,8 @@ const zeroY = computed(() => {
   flex-wrap: wrap;
   column-gap: 12px;
   row-gap: 2px;
-  margin-top: 6px;
+  margin-top: auto;
+  padding-top: 8px;
   position: relative;
   font-family: var(--ck-font-mono);
   font-size: 9px;

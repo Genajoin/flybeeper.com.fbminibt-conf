@@ -252,6 +252,11 @@ const cellViews = computed(() => [
   padding: 12px 16px;
   position: relative;
   overflow: hidden;
+  /* Column + margin-top:auto on the trace line: it sits on the bottom edge of
+     the cell, so all four cells line their status rows up regardless of how
+     tall the readout above them is. */
+  display: flex;
+  flex-direction: column;
 }
 
 .stats__cell--bordr {
@@ -300,7 +305,8 @@ const cellViews = computed(() => [
   flex-wrap: wrap;
   column-gap: 8px;
   row-gap: 2px;
-  margin-top: 6px;
+  margin-top: auto;
+  padding-top: 8px;
   position: relative;
   font-family: var(--ck-font-mono);
   font-size: 9px;

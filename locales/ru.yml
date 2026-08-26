@@ -175,8 +175,8 @@ dashboard:
   press: ДАВЛ
   temp: ТЕМП
   bat: БАТ
-  trace-min: МИН
-  trace-max: МАКС
+  trace-min: min
+  trace-max: max
   trace-span: Δt
   trace-sec: с
   copy-device-id: Скопировать полный идентификатор прибора
