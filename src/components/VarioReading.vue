@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
-import { formatSpanSec, sparkGeometry, traceStats } from '~/utils/traceStats'
+import { formatSpanSec, sparkGeometry, traceStats, trimTrace } from '~/utils/traceStats'
 
 /**
  * Live vario reading. Prefers the native vario characteristic; if the
@@ -97,7 +97,7 @@ function altFromPressurePa(pa: number): number {
 }
 
 interface Sample { t: number, h: number, v: number }
-const HISTORY_MS = 30000 // 30 s of trace
+
 const DERIV_WINDOW_MS = 1200
 const samples = ref<Sample[]>([])
 
@@ -118,9 +118,7 @@ watch(livePressure, (pa) => {
       v = (h - anchor.h) / dt
   }
   samples.value.push({ t: now, h, v })
-  // Trim trace to HISTORY_MS.
-  while (samples.value.length && now - samples.value[0].t > HISTORY_MS)
-    samples.value.shift()
+  trimTrace(samples.value, now)
 })
 
 const derivedVario = computed<number | null>(() => {
@@ -172,7 +170,7 @@ const fracPct = computed(() => frac.value * 100)
 const barLeft = computed(() => Math.min(fracPct.value, zeroPct.value))
 const barRight = computed(() => 100 - Math.max(fracPct.value, zeroPct.value))
 
-// Sparkline geometry over the live vario trace (last 30 s): path plus where
+// Sparkline geometry over the live vario trace: path plus where
 // the extremes sit, so the marker dots land on the drawn line.
 const spark = computed(() => sparkGeometry(samples.value, 0.12))
 

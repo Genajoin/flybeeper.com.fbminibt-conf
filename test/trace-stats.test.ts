@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatSpanSec, sparkGeometry, traceStats } from '../src/utils/traceStats'
+import { TRACE_MAX_AGE_MS, TRACE_MAX_POINTS, formatSpanSec, sparkGeometry, traceStats, trimTrace } from '../src/utils/traceStats'
 
 describe('traceStats', () => {
   it('needs at least two points to have an extent', () => {
@@ -72,5 +72,34 @@ describe('sparkGeometry', () => {
     expect(g.path).toBe('M0.0,50.0 L100.0,50.0')
     expect(g.min).toEqual({ x: 0, y: 50 })
     expect(g.max).toEqual({ x: 0, y: 50 })
+  })
+})
+
+describe('trimTrace', () => {
+  it('keeps the last TRACE_MAX_POINTS samples, dropping the oldest', () => {
+    const trace = Array.from({ length: TRACE_MAX_POINTS + 5 }, (_, i) => ({ t: i, v: i }))
+    trimTrace(trace, TRACE_MAX_POINTS + 5)
+    expect(trace).toHaveLength(TRACE_MAX_POINTS)
+    expect(trace[0].v).toBe(5)
+  })
+
+  it('keeps a slow channel long past the old 30 s window', () => {
+    // Battery notifies every few minutes: three samples over 9 minutes used to
+    // leave at most one point in the window — no sparkline, no min/max.
+    const min = 60_000
+    const trace = [{ t: 0, v: 4.1 }, { t: 4 * min, v: 4.0 }, { t: 9 * min, v: 3.9 }]
+    trimTrace(trace, 9 * min)
+    expect(trace).toHaveLength(3)
+  })
+
+  it('still drops samples older than the age backstop', () => {
+    const now = 2 * TRACE_MAX_AGE_MS
+    const trace = [
+      { t: 0, v: 1 },
+      { t: now - TRACE_MAX_AGE_MS - 1, v: 2 },
+      { t: now - 1000, v: 3 },
+    ]
+    trimTrace(trace, now)
+    expect(trace.map(p => p.v)).toEqual([3])
   })
 })

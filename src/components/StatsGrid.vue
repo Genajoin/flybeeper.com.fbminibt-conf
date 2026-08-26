@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
-import { formatSpanSec, sparkGeometry, traceStats } from '~/utils/traceStats'
+import { formatSpanSec, sparkGeometry, traceStats, trimTrace } from '~/utils/traceStats'
 
 const bt = useBluetoothStore()
 const { t } = useI18n()
@@ -18,11 +18,10 @@ const WANT_UUIDS = [ALT_UUID, PRESS_UUID, TEMP_UUID, BAT_UUID, BAT_LVL_UUID]
 interface CellState {
   /** Live value pushed by the GATT notification subscriber. */
   value: number | null
-  /** Short trace for the per-cell sparkline (~30 s @ ≤1 Hz). */
+  /** Trace behind the per-cell sparkline — last TRACE_MAX_POINTS samples. */
   trace: { t: number, v: number }[]
 }
 
-const HISTORY_MS = 30000
 const cells = ref<Record<string, CellState>>(
   Object.fromEntries(WANT_UUIDS.map(u => [u, { value: null, trace: [] }])),
 )
@@ -34,8 +33,7 @@ function pushTrace(uuid: string, v: number) {
   const now = performance.now()
   c.value = v
   c.trace.push({ t: now, v })
-  while (c.trace.length && now - c.trace[0].t > HISTORY_MS)
-    c.trace.shift()
+  trimTrace(c.trace, now)
 }
 
 async function attach(ch: BleCharacteristic) {

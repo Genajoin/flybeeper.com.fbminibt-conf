@@ -1,7 +1,7 @@
 /**
  * Stats for the live traces behind the dashboard sparklines.
  *
- * The sparkline shows the SHAPE of the last ~30 s but says nothing about the
+ * The sparkline shows the SHAPE of the recent trace but says nothing about the
  * scale it was drawn at: every cell auto-fits its own min/max, so a 0.2 Pa
  * wobble and a 40 Pa dive look identical. These numbers spell the axes out —
  * vertical extent (min/max) and horizontal extent (window length) —
@@ -9,6 +9,39 @@
  */
 
 export interface TracePoint { t: number, v: number }
+
+/**
+ * How much history a trace keeps.
+ *
+ * Counted in SAMPLES, not seconds. A fixed time window is wrong here because
+ * the channels update at wildly different rates: pressure notifies several
+ * times a second, temperature every few seconds, battery every few MINUTES.
+ * Under a 30 s window the battery cell never held two points, so it had no
+ * sparkline and no min/max at all, and temperature kept three points that slid
+ * off almost as fast as they arrived. By sample count every channel keeps the
+ * same amount of *evidence* and stretches its own window to match its rate.
+ */
+export const TRACE_MAX_POINTS = 120
+
+/**
+ * Backstop on top of the sample count: drop anything older than this, so a
+ * session left open for hours doesn't draw a line that welds a reading from
+ * this morning onto one from now. Slow channels still get a window measured in
+ * minutes — far more than the 30 s they used to get.
+ */
+export const TRACE_MAX_AGE_MS = 30 * 60 * 1000
+
+/**
+ * Trim a trace in place after a push: oldest samples first, by count and then
+ * by age. In place because the callers hold reactive arrays that the sparkline
+ * reads directly.
+ */
+export function trimTrace(trace: TracePoint[], now: number): void {
+  while (trace.length > TRACE_MAX_POINTS)
+    trace.shift()
+  while (trace.length && now - trace[0].t > TRACE_MAX_AGE_MS)
+    trace.shift()
+}
 
 export interface TraceStats {
   min: number
