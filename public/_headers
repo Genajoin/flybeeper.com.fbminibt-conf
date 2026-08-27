@@ -31,7 +31,4 @@
 # invisible on a PoP for four hours after the deploy.
 /sw.js
   cache-control: public, max-age=0, must-revalidate
-
-# Same reasoning: the precache list inside it decides what the worker serves.
-/registerSW.js
-  cache-control: public, max-age=0, must-revalidate
+  x-fb-headers-rule: sw
