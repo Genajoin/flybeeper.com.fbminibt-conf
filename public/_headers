@@ -24,11 +24,19 @@
 /assets/*
   cache-control: public, max-age=31536000, immutable
 
-# The service worker is the only thing that can pull a stuck client forward, so
-# nothing may sit in front of it. Cloudflare's default for this file is
-# `max-age=14400, must-revalidate` — browsers bypass their own HTTP cache when
-# they re-fetch sw.js, but the edge does not, so a new build could stay
-# invisible on a PoP for four hours after the deploy.
-/sw.js
-  cache-control: public, max-age=0, must-revalidate
-  x-fb-headers-rule: sw
+# NO cache-control rule for /sw.js here, and not for lack of trying.
+#
+# Pages answers it with `public, max-age=14400, must-revalidate` and keeps
+# doing so whatever this file says: a rule of
+#   /sw.js
+#     cache-control: public, max-age=0, must-revalidate
+#     x-fb-headers-rule: sw
+# deployed on 2026-08-27 put `x-fb-headers-rule` on the response and left
+# cache-control untouched — the rule matches, Pages just wins on that header.
+# (The /assets/* line above survives because it happens to agree with what
+# Pages already does for hashed bundles.)
+#
+# It does not bite in practice, which is why there is no workaround: a browser
+# re-fetching sw.js bypasses its own HTTP cache by spec, and a Pages deploy
+# invalidates the edge copy — the new worker was live on the PoP seconds after
+# the deploy that added this comment.
