@@ -500,6 +500,9 @@ update:
   latest-badge: ПОСЛЕДНЯЯ
 
 footer:
+  force-update: Обновить приложение
+  force-update-hint: Сбросить кеш и загрузить свежую версию конфигуратора
+  updating: Обновляю…
   build: Сборка
   copy-build: Скопировать идентификатор сборки (его спрашивает поддержка)
   about: О FlyBeeper

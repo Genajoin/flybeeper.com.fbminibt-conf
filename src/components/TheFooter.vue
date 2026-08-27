@@ -22,6 +22,25 @@ async function copyBuild() {
 }
 
 onBeforeUnmount(() => clearTimeout(copyTimer))
+
+/**
+ * Escape hatch for a browser stuck on an old build.
+ *
+ * The UPDATE banner only appears once the browser has *noticed* a new worker,
+ * and on a phone that can take days — an installed PWA is resumed, not
+ * reloaded, and pull-to-reload does not touch the service-worker cache. So the
+ * footer gets an unconditional escape hatch: drop every cache, unregister the
+ * worker, come back from the network. Settings live in IndexedDB and survive.
+ */
+const { hardReload } = useSwUpdate()
+const updating = ref(false)
+
+async function forceUpdate() {
+  if (updating.value)
+    return
+  updating.value = true
+  await hardReload()
+}
 </script>
 
 <template>
@@ -38,6 +57,17 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
       </RouterLink>
       <a class="ftr__link ftr__link--ext" href="https://alpisto.eu" target="_blank" rel="noopener">
         {{ t('footer.alpisto') }}
+      </a>
+      <!-- A plain <a>, not a button, and deliberately not a RouterLink: when
+           the bundle failed to load there is no Vue to handle a click, and
+           navigating to ?reset=1 still reaches the inline cleanup script in
+           index.html. With Vue alive the handler below does the same thing in
+           one navigation instead of two. -->
+      <a
+        class="ftr__link ftr__update" href="?reset=1"
+        :title="t('footer.force-update-hint')" @click.prevent="forceUpdate"
+      >
+        {{ updating ? t('footer.updating') : t('footer.force-update') }}
       </a>
       <!-- Same row as the links, as its own cell — the build id is a footer
            entry, not a separate strip under one. -->
@@ -86,6 +116,20 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* The one footer cell that is an action, so it carries the signal colour —
+   a user hunting for "how do I update this thing" has to find it without
+   being told where to look. Full-width row of its own on a phone, like the
+   build id under it. */
+.ftr__update {
+  flex: 1 1 100%;
+  min-width: 100%;
+  border-right: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: var(--ck-signal);
+}
+
 /* Takes the .ftr__link cell (padding, borders, mono type) and only drops the
    emphasis — it is an identifier, not a navigation target. Declared after
    .ftr__link so these win at equal specificity. Narrow viewports: full-width
@@ -111,10 +155,15 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
   .ftr__link:nth-child(2n) {
     border-right: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
   }
+  .ftr__update {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-left: auto;
+    border-right: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
+  }
   .ftr__build {
     flex: 0 0 auto;
     min-width: 0;
-    margin-left: auto;
     border-bottom: none;
     border-left: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
     text-align: right;

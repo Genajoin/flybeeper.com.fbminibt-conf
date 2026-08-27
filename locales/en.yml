@@ -503,6 +503,9 @@ update:
   latest-badge: LATEST
 
 footer:
+  force-update: Force update
+  force-update-hint: Drop the cache and load the newest configurator build
+  updating: Updating…
   build: Build
   copy-build: Copy the build id (support asks for it)
   about: About FlyBeeper

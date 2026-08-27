@@ -23,3 +23,15 @@
 # is a real file.
 /assets/*
   cache-control: public, max-age=31536000, immutable
+
+# The service worker is the only thing that can pull a stuck client forward, so
+# nothing may sit in front of it. Cloudflare's default for this file is
+# `max-age=14400, must-revalidate` — browsers bypass their own HTTP cache when
+# they re-fetch sw.js, but the edge does not, so a new build could stay
+# invisible on a PoP for four hours after the deploy.
+/sw.js
+  cache-control: public, max-age=0, must-revalidate
+
+# Same reasoning: the precache list inside it decides what the worker serves.
+/registerSW.js
+  cache-control: public, max-age=0, must-revalidate

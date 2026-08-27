@@ -504,6 +504,9 @@ device:
   manual-open-standalone: Im neuen Tab ↗
 
 footer:
+  force-update: App aktualisieren
+  force-update-hint: Cache leeren und die neueste Version des Konfigurators laden
+  updating: Aktualisiere…
   build: Build
   copy-build: Build-Kennung kopieren (danach fragt der Support)
   about: Über FlyBeeper

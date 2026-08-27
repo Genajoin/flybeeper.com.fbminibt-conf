@@ -8,6 +8,52 @@
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#00aba9" />
     <meta name="msapplication-TileColor" content="#00aba9" />
+    <!--
+      Cache escape hatch, inline on purpose: it has to run before a single
+      module is imported, and it must keep working when the app bundle is the
+      thing that is broken.
+
+      `?reset=1` — the link support hands to a user stuck on an old build:
+      drops every Cache Storage entry, unregisters every worker, reloads clean.
+      `?fresh=…` — the cache-buster hardReload() adds; strip it from the bar
+      so the address the user sees (and bookmarks) stays the plain one.
+    -->
+    <script>
+      ;(function () {
+        const url = new URL(window.location.href)
+        if (url.searchParams.has('fresh')) {
+          url.searchParams.delete('fresh')
+          window.history.replaceState(null, '', url.toString())
+        }
+        if (url.searchParams.get('reset') !== '1') return
+        url.searchParams.delete('reset')
+        const clean = url.toString()
+        const done = function () {
+          window.location.replace(clean)
+        }
+        Promise.all([
+          window.caches
+            ? caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys.map(function (k) {
+                    return caches.delete(k)
+                  }),
+                )
+              })
+            : Promise.resolve(),
+          navigator.serviceWorker && navigator.serviceWorker.getRegistrations
+            ? navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(
+                  regs.map(function (r) {
+                    return r.unregister()
+                  }),
+                )
+              })
+            : Promise.resolve(),
+        ]).then(done, done)
+      })()
+    </script>
+
     <script>
       ;(function () {
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
