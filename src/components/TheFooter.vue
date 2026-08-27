@@ -103,8 +103,8 @@ async function forceUpdate() {
   color: var(--ck-paper);
   text-decoration: none;
   background: var(--ck-ink);
-  border-right: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
-  border-bottom: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
+  border-right: var(--ck-stroke-rule) solid var(--ck-on-ink-rule);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-on-ink-rule);
 }
 
 .ftr__link:nth-child(2n) {
@@ -113,7 +113,7 @@ async function forceUpdate() {
 
 .ftr__link:hover {
   color: var(--ck-signal);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ck-on-ink-wash);
 }
 
 /* The one footer cell that is an action, so it carries the signal colour —
@@ -142,7 +142,7 @@ async function forceUpdate() {
   border-right: none;
   cursor: pointer;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ck-on-ink-dim);
   text-align: left;
 }
 
@@ -153,19 +153,19 @@ async function forceUpdate() {
     border-bottom: none;
   }
   .ftr__link:nth-child(2n) {
-    border-right: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
+    border-right: var(--ck-stroke-rule) solid var(--ck-on-ink-rule);
   }
   .ftr__update {
     flex: 0 1 auto;
     min-width: 0;
     margin-left: auto;
-    border-right: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
+    border-right: var(--ck-stroke-rule) solid var(--ck-on-ink-rule);
   }
   .ftr__build {
     flex: 0 0 auto;
     min-width: 0;
     border-bottom: none;
-    border-left: var(--ck-stroke-rule) solid rgba(255, 255, 255, 0.16);
+    border-left: var(--ck-stroke-rule) solid var(--ck-on-ink-rule);
     text-align: right;
   }
   .ftr__link:last-child {

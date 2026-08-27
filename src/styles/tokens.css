@@ -27,6 +27,15 @@
   --ck-signal: #ff6a00;
   --ck-on-signal: #ffffff;
 
+  /* ── Color · on-ink (the footer, the one inverted surface) ─
+     A block painted --ck-ink carries type in --ck-paper, so its dim type,
+     rules and hover wash cannot be hardcoded white: dark mode flips ink to
+     near-white and a white-on-white build id disappears. These are the same
+     alphas, expressed against whichever side ink is on. */
+  --ck-on-ink-dim: rgba(255, 255, 255, 0.45);
+  --ck-on-ink-rule: rgba(255, 255, 255, 0.16);
+  --ck-on-ink-wash: rgba(255, 255, 255, 0.04);
+
   /* Cold counterpart to the signal. NOT a second accent — it exists only
      where a pair of opposite extremes has to be told apart at a glance
      (the min dot against the max dot on a sparkline). */
@@ -117,4 +126,11 @@ html.dark {
   --ck-signal: #ff6a00;
   --ck-on-signal: #000000;
   --ck-cold: #5b9bff;
+
+  /* Ink is near-white here, so the inverted block reads the other way round.
+     Slightly stronger alphas: black on a light surface carries less than
+     white on a dark one at the same value. */
+  --ck-on-ink-dim: rgba(0, 0, 0, 0.5);
+  --ck-on-ink-rule: rgba(0, 0, 0, 0.2);
+  --ck-on-ink-wash: rgba(0, 0, 0, 0.05);
 }
