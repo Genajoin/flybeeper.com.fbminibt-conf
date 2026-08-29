@@ -1,5 +1,10 @@
 ## Changelog
 
+**Version:** 0.28.1 | **Date:** 29.08.2026 | [**Download**](/firmware/fbsv/app_update.0.28.1.bin)
+
+- _"Silent on the ground" now really is silent:_ the setting used to stop the vario from being updated instead of muting the sound, so the last value stayed frozen and the buzzer kept sounding it. After landing on a descent the device would keep beeping descent without stopping. Now the sound is muted while the readings continue as usual.
+- _No self switch-off after an update:_ the double-reset window now only counts a press of the button. The reboot that follows an over-the-air update is a software one, and it could previously be mistaken for a button press — a device could go to sleep by itself right after updating.
+
 **Version:** 0.26.0 | **Date:** 19.08.2026 | [**Download**](/firmware/fbsv/app_update.0.26.0.bin)
 
 - _Power-on confirmation:_ The device powers on only after the button is held for 3 seconds — an accidental touch in a pocket no longer wakes it. The hold is accompanied by ticks with a rising rate, so you hear how much longer to hold. Release earlier and the device goes straight back to sleep.

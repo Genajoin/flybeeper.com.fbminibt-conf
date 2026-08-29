@@ -1,5 +1,13 @@
 ## Changelog
 
+**Version:** 0.28.1 | **Date:** 29.08.2026 | [**Download**](/firmware/fbfv/app_update.0.28.1.bin)
+
+- _FANET v2 command channel:_ a dedicated Bluetooth service for the app — transmit with a tag and confirmation, region profile (EU868), power, counters, and RSSI/SNR of received frames. The v1 channel is unchanged.
+- _ADS-L transmission:_ scheduled transmission in the Direct slot by the device's UTC clock, with listen-before-talk and channel alternation. Our frames are now seen by third-party receivers — the sync word was missing its leading byte and other equipment ignored us.
+- _Radio ownership:_ receive commands no longer reconfigure the chip on top of an active ADS-L transmission (subscribing, reconnecting or sleeping during one).
+- _Correct FANET coordinates:_ the decoder now follows the specification exactly.
+- _No self switch-off after an update:_ the double-reset window now only counts a press of the button. The reboot that follows an over-the-air update is a software one, and it could previously be mistaken for a button press — a device could go to sleep by itself right after updating.
+
 **Version:** 0.26.0 | **Date:** 19.08.2026 | [**Download**](/firmware/fbfv/app_update.0.26.0.bin)
 
 - _Power-on confirmation now actually works:_ A short press could still switch the device on. The hold check ran only after the radio stack was up — by then a brief touch was long over and the device booted as if the button had never been checked. The device now recognises a button wake-up from the hardware reset reason, so a touch shorter than the hold is refused and it goes straight back to sleep.
