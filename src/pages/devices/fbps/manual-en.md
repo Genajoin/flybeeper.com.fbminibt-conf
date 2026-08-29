@@ -1,12 +1,21 @@
-# FlyBeeper Pressure Sensor
+# FlyBeeper Baro
 
-![FlyBeeper Pressure Sensor — always-on external Bluetooth barometer](/manual-media/fbps1/overview.png)
+> This manual covers both the **FlyBeeper Baro** and its predecessor, the **FlyBeeper Pressure Sensor (FBPS1)**: same electronics, same firmware. The one difference is the button — the Baro has one, the FBPS1 does not.
+
+![FlyBeeper Baro — always-on external Bluetooth barometer](/manual-media/fbps/overview.png)
 
 ## Manual
 
 ### Control
 
-The device has no controls. After installing the power battery, the device is ready for connection. Reset is done by briefly removing the battery.
+**FlyBeeper Baro (round enclosure).** There is one button, and it does two things:
+
+- **One press** wakes the device and makes it advertise frequently for a while, so your phone finds it in a second instead of waiting for the next beacon. The same press brings it back from storage mode.
+- **A double press** with a 1–2 second pause puts it into deep sleep: advertising stops, the device cannot be connected to, and it draws almost nothing. This is the mode for transport and long storage; one press brings it back.
+
+**FlyBeeper Pressure Sensor (FBPS1, the predecessor).** It has no button at all: the device is ready to connect as soon as the battery is in, and a reset is done by briefly removing the battery. Everything else — the operating modes, the pressure stream, firmware updates — is identical on both devices.
+
+Nothing else controls the device: it has no screen, no LED and no sound — your flight app does all of that.
 
 ### Operating Modes
 
@@ -14,7 +23,7 @@ The device operates in two modes. Immediately after installing the battery, the 
 
 ### Configuration
 
-You can test the device through the graphical interface. You need device with Bluetooth, such as a smartphone, laptop, or computer with a Bluetooth module. Press Connect and select FbPs1 from the list. Keep the devices as close to each other as possible.
+You can test the device through the graphical interface. You need device with Bluetooth, such as a smartphone, laptop, or computer with a Bluetooth module. Press Connect and select FBPS from the list (the four characters after the dot come from the device ID). Keep the devices as close to each other as possible.
 
 At the current point, the device does not have accessible settings, but new firmware updates will include the ability to change the sensor polling frequency and data transmission frequency.
 

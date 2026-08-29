@@ -26,7 +26,7 @@ export function resolveSku(model: string | null | undefined): string | null {
   if (norm.startsWith('fbsv'))
     return 'fbsv'
   if (norm.startsWith('fbps'))
-    return 'fbps1'
+    return 'fbps'
   return null
 }
 

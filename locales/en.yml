@@ -315,7 +315,7 @@ about:
   contact-error-eyebrow: SEND FAILED
   contact-error-body: 'Could not reach the form endpoint. Check your connection and try again, or email hello{''@''}alpisto.eu directly.'
   fbminibt-p1: Variometer with Bluetooth and wireless buttons. Audible climb rate indication based on user-defined curves. The battery is cold-resistant.
-  fbps1-p1: Always available for Bluetooth connection external barometer. High sensitivity and stability with minimal delays. Turn any smartphone into a reliable variometer.
+  fbps-p1: Always available for Bluetooth connection external barometer. High sensitivity and stability with minimal delays. Turn any smartphone into a reliable variometer. This page covers both the FlyBeeper Baro and its predecessor, the Pressure Sensor (FBPS1) — they share one firmware.
   fbrc4-p1: 4 external buttons are always available for connecting via Bluetooth.
   fbtas-p1: Autonomous true airspeed sensor with Bluetooth.
   fbfanet-p1: External Bluetooth-controlled radio transmitter with a customizable channel for receiving FANET, ADS-L or the like. Send and receive any data without an Internet connection.

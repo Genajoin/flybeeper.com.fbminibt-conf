@@ -5,6 +5,16 @@
 /devices/fbfanetvario/*    /devices/fbfv/:splat     301
 /update/firmware/fbfanetvario  /update/firmware/fbfv  301
 
+# Pressure Sensor жил на /devices/fbps1, пока прибор назывался PS1. Прибор в
+# Bluetooth всегда отдавал «FBPS», под этим именем его теперь знает и витрина,
+# поэтому страница переехала на /devices/fbps. Старый адрес мог быть в закладках
+# и в выдаче — держим его живым, вместе с путями прошивок.
+/devices/fbps1             /devices/fbps            301
+/devices/fbps1/*           /devices/fbps/:splat     301
+/update/firmware/fbps1     /update/firmware/fbps    301
+/firmware/fbps1/*          /firmware/fbps/:splat    301
+/manual-media/fbps1/*      /manual-media/fbps/:splat  301
+
 # NO catch-all `/*  /index.html  200` here, on purpose.
 #
 # A catch-all also swallows requests for hashed bundles: ask for an

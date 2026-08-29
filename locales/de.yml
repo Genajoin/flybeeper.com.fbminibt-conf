@@ -211,7 +211,7 @@ about:
   contact-error-body: 'Verbindung zum Formular-Endpoint nicht möglich. Prüfe deine Internetverbindung und versuche es erneut, oder schreibe direkt an hello{''@''}alpisto.eu.'
   fbtas-p1: Autonomer wahre Luftgeschwindigkeitssensor mit Bluetooth.
   fbminibt-p1: Variometer mit Bluetooth und drahtlosen Tasten. Hörbare Steigrate-Anzeige basierend auf benutzerdefinierten Kurven. Die Batterie ist kälteresistent.
-  fbps1-p1: Immer verfügbar für Bluetooth-Verbindung externer Barometer. Hohe Empfindlichkeit und Stabilität mit minimalen Verzögerungen. Verwandeln Sie jedes Smartphone in einen zuverlässigen Variometer.
+  fbps-p1: Immer verfügbar für Bluetooth-Verbindung externer Barometer. Hohe Empfindlichkeit und Stabilität mit minimalen Verzögerungen. Verwandeln Sie jedes Smartphone in einen zuverlässigen Variometer. Diese Seite gilt für den FlyBeeper Baro und seinen Vorgänger Pressure Sensor (FBPS1) — sie teilen sich eine Firmware.
   fbrc4-p1: 4 externe Tasten sind immer für die Verbindung über Bluetooth verfügbar.
   fbfanet-p1: Externer Funksender mit Bluetooth-Steuerung zum Empfang von FANET-, ADS-L- oder ähnlichen Funkpaketen. Senden und empfangen Sie beliebige Daten ohne Internetverbindung.
   fbfv-p1: Externer FANET mit Bluetooth und Variometer in einem Gehäuse mit Solarpanel. Senden und Empfangen von FANET-Paketen ohne Internetverbindung. Verwenden Sie es als empfindliches Variometer und als Quelle für barometrische Höhenangaben für Smartphone-Apps.

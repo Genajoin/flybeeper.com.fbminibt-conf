@@ -1,12 +1,21 @@
-# FlyBeeper Pressure Sensor
+# FlyBeeper Baro
 
-![FlyBeeper Pressure Sensor — immer verfügbarer externer Bluetooth-Barometer](/manual-media/fbps1/overview.png)
+> Diese Anleitung gilt für den **FlyBeeper Baro** und seinen Vorgänger, den **FlyBeeper Pressure Sensor (FBPS1)**: gleiche Elektronik, gleiche Firmware. Der einzige Unterschied ist die Taste — der Baro hat eine, der FBPS1 nicht.
+
+![FlyBeeper Baro — immer verfügbarer externer Bluetooth-Barometer](/manual-media/fbps/overview.png)
 
 ## Handbuch
 
 ### Bedienung
 
-Das Gerät hat keine Bedienelemente. Nach Einsetzen der Batterie ist es verbindungsbereit. Ein Reset erfolgt durch kurzes Entnehmen der Batterie.
+**FlyBeeper Baro (rundes Gehäuse).** Es gibt eine Taste, und sie hat zwei Aufgaben:
+
+- **Ein Druck** weckt das Gerät und lässt es eine Zeit lang häufig senden, sodass das Telefon es in einer Sekunde findet und nicht auf das nächste Advertising-Paket wartet. Derselbe Druck holt das Gerät aus dem Lagermodus zurück.
+- **Ein Doppeldruck** mit 1–2 Sekunden Pause versetzt es in den Tiefschlaf: das Senden hört auf, eine Verbindung ist nicht möglich, der Verbrauch geht gegen null. Das ist der Modus für Transport und lange Lagerung; ein Druck holt es zurück.
+
+**FlyBeeper Pressure Sensor (FBPS1, der Vorgänger).** Er hat überhaupt keine Taste: das Gerät ist verbindungsbereit, sobald die Batterie eingesetzt ist, und ein Reset erfolgt durch kurzes Entnehmen der Batterie. Alles Übrige — Betriebsmodi, Druckdaten, Firmware-Updates — ist bei beiden Geräten gleich.
+
+Sonst wird das Gerät durch nichts bedient: kein Display, keine LED, kein Ton — das alles übernimmt die Flug-App.
 
 ### Betriebsmodi
 
@@ -14,7 +23,7 @@ Das Gerät arbeitet in zwei Modi. Direkt nach dem Einsetzen der Batterie geht da
 
 ### Konfiguration
 
-Sie können das Gerät über die grafische Oberfläche testen. Sie benötigen ein Gerät mit Bluetooth, z. B. Smartphone, Laptop oder Computer mit Bluetooth-Modul. Klicken Sie auf Connect und wählen Sie FbPs1 aus der Liste. Halten Sie die Geräte möglichst nah beieinander.
+Sie können das Gerät über die grafische Oberfläche testen. Sie benötigen ein Gerät mit Bluetooth, z. B. Smartphone, Laptop oder Computer mit Bluetooth-Modul. Klicken Sie auf Connect und wählen Sie FBPS aus der Liste (die vier Zeichen nach dem Punkt stammen aus der Geräte-ID). Halten Sie die Geräte möglichst nah beieinander.
 
 Aktuell hat das Gerät keine zugänglichen Einstellungen, aber zukünftige Firmware-Updates werden die Änderung von Abfragefrequenz des Sensors und Datenübertragungsfrequenz erlauben.
 

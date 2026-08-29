@@ -29,13 +29,16 @@ export const DEVICE_CATALOG: DeviceEntry[] = [
     iconName: 'pressure',
   },
   {
-    sku: 'fbps1',
-    displayName: 'FlyBeeper Pressure Sensor',
-    aboutKey: 'about.fbps1-p1',
-    stlPath: '/fbps1-model.stl',
+    // Одна карточка на два прибора: Baro и его предшественник Pressure Sensor
+    // (FBPS1). Разделить их нельзя и не нужно — по Bluetooth оба отдают Model
+    // Number «FBPS» и берут одну и ту же прошивку (см. resolveSku в
+    // useFirmwareUpdate.ts), поэтому подключившийся всегда попадает сюда.
+    sku: 'fbps',
+    displayName: 'FlyBeeper Baro',
+    aboutKey: 'about.fbps-p1',
+    stlPath: '/fbps-model.stl',
     stlPos: { x: -40, y: -20, z: 60 },
-    marketUrl: 'https://market.flybeeper.com/device/ps1',
-    buyUrl: 'https://buy.stripe.com/dR6cPZ52vfxgdzifZ0',
+    marketUrl: 'https://market.flybeeper.com/device/baro',
     iconName: 'pressure-filled',
   },
   {
