@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import log from 'loglevel'
 import cloneDeep from 'lodash.clonedeep'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { SettingsGroupKey } from '~/composables/useSettingsGroups'
@@ -8,6 +9,7 @@ import {
   SETTINGS_GROUP_NAV,
 } from '~/composables/useSettingsGroups'
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+import { describeWriteError } from '~/utils/write-errors'
 
 const props = defineProps<{
   group: SettingsGroupKey
@@ -130,7 +132,11 @@ async function apply() {
         // One bad field must not abort the rest — and must not be reported
         // as applied. Both were wrong before: the loop threw out of apply()
         // and markSynced() had already been reached on the happy path.
-        failed.push({ uuid, message: err instanceof Error ? err.message : String(err) })
+        // describeWriteError turns the read-back mismatch into something a
+        // pilot can act on ("5 values outside 100–6000 Hz"); the raw hex
+        // stays in the log.
+        log.error('apply failed', uuid, err)
+        failed.push({ uuid, message: describeWriteError(err, t) })
       }
     }
     if (restartNeeded)

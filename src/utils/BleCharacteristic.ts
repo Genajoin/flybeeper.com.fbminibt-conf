@@ -2,6 +2,7 @@
 
 import log from 'loglevel'
 import { gattOp } from '~/utils/gattQueue'
+import { DeviceRejectedWriteError, outOfRangeDetail } from '~/utils/write-errors'
 import { VIRTUAL_CPF_FORMAT } from '~/composables/useDemoSnapshot'
 
 /**
@@ -484,9 +485,18 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     if (this.characteristic.properties?.read) {
       const readBack = await gattOp(`verify ${this.characteristic.uuid}`, () => this.characteristic.readValue())
       if (!this.compareValues(value, readBack)) {
+        // Snapshot what we tried to write BEFORE formattedValue is rewound to
+        // the device's answer — the out-of-range check needs the rejected
+        // value, not the factory curve that came back.
+        const attempted = this.formattedValue
         this.value = readBack
         this.formattedValue = this.formatValue(readBack)
-        throw new Error(`${this.characteristic.uuid}: device did not accept the value (wrote ${bytesToHex(value)}, read back ${bytesToHex(readBack)})`)
+        throw new DeviceRejectedWriteError(
+          this.characteristic.uuid,
+          bytesToHex(value),
+          bytesToHex(readBack),
+          outOfRangeDetail(this.characteristic.uuid, attempted),
+        )
       }
       this.value = readBack
     }

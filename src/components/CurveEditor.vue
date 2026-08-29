@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import {
+  CURVE_LIMITS,
+  CYCLE_DOTS_UUID,
+  DUTY_DOTS_UUID,
+  FREQ_DOTS_UUID,
+  VARIO_DOTS_UUID,
+} from '~/utils/setting-limits'
+
 export interface iVarioCurves {
   buzzer_vario_dots: number[]
   buzzer_frequency_dots: number[]
@@ -36,7 +44,17 @@ type TabKey = CurveKey | ThresholdKey
 interface CurveDef {
   key: CurveKey
   field: keyof iVarioCurves
+  uuid: string
   unit: string
+  /** Y-axis range the chart is drawn against — unchanged by the limits. */
+  axisMin: number
+  axisMax: number
+  /**
+   * Range a dragged handle is clamped to: the firmware's accepted range,
+   * narrowed to what the axis can show. A frequency point below 100 Hz makes
+   * the device reject and factory-reset ALL FOUR tone tables, so the editor
+   * must not be able to produce one in the first place.
+   */
   min: number
   max: number
   step: number
@@ -44,12 +62,21 @@ interface CurveDef {
   ticks: number
 }
 
-const VARIO_RANGE = { min: -2000, max: 2000, step: 5 }
+const VARIO_RANGE = { min: CURVE_LIMITS[VARIO_DOTS_UUID].min, max: CURVE_LIMITS[VARIO_DOTS_UUID].max, step: 5 }
+
+function withDeviceLimits(def: Omit<CurveDef, 'min' | 'max'>): CurveDef {
+  const limit = CURVE_LIMITS[def.uuid]
+  return {
+    ...def,
+    min: Math.max(limit.min, def.axisMin),
+    max: Math.min(limit.max, def.axisMax),
+  }
+}
 
 const curveDefs: Record<CurveKey, CurveDef> = {
-  frequency: { key: 'frequency', field: 'buzzer_frequency_dots', unit: 'Hz', min: 0, max: 6000, step: 5, color: '#0aa0e0', ticks: 6 },
-  cycle: { key: 'cycle', field: 'buzzer_cycle_dots', unit: 'ms', min: 0, max: 1000, step: 5, color: '#9b5cff', ticks: 5 },
-  duty: { key: 'duty', field: 'buzzer_duty_dots', unit: '%', min: 0, max: 100, step: 1, color: '#22c577', ticks: 5 },
+  frequency: withDeviceLimits({ key: 'frequency', field: 'buzzer_frequency_dots', uuid: FREQ_DOTS_UUID, unit: 'Hz', axisMin: 0, axisMax: 6000, step: 5, color: '#0aa0e0', ticks: 6 }),
+  cycle: withDeviceLimits({ key: 'cycle', field: 'buzzer_cycle_dots', uuid: CYCLE_DOTS_UUID, unit: 'ms', axisMin: 0, axisMax: 1000, step: 5, color: '#9b5cff', ticks: 5 }),
+  duty: withDeviceLimits({ key: 'duty', field: 'buzzer_duty_dots', uuid: DUTY_DOTS_UUID, unit: '%', axisMin: 0, axisMax: 100, step: 1, color: '#22c577', ticks: 5 }),
 }
 
 const CURVE_ORDER: CurveKey[] = ['frequency', 'cycle', 'duty']
@@ -166,11 +193,11 @@ function normalisedForY(y: number): number {
   return clamp((PAD_TOP + plotH - y) / plotH, 0, 1)
 }
 function yForCurveValue(curve: CurveDef, value: number): number {
-  const t = (value - curve.min) / (curve.max - curve.min || 1)
+  const t = (value - curve.axisMin) / (curve.axisMax - curve.axisMin || 1)
   return yForNormalised(clamp(t, 0, 1))
 }
 function curveValueForY(curve: CurveDef, y: number): number {
-  return curve.min + normalisedForY(y) * (curve.max - curve.min)
+  return curve.axisMin + normalisedForY(y) * (curve.axisMax - curve.axisMin)
 }
 
 /* ---------------------------------------------------------------- render */
@@ -223,7 +250,7 @@ const yTicks = computed(() => {
   const out: { y: number, label: string }[] = []
   for (let i = 0; i <= d.ticks - 1; i++) {
     const t = i / (d.ticks - 1)
-    const value = d.min + t * (d.max - d.min)
+    const value = d.axisMin + t * (d.axisMax - d.axisMin)
     out.push({ y: yForNormalised(t), label: value.toFixed(0) })
   }
   return out

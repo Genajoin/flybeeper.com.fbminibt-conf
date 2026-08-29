@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { SettingsLocal } from '~/stores/settings'
+import { clampSettings } from '~/utils/setting-limits'
 
 /**
  * Staged preset import (Phase G).
@@ -26,6 +27,15 @@ export interface StagedPreset {
   format?: string
   /** File imports only: entries parsed but not importable. */
   skipped?: number
+  /**
+   * How many individual values `stage()` had to pull into the range the
+   * firmware accepts, and which characteristics they belong to. Presets
+   * written by the old configurator (and by a Mini, whose firmware never
+   * validated the tone tables) routinely carry such values — negative
+   * frequencies standing in for silence being the usual case.
+   */
+  adjusted?: number
+  adjustedByUuid?: Record<string, number>
 }
 
 export const useSharedPresetStore = defineStore('sharedPresetStore', {
@@ -35,8 +45,23 @@ export const useSharedPresetStore = defineStore('sharedPresetStore', {
     exportBy: '',
   }),
   actions: {
+    /**
+     * Stage a preset for the import banner — the single funnel both entry
+     * points (URL fragment and JSON file) go through, and therefore the right
+     * place to make an out-of-range preset importable.
+     *
+     * Values the firmware would reject are pulled to the nearest accepted
+     * value rather than dropped: an old file is usually the only copy of a
+     * setup a pilot tuned over a season, and a single bad frequency point
+     * would otherwise cost the whole tone table (the device resets all four
+     * curves to factory when one value is out of range). The banner reports
+     * the count so the change is never silent.
+     */
     stage(preset: StagedPreset): void {
-      this.pending = preset
+      const { settings, adjusted, byUuid } = clampSettings(preset.settings)
+      this.pending = adjusted
+        ? { ...preset, settings, adjusted, adjustedByUuid: byUuid }
+        : preset
     },
     clear(): void {
       this.pending = null

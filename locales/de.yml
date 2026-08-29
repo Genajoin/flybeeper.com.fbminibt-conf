@@ -295,6 +295,8 @@ sett:
   reset-confirm: Diese Gruppe auf Werkseinstellungen zurücksetzen?
   no-changes: Keine lokalen Änderungen
   apply-failed: '{count} Einstellung(en) konnten NICHT auf das Gerät geschrieben werden — sie gelten weiterhin als geändert. Gehe näher an das Gerät, verbinde neu und versuche es erneut.'
+  write-out-of-range: '{name}: {count} Wert(e) außerhalb von {min}–{max} {unit}. Das Gerät verwirft die gesamte Tontabelle und stellt die Werkskurven wieder her — Werte korrigieren und erneut anwenden.'
+  write-rejected: '{name}: Das Gerät hat diesen Wert nicht übernommen.'
   unsynced: '{count} lokale Änderung(en) ausstehend'
 
 audio:
@@ -416,6 +418,7 @@ preset:
   upload-json: ↑ JSON
   import-error: Keine FlyBeeper-Preset-Datei
   skipped: ÜBERSPRUNGEN
+  adjusted-note: '{count} Wert(e) lagen außerhalb des vom Gerät akzeptierten Bereichs und wurden auf den nächstgültigen Wert gesetzt — {detail}. Prüfe die Kurven nach dem Anwenden.'
   via-file: aus JSON-Datei
   format-v2: aktuelles Format
   format-cpf-list: altes Format (Firmware ≥0.15)

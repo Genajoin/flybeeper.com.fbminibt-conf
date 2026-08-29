@@ -6,7 +6,7 @@ const shared = useSharedPresetStore()
 const settings = useSettingsStore()
 const router = useRouter()
 const route = useRoute()
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 async function apply() {
   if (!shared.pending)
@@ -38,6 +38,22 @@ const fieldCount = computed(() => Object.keys(shared.pending?.settings ?? {}).le
  * an old file imports: it tells the user whether the legacy cm/s → m/s
  * conversion was applied.
  */
+/**
+ * "Frequency ×5 · Duty ×2" — which curves the range repair touched. Presets
+ * from the old configurator (and from a Mini, whose firmware never checked
+ * the tone tables) carry values no current device accepts; `stage()` pulls
+ * them to the nearest valid value and this line says what moved, so the
+ * import is a repair the user can see rather than a silent rewrite.
+ */
+const adjustedDetail = computed(() => {
+  const by = shared.pending?.adjustedByUuid
+  if (!by)
+    return ''
+  return Object.entries(by)
+    .map(([uuid, n]) => `${te(`sett.${uuid}`) ? t(`sett.${uuid}`) : uuid} ×${n}`)
+    .join(' · ')
+})
+
 const sourceLabel = computed(() => {
   const p = shared.pending
   if (!p || p.source !== 'file')
@@ -63,6 +79,9 @@ const sourceLabel = computed(() => {
           <template v-if="shared.pending.skipped">
             · {{ shared.pending.skipped }} {{ t('preset.skipped') }}
           </template>
+        </div>
+        <div v-if="shared.pending.adjusted" class="banner-row__note">
+          {{ t('preset.adjusted-note', { count: shared.pending.adjusted, detail: adjustedDetail }) }}
         </div>
         <div class="banner-row__actions">
           <button class="banner-row__primary" type="button" @click="apply">
@@ -112,6 +131,15 @@ const sourceLabel = computed(() => {
   color: var(--ck-dim);
   margin-top: 3px;
   line-height: 1.4;
+}
+
+.banner-row__note {
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 6px;
+  padding: 5px 7px;
+  border-left: 3px solid var(--ck-signal);
+  background: var(--ck-bg);
 }
 
 .banner-row__actions {

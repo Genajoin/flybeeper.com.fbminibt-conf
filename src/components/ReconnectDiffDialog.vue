@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import log from 'loglevel'
+import { describeWriteError } from '~/utils/write-errors'
+
 const bt = useBluetoothStore()
 const settings = useSettingsStore()
 const { t, te } = useI18n()
@@ -62,7 +65,8 @@ async function applyLocal() {
         written.push(entry.key)
       }
       catch (err) {
-        failed.push({ key: entry.key, message: err instanceof Error ? err.message : String(err) })
+        log.error('apply failed', entry.key, err)
+        failed.push({ key: entry.key, message: describeWriteError(err, t) })
       }
     }
     // Only confirmed writes count. Closing the dialog on failures — as the

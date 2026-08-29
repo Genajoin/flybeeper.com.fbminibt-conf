@@ -13,6 +13,8 @@ vi.mock('idb-keyval', () => ({
 
 const { useSettingsStore } = await import('../src/stores/settings')
 const { BleCharacteristicImpl } = await import('../src/utils/BleCharacteristic')
+const { DeviceRejectedWriteError } = await import('../src/utils/write-errors')
+type RejectedWrite = InstanceType<typeof DeviceRejectedWriteError>
 
 const SINK_ON = 'b713f438-42fe-46fe-b052-371a3b9e433a' // int16, exponent -2, m/s
 const CLIMB_ON = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
@@ -190,5 +192,71 @@ describe('settings store sync bookkeeping', () => {
     expect(s.diff()).toEqual([])
     s.pruneLocal()
     expect(Object.keys(s.local ?? {})).toEqual([SINK_ON])
+  })
+})
+
+/**
+ * Curve write against firmware that validates the tone tables.
+ *
+ * `checkAndResetTables()` restores the factory curves when any point is out
+ * of range — the write is ACKed, only the read-back reveals it. The error must
+ * carry that reason, not just a hex diff, or the user is left with the
+ * message a Sun Vario owner reported: a wall of hex and no idea that his five
+ * −700 Hz "silence" points (legal on his Mini, whose check is commented out)
+ * were what dropped the whole table.
+ */
+function fakeCurveChar(uuid: string, factory: number[]) {
+  const encode = (dots: number[]) => {
+    const dv = new DataView(new ArrayBuffer(dots.length * 2))
+    dots.forEach((v, i) => dv.setInt16(i * 2, v, true))
+    return dv
+  }
+  let stored = encode(factory)
+  const char: any = {
+    uuid,
+    properties: { read: true, write: true, notify: false },
+    service: { uuid: 'fss', device: { gatt: { connected: true } } },
+    getDescriptors: vi.fn(async () => [cpfDescriptor(0x1B, 0)]),
+    readValue: vi.fn(async () => stored),
+    writeValue: vi.fn(async (v: DataView<ArrayBuffer>) => {
+      const dots = Array.from({ length: 12 }, (_, i) => v.getInt16(i * 2, true))
+      // The firmware's all-or-nothing check, in one line.
+      stored = dots.some(d => d < 100 || d > 6000) ? encode(factory) : v
+    }),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }
+  return { char, read: () => Array.from({ length: 12 }, (_, i) => stored.getInt16(i * 2, true)) }
+}
+
+describe('curve write rejected by the firmware', () => {
+  const FREQ_DOTS = '8c090502-81c4-4d29-8d10-6db20607ace9'
+  const FACTORY = [200, 250, 390, 395, 400, 470, 760, 1120, 1480, 2020, 4720, 6000]
+
+  it('reports which values were out of range, and keeps the hex for the log', async () => {
+    const { char, read } = fakeCurveChar(FREQ_DOTS, FACTORY)
+    const ch = new BleCharacteristicImpl(char)
+    await ch.initialize()
+
+    ch.formattedValue = [-700, -700, -700, -700, -700, 470, 760, 1120, 1480, 2020, 4720, 6000]
+    const err = await ch.setFormattedValue().catch((e: unknown) => e)
+
+    expect(err).toBeInstanceOf(DeviceRejectedWriteError)
+    expect((err as RejectedWrite).outOfRange).toEqual({ count: 5, min: 100, max: 6000, unit: 'Hz' })
+    expect((err as RejectedWrite).message).toContain('44fd')
+    // Device kept the factory curve, and the char now mirrors it.
+    expect(read()).toEqual(FACTORY)
+    expect(ch.formattedValue).toEqual(FACTORY)
+  })
+
+  it('writes a curve that stays inside the accepted range', async () => {
+    const { char, read } = fakeCurveChar(FREQ_DOTS, FACTORY)
+    const ch = new BleCharacteristicImpl(char)
+    await ch.initialize()
+
+    const wanted = [100, 100, 100, 100, 100, 470, 760, 1120, 1480, 2020, 4720, 6000]
+    ch.formattedValue = wanted
+    await ch.setFormattedValue()
+    expect(read()).toEqual(wanted)
   })
 })

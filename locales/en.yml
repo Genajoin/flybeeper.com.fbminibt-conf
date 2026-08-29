@@ -143,6 +143,7 @@ preset:
   upload-json: ↑ JSON
   import-error: Not a FlyBeeper preset file
   skipped: SKIPPED
+  adjusted-note: '{count} value(s) were outside the range this device accepts and were set to the nearest valid value — {detail}. Check the curves after applying.'
   via-file: via JSON file
   format-v2: current format
   format-cpf-list: old format (fw ≥0.15)
@@ -399,6 +400,8 @@ sett:
   reset-confirm: Reset this group to factory defaults?
   no-changes: No local changes
   apply-failed: '{count} setting(s) could NOT be written to the device — they are still shown as changed. Move closer to the device, reconnect and try again.'
+  write-out-of-range: '{name}: {count} value(s) outside {min}–{max} {unit}. The device rejects the whole tone table and restores the factory curves — correct the values and apply again.'
+  write-rejected: '{name}: the device did not store this value.'
   unsynced: '{count} local change(s) pending'
 
 audio:
