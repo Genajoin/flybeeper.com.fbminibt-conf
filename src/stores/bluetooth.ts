@@ -195,31 +195,26 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       }
 
       try {
-        const server = await withTimeout(
-          device.gatt.connect(),
-          CONNECT_TIMEOUT_MS,
-          'Connection timed out — is the device powered on and in range?',
-        )
-
         const FSS_UUID = '904baf04-5814-11ee-8c99-0242ac120000'
+        const DIS_UUID = '0000180a-0000-1000-8000-00805f9b34fb'
 
         // Service discovery. Desktop Chrome returns everything from the bulk
         // getPrimaryServices(); iOS WebBluetooth shims (Bluefy / WebBLE) often
         // return an incomplete or empty list right after pairing, so we ALSO
         // resolve each known service directly via getPrimaryService(uuid) — the
         // path those shims reliably support — and union the two results, with a
-        // few short retries while CoreBluetooth's GATT discovery settles.
+        // few short retries while the OS GATT discovery settles.
         const KNOWN_SERVICE_UUIDS = [
-          '0000180a-0000-1000-8000-00805f9b34fb', // device_information
+          DIS_UUID, // device_information
           '0000181a-0000-1000-8000-00805f9b34fb', // environmental_sensing
           '0000180f-0000-1000-8000-00805f9b34fb', // battery_service
           '00001819-0000-1000-8000-00805f9b34fb', // location_and_navigation
           '00001815-0000-1000-8000-00805f9b34fb', // automation_io
           FSS_UUID, // FlyBeeper Settings Service
         ]
-        // Key by NORMALIZED uuid: iOS shims return short/uppercase UUIDs, so
-        // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
-        // — the retry loop would spin and the FSS lookup below would miss.
+        // Without these two the page is useless: DIS carries model + firmware
+        // (the update panel keys off it) and FSS carries every setting.
+        const ESSENTIAL_UUIDS = [DIS_UUID, FSS_UUID]
         // The retry budget is sized for a cold GATT cache: right after a
         // firmware update the attribute table changes and the OS stack redoes
         // FULL service discovery over the air — several seconds, not the
@@ -227,43 +222,88 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // the page came up with zero characteristics (no DIS, no settings)
         // even though the stack finished fine a moment later.
         const DISCOVERY_DEADLINE_MS = 12_000
-        const servicesByUuid = new Map<string, BluetoothRemoteGATTService>()
-        const discoveryStart = Date.now()
-        for (let attempt = 0; ; attempt++) {
-          // Bulk call first on every round: on desktop it returns everything
-          // known so far, and repeating it picks up services that finished
-          // resolving after the previous round.
+
+        // Keys are NORMALIZED uuids: iOS shims return short/uppercase UUIDs, so
+        // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
+        // — the retry loop would spin and the FSS lookup below would miss.
+        const discoverServices = async (srv: BluetoothRemoteGATTServer) => {
+          const found = new Map<string, BluetoothRemoteGATTService>()
+          const started = Date.now()
+          for (let attempt = 0; ; attempt++) {
+            // Bulk call first on every round: on desktop it returns everything
+            // known so far, and repeating it picks up services that finished
+            // resolving after the previous round.
+            try {
+              for (const s of await srv.getPrimaryServices())
+                found.set(normalizeUuid(s.uuid), s)
+            }
+            catch (e) {
+              log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
+            }
+            // Per-service lookups for whatever is still missing — the path iOS
+            // shims (Bluefy / WebBLE) support reliably.
+            for (const uuid of KNOWN_SERVICE_UUIDS.filter(u => !found.has(u))) {
+              try {
+                const svc = await srv.getPrimaryService(uuid)
+                if (svc)
+                  found.set(normalizeUuid(svc.uuid), svc)
+              }
+              catch { /* absent on this device, or not yet discoverable */ }
+            }
+            if (KNOWN_SERVICE_UUIDS.every(u => found.has(u)))
+              break
+            // Essentials present and the optional ones didn't show up on an
+            // extra round: this device simply doesn't have them (automation_io
+            // exists on FBminiBT only, ESS/LN vary by model). Don't burn the
+            // full deadline.
+            if (attempt >= 3 && ESSENTIAL_UUIDS.every(u => found.has(u)))
+              break
+            if (Date.now() - started > DISCOVERY_DEADLINE_MS || !srv.connected) {
+              log.warn('service discovery incomplete after deadline', [...found.keys()], 'connected:', srv.connected)
+              break
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+          return found
+        }
+
+        let server = await withTimeout(
+          device.gatt.connect(),
+          CONNECT_TIMEOUT_MS,
+          'Connection timed out — is the device powered on and in range?',
+        )
+        let servicesByUuid = await discoverServices(server)
+
+        // Nothing essential after the full deadline? Then this is not a slow
+        // discovery, it is a stale one: the browser is answering from a GATT
+        // cache taken before the firmware update. Our devices are NOT bonded,
+        // and the Service Changed indication only goes to bonded centrals — so
+        // nothing ever invalidates that cache, and retrying the same connection
+        // returns the same empty answer forever. Dropping the link and dialling
+        // again makes the stack rediscover from scratch, which is what finally
+        // brings the settings back after an OTA. Seen on Chrome/BlueZ with
+        // 0.26 → 0.28: the daemon had the full, fresh attribute table while the
+        // page had nothing at all.
+        if (!ESSENTIAL_UUIDS.every(u => servicesByUuid.has(u))) {
+          log.warn('essential services missing — reconnecting to force a fresh discovery')
           try {
-            for (const s of await server.getPrimaryServices())
-              servicesByUuid.set(normalizeUuid(s.uuid), s)
+            device.gatt.disconnect()
+            await new Promise(resolve => setTimeout(resolve, 1500))
+            if (gen !== this.connectGen)
+              return
+            server = await withTimeout(
+              device.gatt.connect(),
+              CONNECT_TIMEOUT_MS,
+              'Connection timed out — is the device powered on and in range?',
+            )
+            const retried = await discoverServices(server)
+            if (retried.size > servicesByUuid.size)
+              servicesByUuid = retried
+            log.info(`rediscovery after reconnect: ${retried.size} service(s)`)
           }
           catch (e) {
-            log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
+            log.warn('forced reconnect failed', e)
           }
-          // Per-service lookups for whatever is still missing — the path iOS
-          // shims (Bluefy / WebBLE) support reliably.
-          for (const uuid of KNOWN_SERVICE_UUIDS.filter(u => !servicesByUuid.has(u))) {
-            try {
-              const svc = await server.getPrimaryService(uuid)
-              if (svc)
-                servicesByUuid.set(normalizeUuid(svc.uuid), svc)
-            }
-            catch { /* absent on this device, or not yet discoverable */ }
-          }
-          if (KNOWN_SERVICE_UUIDS.every(u => servicesByUuid.has(u)))
-            break
-          // Essentials present — DIS (model, fw) and the settings service —
-          // and the optional ones didn't show up on an extra round: this
-          // device simply doesn't have them (automation_io exists on FBminiBT
-          // only, ESS/LN vary by model). Don't burn the full deadline.
-          const essentials = ['0000180a-0000-1000-8000-00805f9b34fb', FSS_UUID]
-          if (attempt >= 3 && essentials.every(u => servicesByUuid.has(u)))
-            break
-          if (Date.now() - discoveryStart > DISCOVERY_DEADLINE_MS || !server.connected) {
-            log.warn('service discovery incomplete after deadline', [...servicesByUuid.keys()])
-            break
-          }
-          await new Promise(resolve => setTimeout(resolve, 500))
         }
         const services = [...servicesByUuid.values()]
 
