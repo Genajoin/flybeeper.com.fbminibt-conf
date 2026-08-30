@@ -131,10 +131,11 @@ export async function imageStateRead(t: SmpTransport, signal?: AbortSignal): Pro
 /**
  * Mark an uploaded image for the next boot.
  *
- * `confirm: false` is the only mode this app uses: the image boots once on
- * trial and MCUboot reverts to the previous one unless the firmware confirms
- * itself. `confirm: true` would skip that safety net and leave a device that
- * fails to boot unrecoverable over the air.
+ * `confirm: false` — trial boot: the image boots once and MCUboot reverts to
+ * the previous one unless the firmware confirms itself. `confirm: true` skips
+ * that safety net and leaves a device that fails to boot unrecoverable over
+ * the air, so the app uses it only where trial boot cannot work at all — see
+ * needsPermanentSwap() in ~/utils/firmwareVersion.
  */
 export async function imageStateWrite(
   t: SmpTransport,

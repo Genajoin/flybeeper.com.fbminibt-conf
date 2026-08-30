@@ -1,7 +1,9 @@
 ## Changelog
 
-**Version:** 0.28.1 | **Date:** 29.08.2026 | [**Download**](/firmware/fbfv/app_update.0.28.1.bin)
+**Version:** 0.28.3 | **Date:** 30.08.2026 | [**Download**](/firmware/fbfv/app_update.0.28.3.bin)
 
+- _Over-the-air update fixed:_ versions 0.28.1 and 0.28.2 could not be installed on this device over the air — the file was transferred, the new firmware started, and the device came back on the old version. Two separate causes, both fixed: memory was full to the brim after the ADS-L module was enabled and the firmware could not write its own confirmation (3 KB freed); and the hardware watchdog, which keeps running through the software reset that starts an update, fired inside the bootloader's image check right after the swap finished. The watchdog window is now 6 seconds. On firmware older than this version the configurator installs the update in permanent mode to get past that watchdog.
+- _Quiet on the ground now follows the ground:_ the reference pressure is re-taken every 10 seconds while you stand, so barometer drift no longer looks like a take-off, and a device switched on down in the valley and carried up to launch treats the launch as the ground after a minute. A take-off is a climb of 2 metres from that reference; a landing is a minute of stillness within half a metre.
 - _FANET v2 command channel:_ a dedicated Bluetooth service for the app — transmit with a tag and confirmation, region profile (EU868), power, counters, and RSSI/SNR of received frames. The v1 channel is unchanged.
 - _ADS-L transmission:_ scheduled transmission in the Direct slot by the device's UTC clock, with listen-before-talk and channel alternation. Our frames are now seen by third-party receivers — the sync word was missing its leading byte and other equipment ignored us.
 - _Radio ownership:_ receive commands no longer reconfigure the chip on top of an active ADS-L transmission (subscribing, reconnecting or sleeping during one).

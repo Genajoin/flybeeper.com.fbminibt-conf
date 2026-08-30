@@ -43,3 +43,32 @@ export function compareFwVersions(a: string, b: string): -1 | 0 | 1 {
   }
   return 0
 }
+
+/**
+ * First firmware whose hardware watchdog window (6 s) outlives MCUboot's
+ * image check. Older builds arm the nRF52 hardware watchdog with a 0.6 s
+ * window, and that watchdog survives the software reset that starts an
+ * update: MCUboot feeds it while copying sectors but not while verifying the
+ * image (sha256 + RSA over ~200 KB, about 0.6 s), so the device resets right
+ * after the swap finishes — and a trial-mode image that has not confirmed
+ * itself by then gets rolled back. Measured on FBFV, 30.08.2026.
+ */
+export const FW_TRIAL_BOOT_SAFE_FROM = '0.28.3'
+
+/**
+ * Whether the image must be marked permanent (`confirm: true`) instead of
+ * trial (`confirm: false`) for the device currently connected.
+ *
+ * Permanent is the only mode that survives the watchdog reset on firmware
+ * older than FW_TRIAL_BOOT_SAFE_FROM: after the reset MCUboot sees the image
+ * already confirmed and boots it instead of reverting. The price is the lost
+ * safety net — a permanent image that fails to boot cannot be undone over the
+ * air — so it is used only where trial boot cannot work at all. An unknown
+ * version is treated as old: every device in the field predates the fix.
+ */
+export function needsPermanentSwap(currentFw: string | null | undefined): boolean {
+  const clean = stripGitDescribe(currentFw)
+  if (!clean || !parseFwVersion(clean))
+    return true
+  return compareFwVersions(clean, FW_TRIAL_BOOT_SAFE_FROM) < 0
+}

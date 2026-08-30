@@ -20,7 +20,8 @@ describe('resolveSku — DIS model number → catalog SKU', () => {
     expect(resolveSku('FBTAS')).toBe('fbtas')
     expect(resolveSku('FBRC4')).toBe('fbrc4')
     expect(resolveSku('FBSV')).toBe('fbsv')
-    expect(resolveSku('FBPS1')).toBe('fbps1')
+    // Прибор представляется 'FBPS1', в каталоге он 'fbps' (см. useFirmwareUpdate.resolveSku).
+    expect(resolveSku('FBPS1')).toBe('fbps')
   })
 
   it('returns null for an unknown model instead of guessing', () => {

@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { ImageSlot, McubootImage } from '~/lib/smp'
+import { needsPermanentSwap } from '~/utils/firmwareVersion'
 import {
   SmpError,
   SmpTransport,
@@ -21,10 +22,15 @@ import {
  * lives in the portable module.
  *
  * The flow deliberately mirrors what a native MCUmgr client does:
- *   read slots → upload → mark pending (test mode, never confirm) → verify the
- *   mark landed → reboot → reconnect → verify slot 0 runs the new image and
- *   confirmed itself. Skipping the two verification reads would turn "the file
- *   went through" into "the update worked", which are not the same thing.
+ *   read slots → upload → mark pending → verify the mark landed → reboot →
+ *   reconnect → verify slot 0 runs the new image and confirmed itself.
+ *   Skipping the two verification reads would turn "the file went through"
+ *   into "the update worked", which are not the same thing.
+ *
+ * The mark is a trial boot (`confirm: false`, MCUboot reverts unless the new
+ * firmware confirms itself) on firmware from FW_TRIAL_BOOT_SAFE_FROM on, and a
+ * permanent one on anything older — see needsPermanentSwap() for why trial
+ * boot cannot work there.
  */
 
 export type FlashPhase =
@@ -174,10 +180,13 @@ export function useFirmwareFlash() {
         sentBytes.value = totalBytes.value
       }
 
-      // confirm:false — trial boot. MCUboot reverts to the old image unless the
-      // new one confirms itself, which is the only safety net we have over BLE.
+      // Trial boot where the device can survive it (MCUboot reverts to the old
+      // image unless the new one confirms itself — the only safety net over
+      // BLE); permanent on old firmware, whose watchdog resets the device in
+      // the bootloader's image check and would turn every trial into a revert.
       phase.value = 'marking'
-      await imageStateWrite(transport, image.hash, false, signal)
+      const permanent = needsPermanentSwap(bt.dis.firmwareRevisionString.value as string | null)
+      await imageStateWrite(transport, image.hash, permanent, signal)
 
       slots.value = await imageStateRead(transport, signal)
       const marked = slots.value.find(s => sameHash(s.hash, image.hash))
