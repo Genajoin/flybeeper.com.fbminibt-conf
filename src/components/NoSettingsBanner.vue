@@ -13,12 +13,22 @@ import { CPF_UUID_TO_GROUP } from '~/composables/useSettingsGroups'
 const bt = useBluetoothStore()
 const { t } = useI18n()
 
+/* The banner covers the whole top of the page, so it MUST be dismissable:
+ * a user who only came to flash firmware (settings be damned) was otherwise
+ * locked out of the page with no way past except F5 — which reconnects and
+ * brings the banner right back. Dismissal is per connection: a reconnect
+ * (isConnected flips) re-arms it, since new discovery may fail anew. */
+const dismissed = ref(false)
+watch(() => bt.isConnected, () => {
+  dismissed.value = false
+})
+
 const hasCpfSettings = computed(() =>
   bt.bleCharacteristics.some(c => CPF_UUID_TO_GROUP[c.characteristic.uuid]),
 )
 
 const show = computed(() =>
-  bt.isConnected && !bt.isFetching && !hasCpfSettings.value,
+  bt.isConnected && !bt.isFetching && !hasCpfSettings.value && !dismissed.value,
 )
 
 function reconnect() {
@@ -40,6 +50,9 @@ function reconnect() {
       <template #actions>
         <button class="btn-primary--ink" type="button" @click="reconnect">
           {{ t('pair.no-settings-retry') }}
+        </button>
+        <button type="button" @click="dismissed = true">
+          {{ t('pair.no-settings-dismiss') }}
         </button>
       </template>
     </CkBannerRow>

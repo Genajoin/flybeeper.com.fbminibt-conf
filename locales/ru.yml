@@ -116,6 +116,7 @@ pair:
   no-settings-title: Устройство подключено, настройки недоступны
   no-settings-sub: Устройство не вернуло настройки — частое поведение в Bluefy на iOS. Переподключитесь, чтобы повторить.
   no-settings-retry: ПЕРЕПОДКЛЮЧИТЬ
+  no-settings-dismiss: СКРЫТЬ
   restart-eyebrow: Нужен перезапуск
   restart-title: Перезагрузите устройство
   restart-sub: Часть настроек применяется только после полной перезагрузки.
@@ -459,6 +460,9 @@ update:
   flash-connect-lead: 'Опубликована FW {latest}. Подключите прибор — и её можно поставить прямо с этой страницы.'
   flash-connect-cta: ● Подключить прибор
   flash-connect-other: Подключить другой прибор
+  flash-model-unknown-title: Модель не прочиталась
+  flash-model-unknown: 'Подключён {name}, но прибор не успел отдать номер модели — так бывает сразу после смены прошивки, пока система заново читает его сервисы. Переподключитесь.'
+  flash-model-unknown-retry: Переподключить
   flash-other-device-title: Подключён другой прибор
   flash-install-title: 'Установить FW {latest}'
   flash-uptodate-title: Обновление не требуется

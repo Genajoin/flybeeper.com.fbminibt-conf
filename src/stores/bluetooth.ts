@@ -220,19 +220,29 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // Key by NORMALIZED uuid: iOS shims return short/uppercase UUIDs, so
         // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
         // — the retry loop would spin and the FSS lookup below would miss.
+        // The retry budget is sized for a cold GATT cache: right after a
+        // firmware update the attribute table changes and the OS stack redoes
+        // FULL service discovery over the air — several seconds, not the
+        // ~instant cached answer. The old 4×300 ms window lost that race and
+        // the page came up with zero characteristics (no DIS, no settings)
+        // even though the stack finished fine a moment later.
+        const DISCOVERY_DEADLINE_MS = 12_000
         const servicesByUuid = new Map<string, BluetoothRemoteGATTService>()
-        try {
-          for (const s of await server.getPrimaryServices())
-            servicesByUuid.set(normalizeUuid(s.uuid), s)
-        }
-        catch (e) {
-          log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
-        }
-        for (let attempt = 0; attempt < 4; attempt++) {
-          const missing = KNOWN_SERVICE_UUIDS.filter(u => !servicesByUuid.has(u))
-          if (!missing.length)
-            break
-          for (const uuid of missing) {
+        const discoveryStart = Date.now()
+        for (let attempt = 0; ; attempt++) {
+          // Bulk call first on every round: on desktop it returns everything
+          // known so far, and repeating it picks up services that finished
+          // resolving after the previous round.
+          try {
+            for (const s of await server.getPrimaryServices())
+              servicesByUuid.set(normalizeUuid(s.uuid), s)
+          }
+          catch (e) {
+            log.warn('getPrimaryServices() failed — falling back to per-service lookup', e)
+          }
+          // Per-service lookups for whatever is still missing — the path iOS
+          // shims (Bluefy / WebBLE) support reliably.
+          for (const uuid of KNOWN_SERVICE_UUIDS.filter(u => !servicesByUuid.has(u))) {
             try {
               const svc = await server.getPrimaryService(uuid)
               if (svc)
@@ -242,7 +252,18 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
           }
           if (KNOWN_SERVICE_UUIDS.every(u => servicesByUuid.has(u)))
             break
-          await new Promise(resolve => setTimeout(resolve, 300))
+          // Essentials present — DIS (model, fw) and the settings service —
+          // and the optional ones didn't show up on an extra round: this
+          // device simply doesn't have them (automation_io exists on FBminiBT
+          // only, ESS/LN vary by model). Don't burn the full deadline.
+          const essentials = ['0000180a-0000-1000-8000-00805f9b34fb', FSS_UUID]
+          if (attempt >= 3 && essentials.every(u => servicesByUuid.has(u)))
+            break
+          if (Date.now() - discoveryStart > DISCOVERY_DEADLINE_MS || !server.connected) {
+            log.warn('service discovery incomplete after deadline', [...servicesByUuid.keys()])
+            break
+          }
+          await new Promise(resolve => setTimeout(resolve, 500))
         }
         const services = [...servicesByUuid.values()]
 

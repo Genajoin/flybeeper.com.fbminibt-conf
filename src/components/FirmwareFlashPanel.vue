@@ -39,6 +39,11 @@ const device = computed(() => bySku(props.sku))
 const deviceName = computed(() => device.value?.displayName ?? props.sku.toUpperCase())
 const connecting = computed(() => bt.isConnecting || bt.isFetching)
 const isThisDevice = computed(() => bt.isConnected && fwUpdate.sku.value === props.sku)
+/* Connected, but DIS model number never arrived — discovery came up short
+ * (fresh GATT cache right after a firmware change is the usual reason). This
+ * is NOT "a different device": naming it that sent people hunting for another
+ * vario on the desk. Offer a reconnect instead. */
+const modelUnknown = computed(() => bt.isConnected && !fwUpdate.sku.value)
 const isUpToDate = computed(() =>
   isThisDevice.value && !!props.latest && fwUpdate.current.value === props.latest,
 )
@@ -215,6 +220,19 @@ function start() {
         <button class="flash__cta" type="button" @click="connect">
           {{ connectLabel }}
           <CkDots v-if="connecting" />
+        </button>
+      </template>
+
+      <!-- ---------- step 1: connected, but the model could not be read ---------- -->
+      <template v-else-if="modelUnknown">
+        <h2 class="flash__title">
+          {{ t('update.flash-model-unknown-title') }}
+        </h2>
+        <p class="flash__lead">
+          {{ t('update.flash-model-unknown', { name: bt.devName }) }}
+        </p>
+        <button class="flash__cta" type="button" @click="connectAnother">
+          {{ t('update.flash-model-unknown-retry') }}
         </button>
       </template>
 

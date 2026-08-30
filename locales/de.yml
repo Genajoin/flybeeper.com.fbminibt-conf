@@ -95,6 +95,7 @@ pair:
   no-settings-title: Gerät verbunden, Einstellungen nicht verfügbar
   no-settings-sub: Das Gerät hat keine Einstellungen geliefert — häufig bei Bluefy unter iOS. Neu verbinden, um es erneut zu versuchen.
   no-settings-retry: NEU VERBINDEN
+  no-settings-dismiss: AUSBLENDEN
   restart-eyebrow: Neustart nötig
   restart-title: Gerät neu starten
   restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
@@ -357,6 +358,9 @@ update:
   flash-connect-lead: 'FW {latest} ist veröffentlicht. Gerät verbinden — dann lässt sie sich direkt von dieser Seite installieren.'
   flash-connect-cta: ● Gerät verbinden
   flash-connect-other: Anderes Gerät verbinden
+  flash-model-unknown-title: Modell nicht lesbar
+  flash-model-unknown: '{name} ist verbunden, aber das Gerät hat seine Modellnummer nicht geliefert — üblich direkt nach einem Firmwarewechsel, während das System seine Dienste neu einliest. Neu verbinden.'
+  flash-model-unknown-retry: Neu verbinden
   flash-other-device-title: Anderes Gerät verbunden
   flash-install-title: 'FW {latest} installieren'
   flash-uptodate-title: Bereits aktuell
