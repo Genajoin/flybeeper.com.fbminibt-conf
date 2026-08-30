@@ -105,6 +105,15 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      * mutate isFetching / fetchProgress for the live attempt.
      */
     connectGen: 0,
+    /**
+     * Обнаружение вернуло пустоту даже после принудительного переподключения —
+     * почти наверняка браузер отвечает из GATT-кэша, снятого до обновления
+     * прошивки (Service Changed уходит только запаренным центрам, а наши
+     * приборы не парятся). По этому пути помогает не «переподключить», а
+     * выбрать прибор заново через системный список: новый выбор — новое
+     * разрешение и обнуление кэша.
+     */
+    staleGattCache: false,
     devName: '',
     /**
      * FSS characteristics that never produced a usable value this session
@@ -175,6 +184,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
       this.fetchProgress = 0
       this.fetchTotal = 0
       this.incompleteChars = []
+      this.staleGattCache = false
       this.isConnecting = true
       this.device = device
       this.devName = device.name ?? ''
@@ -226,7 +236,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
         // Keys are NORMALIZED uuids: iOS shims return short/uppercase UUIDs, so
         // raw keys would never match KNOWN_SERVICE_UUIDS (all lowercase 128-bit)
         // — the retry loop would spin and the FSS lookup below would miss.
-        const discoverServices = async (srv: BluetoothRemoteGATTServer) => {
+        const discoverServices = async (srv: BluetoothRemoteGATTServer, deadlineMs = DISCOVERY_DEADLINE_MS) => {
           const found = new Map<string, BluetoothRemoteGATTService>()
           const started = Date.now()
           for (let attempt = 0; ; attempt++) {
@@ -258,7 +268,7 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
             // full deadline.
             if (attempt >= 3 && ESSENTIAL_UUIDS.every(u => found.has(u)))
               break
-            if (Date.now() - started > DISCOVERY_DEADLINE_MS || !srv.connected) {
+            if (Date.now() - started > deadlineMs || !srv.connected) {
               log.warn('service discovery incomplete after deadline', [...found.keys()], 'connected:', srv.connected)
               break
             }
@@ -296,14 +306,23 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
               CONNECT_TIMEOUT_MS,
               'Connection timed out — is the device powered on and in range?',
             )
-            const retried = await discoverServices(server)
+            // Короче первого прохода: если стек и на свежем линке молчит
+            // 6 с, ждать вторые 12 нет смысла — это кэш, а не медленный эфир.
+            const retried = await discoverServices(server, 6_000)
             if (retried.size > servicesByUuid.size)
               servicesByUuid = retried
-            log.info(`rediscovery after reconnect: ${retried.size} service(s)`)
+            // warn, не info: печатается только на аварийном пути, зато видно в
+            // консоли на проде без ?debug — по этой строке и понятно, помог
+            // реконнект или кэш браузера пережил и его.
+            log.warn(`rediscovery after reconnect: ${retried.size} service(s)`)
           }
           catch (e) {
             log.warn('forced reconnect failed', e)
           }
+          // Реконнект не спас: дальше по этому соединению ловить нечего,
+          // помогает только новый выбор прибора через системный список.
+          if (!ESSENTIAL_UUIDS.every(u => servicesByUuid.has(u)))
+            this.staleGattCache = true
         }
         const services = [...servicesByUuid.values()]
 
@@ -527,6 +546,32 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
 
       log.info('direct reconnect to', match.name)
       await this.connectToDevice(match)
+    },
+
+    /**
+     * Выбрать прибор заново через системный список. Не то же самое, что
+     * «переподключить»: сохранённый путь (`getDevices()`) переиспользует
+     * выданное разрешение вместе с прилипшим к нему GATT-кэшем, а выбор через
+     * chooser заводит обнаружение с нуля. Единственное, что помогло после
+     * OTA 0.26 → 0.28 (30.08.2026).
+     *
+     * Линк рвём синхронно, БЕЗ await до requestDevice: жест пользователя
+     * действует ограниченное время, и chooser после длинной асинхронной
+     * паузы браузер может уже не открыть.
+     */
+    repickDevice() {
+      this.connectGen++
+      try {
+        this.device?.gatt?.disconnect()
+      }
+      catch { /* device already gone */ }
+      this.bleCharacteristics = []
+      this.device = null
+      this.isConnected = false
+      this.isConnecting = false
+      this.isFetching = false
+      this.staleGattCache = false
+      return this.connectToRequestDevice()
     },
 
     async disconnectDevice() {

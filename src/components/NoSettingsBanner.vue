@@ -31,6 +31,12 @@ const show = computed(() =>
   bt.isConnected && !bt.isFetching && !hasCpfSettings.value && !dismissed.value,
 )
 
+/* Обнаружение не спас даже принудительный реконнект внутри стора: браузер
+ * отвечает из GATT-кэша, снятого до обновления прошивки. Тогда текст должен
+ * называть причину и вести к выбору прибора заново, а не к очередному
+ * «переподключить» по тому же разрешению — оно вернёт ту же пустоту. */
+const stale = computed(() => bt.staleGattCache)
+
 function reconnect() {
   // Drop the half-discovered link and re-run the pairing/discovery flow.
   bt.disconnectDevice().finally(() => bt.connectToRequestDevice())
@@ -45,10 +51,13 @@ function reconnect() {
       accent="var(--ck-signal)"
       :eyebrow="t('pair.no-settings-eyebrow')"
       :title="t('pair.no-settings-title')"
-      :sub="t('pair.no-settings-sub')"
+      :sub="stale ? t('pair.no-settings-stale-sub') : t('pair.no-settings-sub')"
     >
       <template #actions>
-        <button class="btn-primary--ink" type="button" @click="reconnect">
+        <button v-if="stale" class="btn-primary--ink" type="button" @click="bt.repickDevice()">
+          {{ t('pair.no-settings-repick') }}
+        </button>
+        <button v-else class="btn-primary--ink" type="button" @click="reconnect">
           {{ t('pair.no-settings-retry') }}
         </button>
         <button type="button" @click="dismissed = true">

@@ -96,6 +96,8 @@ pair:
   no-settings-sub: Das Gerät hat keine Einstellungen geliefert — häufig bei Bluefy unter iOS. Neu verbinden, um es erneut zu versuchen.
   no-settings-retry: NEU VERBINDEN
   no-settings-dismiss: AUSBLENDEN
+  no-settings-stale-sub: Der Browser liefert eine Dienstliste von vor dem Firmware-Update — neu verbinden hilft dabei nicht. Wählen Sie das Gerät erneut aus der Systemliste.
+  no-settings-repick: GERÄT NEU WÄHLEN
   restart-eyebrow: Neustart nötig
   restart-title: Gerät neu starten
   restart-sub: Einige Einstellungen werden erst nach einem Power-Cycle aktiv.
