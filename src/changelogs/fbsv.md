@@ -5,9 +5,6 @@
 - _Quiet on the ground now follows the ground:_ the reference pressure is re-taken every 10 seconds while you stand, so barometer drift no longer looks like a take-off, and a device switched on down in the valley and carried up to launch treats the launch as the ground after a minute. A take-off is a climb of 2 metres from that reference; a landing is a minute of stillness within half a metre.
 - _Over-the-air update made robust:_ the hardware watchdog keeps running through the software reset that starts an update and could fire inside the bootloader's image check right after the swap finished, sending the device back to the old version. Its window is now 6 seconds. On firmware older than this version the configurator installs the update in permanent mode to get past that watchdog.
 - _More headroom for updates:_ the Bluetooth transfer buffer was trimmed, which frees 3 KB of memory. Updating takes slightly longer and is more reliable.
-
-**Version:** 0.28.1 | **Date:** 29.08.2026 | [**Download**](/firmware/fbsv/app_update.0.28.1.bin)
-
 - _"Silent on the ground" now really is silent:_ the setting used to stop the vario from being updated instead of muting the sound, so the last value stayed frozen and the buzzer kept sounding it. After landing on a descent the device would keep beeping descent without stopping. Now the sound is muted while the readings continue as usual.
 - _No self switch-off after an update:_ the double-reset window now only counts a press of the button. The reboot that follows an over-the-air update is a software one, and it could previously be mistaken for a button press — a device could go to sleep by itself right after updating.
 

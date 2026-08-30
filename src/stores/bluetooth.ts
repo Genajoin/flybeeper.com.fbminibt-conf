@@ -145,6 +145,17 @@ export const useBluetoothStore = defineStore('bluetoothStore', {
      */
     bleBlocked: (state): boolean =>
       state.bleUnavailableReason === 'browser' || state.bleUnavailableReason === 'insecure',
+
+    /**
+     * Сервис настроек действительно поднялся на этом подключении. Connect
+     * может завершиться «успешно» и при пустом обнаружении: линк есть,
+     * ONLINE горит, SMP по прямому запросу работает — а настроек нет ни
+     * одной, и кокпит пустой. Отличать эти два состояния приходится всем,
+     * кто ждёт настроек после переподключения.
+     */
+    hasSettingsService: (state): boolean =>
+      state.bleCharacteristics.some(c =>
+        normalizeUuid(c.characteristic.service.uuid).startsWith('904baf04')),
   },
 
   actions: {

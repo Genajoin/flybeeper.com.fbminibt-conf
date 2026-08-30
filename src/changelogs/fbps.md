@@ -5,9 +5,6 @@
 - _Quiet on the ground now follows the ground:_ the reference pressure is re-taken every 10 seconds while you stand, so barometer drift no longer looks like a take-off, and a device switched on down in the valley and carried up to launch treats the launch as the ground after a minute. A take-off is a climb of 2 metres from that reference; a landing is a minute of stillness within half a metre.
 - _Over-the-air update made robust:_ the hardware watchdog keeps running through the software reset that starts an update and could fire inside the bootloader's image check right after the swap finished, sending the device back to the old version. Its window is now 6 seconds. On firmware older than this version the configurator installs the update in permanent mode to get past that watchdog.
 - _More headroom for updates:_ the Bluetooth transfer buffer was trimmed, which frees 3 KB of memory. Updating takes slightly longer and is more reliable.
-
-**Version:** 0.28.1 | **Date:** 29.08.2026 | [**Download**](/firmware/fbps/app_update.0.28.1.bin)
-
 - _Rebuilt on the shared FlyBeeper firmware base:_ the device now runs the same firmware family as the rest of the line instead of its own separate branch. It keeps its own signing key, so this update installs over the air on units already in the field, and firmware from other FlyBeeper devices still cannot be flashed onto it by mistake.
 - _Power off by double reset:_ two presses of the button with about a second between them switch the device off; a single press turns it back on. The window flag now only counts a press of the button itself, so inserting a fresh battery can no longer switch the device off right after it starts.
 - _Faster to find:_ after power-on or a button press the device advertises rapidly for 30 seconds, then settles into the economical 1.28 s interval — roughly two years from a CR2032.

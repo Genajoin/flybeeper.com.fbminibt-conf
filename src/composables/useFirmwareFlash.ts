@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue'
+import log from 'loglevel'
 import type { ImageSlot, McubootImage } from '~/lib/smp'
 import { needsPermanentSwap } from '~/utils/firmwareVersion'
 import {
@@ -291,6 +292,37 @@ export function useFirmwareFlash() {
     }
     finally {
       await transport?.stop().catch(() => undefined)
+    }
+
+    // Прошивка встала — но подключение, на котором мы это проверили, может
+    // не нести ни одной настройки. Так и было после каждого обновления:
+    // панель рапортует «обновлено», а кокпит пустой, потому что обнаружение
+    // сервисов вернулось из GATT-кэша, снятого ДО смены прошивки (SMP при
+    // этом работает — его страница спрашивает по прямому UUID). Пользователю
+    // приходилось отключаться и подключаться руками. Делаем это за него.
+    await restoreSettingsLink(signal)
+  }
+
+  /**
+   * Поднять настройки после обновления: если сервиса настроек на связи нет,
+   * рвём линк и подключаемся заново — обнаружение идёт с нуля. Не помогло —
+   * `staleGattCache` в сторе уже выставлен, и глобальная плашка предложит
+   * выбрать прибор заново через системный список (единственное, что пробивает
+   * кэш разрешения). Ошибки здесь не валят результат обновления: прошивка
+   * уже проверена, это только удобство.
+   */
+  async function restoreSettingsLink(signal?: AbortSignal): Promise<void> {
+    if (!deviceId || bt.hasSettingsService)
+      return
+    log.warn('update finished without settings on the link — reconnecting')
+    try {
+      await bt.disconnectDevice()
+      await sleep(1500, signal)
+      await bt.connectToSavedDevice(deviceId)
+      log.warn(`settings after reconnect: ${bt.hasSettingsService ? 'ok' : 'still missing'}`)
+    }
+    catch (e) {
+      log.warn('reconnect for settings failed', e)
     }
   }
 
