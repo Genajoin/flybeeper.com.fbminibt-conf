@@ -1,9 +1,9 @@
 ## Changelog
 
-**Version:** 0.29.0 | **Date:** 17.09.2026 | [**Download**](/firmware/fbsv/app_update.0.29.0.bin)
+**Version:** 0.29.1 | **Date:** 17.09.2026 | [**Download**](/firmware/fbsv/app_update.0.29.1.bin)
 
 - _Louder in the weak band:_ the piezo was noticeably quieter between 1700 and 2100 Hz. The buzzer now uses a tuned duty cycle there instead of the fixed 50 %, which adds 7–11 dB right where it was missing. You will hear it in the vario tone around 3.6–4.5 m/s, in the last note of the power-on melody and in the middle ticks while holding the button; all other tones are unchanged.
-- _Board revision 10 supported:_ the new board has no battery divider and reads the supercapacitor straight from the supply voltage. Its scale runs from 0 % at 2.8 V to 100 % at 3.6 V, the level the new charging circuit tops out at. Devices on board revision 8 keep their current scale.
+- _One firmware for every board revision:_ the device reads its board revision from its own factory record and picks the battery measurement to match. Board revision 10 has no battery divider and reads the supercapacitor straight from the supply voltage, with a scale from 0 % at 2.8 V to 100 % at 3.6 V, the level its charging circuit tops out at. Devices on board revision 8 keep their current scale.
 
 **Version:** 0.28.3 | **Date:** 30.08.2026 | [**Download**](/firmware/fbsv/app_update.0.28.3.bin)
 
