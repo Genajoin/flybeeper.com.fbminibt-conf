@@ -1,5 +1,10 @@
 ## Changelog
 
+**Version:** 0.29.0 | **Date:** 17.09.2026 | [**Download**](/firmware/fbps/app_update.0.29.0.bin)
+
+- _Clean shutdown on a flat coin cell:_ the battery is now measured, and when it drops below 2.4 V the device switches itself off instead of rebooting over and over on a dying cell. It checks every 10 minutes and needs two low readings in a row; at power-on it refuses to start if the cell is within 0.1 V of that limit.
+- _Longer battery life after using the app:_ the pressure sensor kept being polled 40 times a second after the phone disconnected, until the next restart — an extra 30–50 µA from the coin cell. It now stops as soon as nothing is subscribed.
+
 **Version:** 0.28.3 | **Date:** 30.08.2026 | [**Download**](/firmware/fbps/app_update.0.28.3.bin)
 
 - _Quiet on the ground now follows the ground:_ the reference pressure is re-taken every 10 seconds while you stand, so barometer drift no longer looks like a take-off, and a device switched on down in the valley and carried up to launch treats the launch as the ground after a minute. A take-off is a climb of 2 metres from that reference; a landing is a minute of stillness within half a metre.

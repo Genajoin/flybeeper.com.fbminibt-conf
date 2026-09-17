@@ -1,5 +1,10 @@
 ## Changelog
 
+**Version:** 0.29.0 | **Date:** 17.09.2026 | [**Download**](/firmware/fbsv/app_update.0.29.0.bin)
+
+- _Louder in the weak band:_ the piezo was noticeably quieter between 1700 and 2100 Hz. The buzzer now uses a tuned duty cycle there instead of the fixed 50 %, which adds 7–11 dB right where it was missing. You will hear it in the vario tone around 3.6–4.5 m/s, in the last note of the power-on melody and in the middle ticks while holding the button; all other tones are unchanged.
+- _Board revision 10 supported:_ the new board has no battery divider and reads the supercapacitor straight from the supply voltage. Its scale runs from 0 % at 2.8 V to 100 % at 3.6 V, the level the new charging circuit tops out at. Devices on board revision 8 keep their current scale.
+
 **Version:** 0.28.3 | **Date:** 30.08.2026 | [**Download**](/firmware/fbsv/app_update.0.28.3.bin)
 
 - _Quiet on the ground now follows the ground:_ the reference pressure is re-taken every 10 seconds while you stand, so barometer drift no longer looks like a take-off, and a device switched on down in the valley and carried up to launch treats the launch as the ground after a minute. A take-off is a climb of 2 metres from that reference; a landing is a minute of stillness within half a metre.
