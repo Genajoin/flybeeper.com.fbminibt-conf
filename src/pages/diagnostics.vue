@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { disconnectsWithBattery, mailtoUrl, readingText, reportFileName, reportText, trend, voltageRate } from '~/utils/diagnostics'
+import { boardRevisionText, disconnectsWithBattery, mailtoUrl, readingText, reportFileName, reportText, trend, voltageRate } from '~/utils/diagnostics'
 import { FAST_BATTERY_PERIOD_MS, SAMPLE_PERIOD_MS, useDiagnostics, useFastBatteryTrace } from '~/composables/useDiagnostics'
 
 /**
@@ -212,6 +212,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
         <StateCell :label="t('diag.online-label')">
           <span class="diag__mono">{{ bt.devName || bt.dis.modelNumberString.value }}</span>
           <span v-if="bt.dis.firmwareRevisionString.value" class="diag__mono"> · FW {{ bt.dis.firmwareRevisionString.value }}</span>
+          <span v-if="report?.device" class="diag__mono"> · HW {{ boardRevisionText(report.device) }}</span>
           <span v-if="batteryNow" class="diag__mono"> · {{ batteryNow }}</span>
         </StateCell>
         <p class="diag__note">

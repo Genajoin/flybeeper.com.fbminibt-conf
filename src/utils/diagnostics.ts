@@ -296,6 +296,41 @@ export function formatTrend(tr: Trend | null, unit: string, decimals: number): s
   return `${now} (${fmtNum(tr.first, decimals)} → ${fmtNum(tr.last, decimals)} over ${tr.spanMin.toFixed(0)} min, ${sign}${tr.perHour.toFixed(decimals + 1)} ${unit}/h)`
 }
 
+/**
+ * Board revision with where it came from. SunVario (0.29.1+) writes 0x2A27 at
+ * boot from hwrev_get_str(): with a dot ("10.0", "8.0") it was read from the
+ * board's UICR and can be trusted; without one ("8", "10") the UICR is empty,
+ * the string is the image's build-time value, and the firmware treats the
+ * board as rev 8 whatever it really is. Other models set 0x2A27 at build time
+ * (Kconfig) — shown as is, no claim about its source.
+ */
+export function boardRevisionText(d: { model: string | null, hardwareRevision: string | null } | null): string {
+  const rev = d?.hardwareRevision
+  if (!rev)
+    return 'unknown'
+  if (!/^fbsv/i.test(d?.model ?? ''))
+    return rev
+  return rev.includes('.') ? `${rev} (UICR)` : `${rev} (build, unverified — firmware treats the board as rev 8)`
+}
+
+/**
+ * SunVario only: a battery voltage near zero or out of any battery's range
+ * means the firmware picked the wrong measurement for this board (rev 10 has
+ * no divider and reads VDD, ~3.5 V on USB). Null when nothing looks wrong.
+ */
+export function batteryScaleWarning(r: Pick<DiagnosticsReport, 'device' | 'samples' | 'batteryTrace'>): string | null {
+  if (!/^fbsv/i.test(r.device?.model ?? ''))
+    return null
+  const mv = [
+    ...r.batteryTrace.map(b => b.mV),
+    ...r.samples.map(s => (s.batteryV === null ? null : Math.round(s.batteryV * 1000))),
+  ].filter((v): v is number => v !== null)
+  const bad = mv.filter(v => v < 1500 || v > 5000)
+  if (!bad.length)
+    return null
+  return `battery voltage ${bad[bad.length - 1]} mV is not a plausible battery reading — the battery scale was probably chosen for the wrong board revision (board revision: ${boardRevisionText(r.device)})`
+}
+
 function deviceTitle(r: DiagnosticsReport): string {
   const d = r.device
   if (!d)
@@ -316,6 +351,9 @@ export function mailSubject(r: DiagnosticsReport): string {
     parts.push(d.name)
   if (d.firmwareRevision)
     parts.push(`FW ${d.firmwareRevision}`)
+  // Board revision decides how the battery is measured (rev 8 vs rev 10) —
+  // support needs it in the subject line, and "unknown" is an answer too.
+  parts.push(`HW ${d.hardwareRevision ?? 'unknown'}${d.hardwareRevision && /^fbsv/i.test(d.model ?? '') && !d.hardwareRevision.includes('.') ? ' (unverified)' : ''}`)
   return `FlyBeeper diagnostics: ${parts.join(' · ')}`
 }
 
@@ -340,7 +378,10 @@ export function summaryLines(r: DiagnosticsReport): string[] {
       lines.push(`BLE name: ${d.name}`)
     lines.push(`Model: ${d.model ?? '—'} · Manufacturer: ${d.manufacturer ?? '—'}`)
     lines.push(`Serial: ${d.serial ?? 'not provided'}`)
-    lines.push(`Board revision: ${d.hardwareRevision ?? 'not provided'}`)
+    lines.push(`Board revision: ${d.hardwareRevision ? boardRevisionText(d) : 'unknown (not provided by the firmware)'}`)
+    const scale = batteryScaleWarning(r)
+    if (scale)
+      lines.push(`WARNING: ${scale}`)
     lines.push(`Firmware: ${d.firmwareRevision ?? '—'}${d.softwareRevision ? ` · SW ${d.softwareRevision}` : ''}`)
     const act = activeSlot(r)
     if (act)
@@ -426,7 +467,7 @@ export function reportText(r: DiagnosticsReport): string {
       `Model: ${d.model ?? '—'}`,
       `Manufacturer: ${d.manufacturer ?? '—'}`,
       `Serial number: ${d.serial ?? 'not provided'}`,
-      `Hardware (board) revision: ${d.hardwareRevision ?? 'not provided'}`,
+      `Hardware (board) revision: ${d.hardwareRevision ? boardRevisionText(d) : 'unknown (not provided by the firmware)'}`,
       `Firmware revision: ${d.firmwareRevision ?? '—'}`,
       `Software revision: ${d.softwareRevision ?? 'not provided'}`,
       `System ID: ${d.systemId ?? 'not provided'}`,

@@ -4,7 +4,9 @@ import {
   DIAGNOSTICS_SCHEMA,
   MAILTO_MAX_LENGTH,
   actionLine,
+  batteryScaleWarning,
   batteryTraceSummary,
+  boardRevisionText,
   disconnectsWithBattery,
   mailSubject,
   mailtoUrl,
@@ -112,7 +114,7 @@ describe('trend', () => {
 
 describe('summary and subject', () => {
   it('puts model, serial and firmware into the subject', () => {
-    expect(mailSubject(report())).toBe('FlyBeeper diagnostics: fbsv · S/N 0B00000000000001 · FBSV.9BFC · FW 0.29.1')
+    expect(mailSubject(report())).toBe('FlyBeeper diagnostics: fbsv · S/N 0B00000000000001 · FBSV.9BFC · FW 0.29.1 · HW 10 (unverified)')
   })
 
   it('still produces a subject with no device', () => {
@@ -123,7 +125,7 @@ describe('summary and subject', () => {
     const lines = summaryLines(report()).join('\n')
     expect(lines).toContain('ble_never_sleep: on')
     expect(lines).toContain('Running image: 0.29.1 confirmed (slot 0)')
-    expect(lines).toContain('Board revision: 10')
+    expect(lines).toContain('Board revision: 10 (build, unverified — firmware treats the board as rev 8)')
     expect(lines).toContain('Bootloader: MCUboot mode 3')
   })
 
@@ -269,5 +271,28 @@ describe('fast battery trace', () => {
     expect(batteryTraceSummary(trace)).toContain('min 3510 mV, max 3600 mV')
     const txt = reportText(r)
     expect(txt).toContain(`${at(27)} 3510 mV\n${at(30)} ** disconnected`)
+  })
+})
+
+describe('board revision source (SunVario)', () => {
+  it('trusts a revision with a dot as read from UICR', () => {
+    expect(boardRevisionText({ model: 'FBSV', hardwareRevision: '10.0' })).toBe('10.0 (UICR)')
+  })
+
+  it('flags a revision without a dot as the build value', () => {
+    expect(boardRevisionText({ model: 'fbsv', hardwareRevision: '8' })).toContain('build, unverified')
+  })
+
+  it('makes no claim about other models or a missing string', () => {
+    expect(boardRevisionText({ model: 'FBminiBT', hardwareRevision: '1.7' })).toBe('1.7')
+    expect(boardRevisionText({ model: 'FBSV', hardwareRevision: null })).toBe('unknown')
+  })
+
+  it('warns when the SunVario battery voltage is implausible', () => {
+    const device = { name: 'FBSV.1', model: 'FBSV', manufacturer: null, serial: null, hardwareRevision: '8', firmwareRevision: '0.29.1', softwareRevision: null, systemId: null, pnpId: null }
+    const ok = batteryScaleWarning({ device, samples: [], batteryTrace: [{ t: '2026-09-28T10:00:00Z', device: 'FBSV.1', mV: 3480, pct: null }] })
+    expect(ok).toBeNull()
+    const bad = batteryScaleWarning({ device, samples: [], batteryTrace: [{ t: '2026-09-28T10:00:00Z', device: 'FBSV.1', mV: 12, pct: null }] })
+    expect(bad).toContain('12 mV is not a plausible battery reading')
   })
 })
