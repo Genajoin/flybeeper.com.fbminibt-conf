@@ -530,7 +530,7 @@ footer:
 
 diag:
   battery-eyebrow: Akku, live
-  battery-hint: 'Solange diese Seite offen und das Gerät verbunden ist, fordert sie alle {sec} s eine frische Akkumessung an. Bei einem Stromproblem: Gerät am USB lassen, diese Seite öffnen, USB abziehen und warten, bis die Verbindung abbricht — dann auf Senden drücken.'
+  battery-hint: 'Solange diese Seite offen und das Gerät verbunden ist, misst sie den Akku alle {sec} s.'
   battery-waiting: Warte auf den ersten Akkuwert…
   battery-count: '{n} Messwerte'
   how-eyebrow: So funktioniert es

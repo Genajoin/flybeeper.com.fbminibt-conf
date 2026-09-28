@@ -529,7 +529,7 @@ footer:
 
 diag:
   battery-eyebrow: Battery, live
-  battery-hint: 'While this page is open and the device is connected, it asks the device for a fresh battery measurement every {sec} s. For a power problem: keep the device on USB, open this page, unplug USB and wait until the connection drops — then press Send.'
+  battery-hint: 'While this page is open and the device is connected, it measures the battery every {sec} s.'
   battery-waiting: Waiting for the first battery reading…
   battery-count: '{n} readings'
   how-eyebrow: How it works
