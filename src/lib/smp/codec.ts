@@ -33,6 +33,8 @@ export enum SmpOsCmd {
   Echo = 0,
   Reset = 5,
   McumgrParams = 6,
+  Info = 7,
+  BootloaderInfo = 8,
 }
 
 export enum SmpImageCmd {

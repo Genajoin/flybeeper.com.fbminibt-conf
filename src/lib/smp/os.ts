@@ -43,3 +43,46 @@ export async function osReset(t: SmpTransport, signal?: AbortSignal): Promise<vo
     // Timed out / link torn down mid-reboot — the device is on its way down.
   }
 }
+
+/**
+ * `uname`-style description of the running image (OS group, command 7), e.g.
+ * `Zephyr unknown 3.7.0 … nrf52832 …` for format `a`. Optional on the device
+ * side (CONFIG_MCUMGR_GRP_OS_INFO) — null when unsupported or on any error,
+ * because a diagnostics caller wants "not available", not an exception.
+ */
+export async function osInfo(t: SmpTransport, format = 'a', signal?: AbortSignal): Promise<string | null> {
+  try {
+    const rsp = await t.request(SmpOp.Read, SmpGroup.Os, SmpOsCmd.Info, { format }, { signal, timeoutMs: 5000 })
+    return typeof rsp.output === 'string' ? rsp.output : null
+  }
+  catch {
+    return null
+  }
+}
+
+/**
+ * Which bootloader the device runs and, for MCUboot, in what mode (OS group,
+ * command 8). Returns the raw response map — the fields differ between
+ * bootloaders — or null when unsupported (CONFIG_MCUMGR_GRP_OS_BOOTLOADER_INFO).
+ * MCUboot does not report its own version through this command.
+ */
+export async function bootloaderInfo(t: SmpTransport, signal?: AbortSignal): Promise<Record<string, unknown> | null> {
+  try {
+    const rsp = await t.request(SmpOp.Read, SmpGroup.Os, SmpOsCmd.BootloaderInfo, {}, { signal, timeoutMs: 5000 })
+    if (typeof rsp.bootloader !== 'string')
+      return null
+    const info: Record<string, unknown> = { ...rsp }
+    if (rsp.bootloader === 'MCUboot') {
+      // Swap mode (0 single, 3 swap-using-move, …) and the downgrade guard.
+      try {
+        const mode = await t.request(SmpOp.Read, SmpGroup.Os, SmpOsCmd.BootloaderInfo, { query: 'mode' }, { signal, timeoutMs: 5000 })
+        Object.assign(info, mode)
+      }
+      catch { /* mode query unsupported — the name alone is still useful */ }
+    }
+    return info
+  }
+  catch {
+    return null
+  }
+}

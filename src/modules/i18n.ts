@@ -44,6 +44,19 @@ export async function loadLanguageAsync(lang: string): Promise<Locale> {
   return setI18nLanguage(lang)
 }
 
+/**
+ * Load a locale's messages without switching the UI to it. The diagnostics
+ * report names settings in English for support, whatever language the pilot
+ * reads the page in.
+ */
+export async function ensureLocaleMessages(lang: string): Promise<void> {
+  if (loadedLanguages.includes(lang) || !localesMap[lang])
+    return
+  const messages = await localesMap[lang]()
+  i18n.global.setLocaleMessage(lang, messages.default)
+  loadedLanguages.push(lang)
+}
+
 export const install: UserModule = async ({ app }) => {
   if (typeof navigator !== 'undefined') {
     const userLang = navigator.language.split('-')[0]

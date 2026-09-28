@@ -120,6 +120,8 @@ export function useFirmwareFlash() {
       error.value = e instanceof Error ? e.message : String(e)
       errorCode.value = null
     }
+    // Into the session log, so the diagnostics report carries OTA failures.
+    log.error(`firmware update failed in phase ${phase.value}:`, error.value, errorCode.value !== null ? `(rc ${errorCode.value})` : '')
     phase.value = 'error'
     bt.isFlashing = false
   }

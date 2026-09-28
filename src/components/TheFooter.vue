@@ -55,6 +55,9 @@ async function forceUpdate() {
       <RouterLink class="ftr__link" to="/update">
         {{ t('footer.firmware-update') }}
       </RouterLink>
+      <RouterLink class="ftr__link" to="/diagnostics">
+        {{ t('footer.diagnostics') }}
+      </RouterLink>
       <a class="ftr__link ftr__link--ext" href="https://alpisto.eu" target="_blank" rel="noopener">
         {{ t('footer.alpisto') }}
       </a>

@@ -524,4 +524,31 @@ footer:
   about: About FlyBeeper
   devices: Devices
   firmware-update: Firmware update
+  diagnostics: Report a problem
   alpisto: alpisto.eu ↗
+
+diag:
+  eyebrow: Diagnostics
+  title: Report a problem
+  sub: Collects your device's firmware, settings and battery readings into one report for support
+  offline-label: No device connected
+  offline-body: Connect your device to include its firmware, settings and battery readings. Without it the report only has the configurator version and your browser.
+  connecting: Connecting…
+  no-ble-label: No Web Bluetooth
+  no-ble-body: This browser cannot connect to the device. The report still has the configurator version and your browser — send it anyway. On a phone, use Chrome on Android or Bluefy on iPhone.
+  online-label: Connected
+  collecting: 'Reading the device… {n} / {total}'
+  sampling: '{n} readings over {min} min (one every {sec} s)'
+  sampling-hint: For battery or power problems keep this page open with the device connected for 15–30 minutes before sending — the report then shows how fast the battery drains.
+  problem-label: Describe the problem
+  problem-ph: What happens, when, and what you already tried
+  send: Send to support
+  download: Download JSON
+  copy: Copy report
+  copied: Copied
+  refresh: Read again
+  report: Report
+  downloaded: The report file is in your downloads — attach it to the email.
+  mail-note: '“Send to support” downloads the report file and opens an email to {email}. The full report does not fit into the email, so please attach the file. If no email app opens, send the file to {email} yourself.'
+  mail-problem: 'Describe the problem here:'
+  mail-attach: 'Please attach the diagnostics file you just downloaded ({file}) — it contains the full report.'

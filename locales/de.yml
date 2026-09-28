@@ -525,4 +525,31 @@ footer:
   about: Über FlyBeeper
   devices: Geräte
   firmware-update: Firmware-Update
+  diagnostics: Problem melden
   alpisto: alpisto.eu ↗
+
+diag:
+  eyebrow: Diagnose
+  title: Problem melden
+  sub: Fasst Firmware, Einstellungen und Akkuwerte deines Geräts in einem Bericht für den Support zusammen
+  offline-label: Kein Gerät verbunden
+  offline-body: Verbinde dein Gerät, damit Firmware, Einstellungen und Akkuwerte im Bericht stehen. Ohne Gerät enthält er nur die Konfigurator-Version und deinen Browser.
+  connecting: Verbinde…
+  no-ble-label: Kein Web Bluetooth
+  no-ble-body: Dieser Browser kann sich nicht mit dem Gerät verbinden. Der Bericht enthält trotzdem Konfigurator-Version und Browser — schick ihn gern trotzdem. Auf dem Handy Chrome unter Android oder Bluefy auf dem iPhone verwenden.
+  online-label: Verbunden
+  collecting: 'Lese das Gerät aus… {n} / {total}'
+  sampling: '{n} Messwerte über {min} min (alle {sec} s)'
+  sampling-hint: Bei Akku- oder Stromproblemen diese Seite mit verbundenem Gerät 15–30 Minuten offen lassen, bevor du sendest — dann zeigt der Bericht, wie schnell sich der Akku entlädt.
+  problem-label: Beschreibe das Problem
+  problem-ph: Was passiert, wann, und was du schon versucht hast
+  send: An den Support senden
+  download: JSON herunterladen
+  copy: Bericht kopieren
+  copied: Kopiert
+  refresh: Neu auslesen
+  report: Bericht
+  downloaded: Die Berichtsdatei liegt in deinen Downloads — bitte an die E-Mail anhängen.
+  mail-note: '„An den Support senden“ lädt die Berichtsdatei herunter und öffnet eine E-Mail an {email}. Der vollständige Bericht passt nicht in die E-Mail, bitte die Datei anhängen. Öffnet sich keine E-Mail-App, schick die Datei selbst an {email}.'
+  mail-problem: 'Beschreibe hier das Problem:'
+  mail-attach: 'Bitte hänge die gerade heruntergeladene Diagnosedatei ({file}) an — sie enthält den vollständigen Bericht.'
