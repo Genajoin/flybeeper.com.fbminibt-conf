@@ -528,6 +528,10 @@ footer:
   alpisto: alpisto.eu ↗
 
 diag:
+  battery-eyebrow: Battery, live
+  battery-hint: 'While this page is open and the device is connected, it asks the device for a fresh battery measurement every {sec} s. For a power problem: keep the device on USB, open this page, unplug USB and wait until the connection drops — then press Send.'
+  battery-waiting: Waiting for the first battery reading…
+  battery-count: '{n} readings'
   how-eyebrow: How it works
   how-body: 'While this configurator is open, everything you do is logged — connecting, changed settings, Apply, the simulator, sound preview, firmware updates — together with what the device reports and how its battery changes. To show us a problem, you don''t need to describe every step: use the configurator as usual, try to make the problem happen, then come back to this page and send the report.'
   how-privacy: 'The log stays in this browser tab only, in memory — nothing is saved on your device or sent anywhere until you press Send, Download or Copy. Reloading or closing the page starts a new log.'

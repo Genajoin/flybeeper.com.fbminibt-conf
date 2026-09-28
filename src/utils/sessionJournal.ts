@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import type {
+  BatteryReading,
   DiagAction,
   DiagCharacteristic,
   DiagEvent,
@@ -43,6 +44,7 @@ export interface DeviceRecord {
 const MAX_ACTIONS = 1000
 const MAX_SAMPLES = 1000 // ~4 h at one sample per 15 s
 const MAX_EVENTS = 300
+const MAX_BATTERY = 5000 // ~4 h at one reading per 3 s
 /** Slider drags and held knobs fold into one entry inside this window. */
 export const ACTION_COALESCE_MS = 3000
 
@@ -50,6 +52,7 @@ export const journal = {
   actions: [] as DiagAction[],
   events: [] as DiagEvent[],
   samples: [] as DiagSample[],
+  batteryTrace: [] as BatteryReading[],
   devices: new Map<string, DeviceRecord>(),
   /** Key of the device connected now, or connected most recently. */
   currentKey: null as string | null,
@@ -98,6 +101,13 @@ export function recordSample(s: DiagSample): void {
   journal.samples.push(s)
   if (journal.samples.length > MAX_SAMPLES)
     journal.samples.splice(0, journal.samples.length - MAX_SAMPLES)
+  touch()
+}
+
+export function recordBattery(b: BatteryReading): void {
+  journal.batteryTrace.push(b)
+  if (journal.batteryTrace.length > MAX_BATTERY)
+    journal.batteryTrace.splice(0, journal.batteryTrace.length - MAX_BATTERY)
   touch()
 }
 
@@ -158,6 +168,7 @@ export function resetJournal(): void {
   journal.actions.length = 0
   journal.events.length = 0
   journal.samples.length = 0
+  journal.batteryTrace.length = 0
   journal.devices.clear()
   journal.currentKey = null
   touch()

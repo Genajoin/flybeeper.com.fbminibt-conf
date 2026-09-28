@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { mailtoUrl, reportFileName, reportText, trend } from '~/utils/diagnostics'
-import { SAMPLE_PERIOD_MS, useDiagnostics } from '~/composables/useDiagnostics'
+import { disconnectsWithBattery, mailtoUrl, readingText, reportFileName, reportText, trend, voltageRate } from '~/utils/diagnostics'
+import { FAST_BATTERY_PERIOD_MS, SAMPLE_PERIOD_MS, useDiagnostics, useFastBatteryTrace } from '~/composables/useDiagnostics'
 
 /**
  * /diagnostics — one page support can link customers to. Collects a report
@@ -16,6 +16,7 @@ const SUPPORT_EMAIL = 'flybeeper@alpisto.eu'
 const { t } = useI18n()
 const bt = useBluetoothStore()
 const diag = useDiagnostics()
+const battery = useFastBatteryTrace()
 
 useHead({ title: () => `${t('diag.title')} · FlyBeeper` })
 
@@ -62,6 +63,56 @@ const elapsedMin = computed(() => {
     return 0
   return Math.round((Date.parse(s[s.length - 1].t) - Date.parse(s[0].t)) / 60_000)
 })
+
+// --- fast battery trace -----------------------------------------------------
+
+/** Chart window: the last 10 minutes are what matters for "it dies after unplugging". */
+const CHART_WINDOW_MS = 10 * 60_000
+const CHART_W = 320
+const CHART_H = 90
+
+const chart = computed(() => {
+  const all = battery.trace.value
+  const useMv = battery.hasVoltage.value
+  const pts = all
+    .map(b => ({ t: Date.parse(b.t), v: useMv ? b.mV : b.pct }))
+    .filter((p): p is { t: number, v: number } => p.v !== null)
+  if (!pts.length)
+    return null
+  const end = pts[pts.length - 1].t
+  const w = pts.filter(p => p.t >= end - CHART_WINDOW_MS)
+  let lo = Math.min(...w.map(p => p.v))
+  let hi = Math.max(...w.map(p => p.v))
+  // Keep a minimum span so ADC jitter does not look like a cliff.
+  const minSpan = useMv ? 50 : 5
+  if (hi - lo < minSpan) {
+    const mid = (hi + lo) / 2
+    lo = mid - minSpan / 2
+    hi = mid + minSpan / 2
+  }
+  const t0 = w[0].t
+  const span = Math.max(end - t0, 1)
+  const x = (t: number) => ((t - t0) / span) * CHART_W
+  const y = (v: number) => CHART_H - ((v - lo) / (hi - lo)) * CHART_H
+  const drops = disconnectsWithBattery({ events: battery.events.value, batteryTrace: all })
+    .map(d => Date.parse(d.t))
+    .filter(t => t >= t0 && t <= end + 60_000)
+    .map(t => Math.min(x(t), CHART_W))
+  return {
+    points: w.map(p => `${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join(' '),
+    lo: Math.round(lo),
+    hi: Math.round(hi),
+    unit: useMv ? 'mV' : '%',
+    drops,
+  }
+})
+
+const batteryLast = computed(() => battery.trace.value.slice(-6).reverse())
+const batteryRate = computed(() => voltageRate(battery.trace.value))
+
+function hhmmss(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
 
 function connect() {
   if (busyConnecting.value)
@@ -172,6 +223,34 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
           {{ t('diag.sampling-hint') }}
         </p>
       </template>
+    </section>
+
+    <section v-if="mounted && (bt.isConnected || battery.trace.value.length)" class="diag__block">
+      <CkEyebrow color="var(--ck-signal)" block>
+        {{ t('diag.battery-eyebrow') }}
+      </CkEyebrow>
+      <p class="diag__note diag__note--dim">
+        {{ t('diag.battery-hint', { sec: FAST_BATTERY_PERIOD_MS / 1000 }) }}
+      </p>
+      <template v-if="chart">
+        <svg class="diag__chart" :viewBox="`0 0 ${CHART_W} ${CHART_H}`" preserveAspectRatio="none" role="img" :aria-label="t('diag.battery-eyebrow')">
+          <line v-for="(dx, i) in chart.drops" :key="i" :x1="dx" :x2="dx" y1="0" :y2="CHART_H" class="diag__chart-drop" />
+          <polyline :points="chart.points" class="diag__chart-line" />
+        </svg>
+        <div class="diag__mono diag__chart-scale">
+          <span>{{ chart.lo }}–{{ chart.hi }} {{ chart.unit }}</span>
+          <span v-if="batteryRate !== null">{{ batteryRate > 0 ? '+' : '' }}{{ batteryRate.toFixed(0) }} mV/min</span>
+          <span>{{ t('diag.battery-count', { n: battery.trace.value.length }) }}</span>
+        </div>
+        <ul class="diag__mono diag__readings">
+          <li v-for="b in batteryLast" :key="b.t">
+            {{ hhmmss(b.t) }} · {{ readingText(b) }}
+          </li>
+        </ul>
+      </template>
+      <p v-else class="diag__note">
+        {{ t('diag.battery-waiting') }}
+      </p>
     </section>
 
     <section class="diag__block">
@@ -332,6 +411,43 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
 .diag__btn--block {
   width: 100%;
   border: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.diag__chart {
+  width: 100%;
+  height: 90px;
+  background: var(--ck-bg);
+  border: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.diag__chart-line {
+  fill: none;
+  stroke: var(--ck-signal);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.diag__chart-drop {
+  stroke: var(--ck-ink);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.diag__chart-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diag__readings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .diag__report {

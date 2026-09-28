@@ -529,6 +529,10 @@ footer:
   alpisto: alpisto.eu ↗
 
 diag:
+  battery-eyebrow: Akku, live
+  battery-hint: 'Solange diese Seite offen und das Gerät verbunden ist, fordert sie alle {sec} s eine frische Akkumessung an. Bei einem Stromproblem: Gerät am USB lassen, diese Seite öffnen, USB abziehen und warten, bis die Verbindung abbricht — dann auf Senden drücken.'
+  battery-waiting: Warte auf den ersten Akkuwert…
+  battery-count: '{n} Messwerte'
   how-eyebrow: So funktioniert es
   how-body: 'Solange der Konfigurator geöffnet ist, wird alles protokolliert, was du tust — Verbinden, geänderte Einstellungen, Übernehmen, Simulator, Tonvorschau, Firmware-Updates — zusammen mit dem, was das Gerät meldet, und dem Verlauf des Akkus. Um uns ein Problem zu zeigen, musst du nicht jeden Schritt beschreiben: Benutze den Konfigurator wie gewohnt, lass das Problem auftreten, komm dann auf diese Seite zurück und sende den Bericht.'
   how-privacy: 'Das Protokoll bleibt nur in diesem Browser-Tab, im Arbeitsspeicher — nichts wird auf deinem Gerät gespeichert oder irgendwohin gesendet, bis du auf Senden, Herunterladen oder Kopieren drückst. Neu laden oder Schließen der Seite beginnt ein neues Protokoll.'

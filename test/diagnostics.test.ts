@@ -4,6 +4,8 @@ import {
   DIAGNOSTICS_SCHEMA,
   MAILTO_MAX_LENGTH,
   actionLine,
+  batteryTraceSummary,
+  disconnectsWithBattery,
   mailSubject,
   mailtoUrl,
   pushAction,
@@ -11,6 +13,7 @@ import {
   reportText,
   summaryLines,
   trend,
+  voltageRate,
 } from '../src/utils/diagnostics'
 
 function sample(minute: number, batteryV: number | null, batteryPct: number | null = null): DiagSample {
@@ -78,6 +81,7 @@ function report(overrides: Partial<DiagnosticsReport> = {}): DiagnosticsReport {
     ],
     incompleteChars: [],
     samples: [],
+    batteryTrace: [],
     events: [],
     errors: { connect: null, firmwareUpdate: null },
     log: [],
@@ -234,5 +238,36 @@ describe('user action log', () => {
     const txt = reportText(r)
     expect(txt).toContain('[simulator] simulator vario 2.00 m/s (sent to the device) (×12)')
     expect(summaryLines(r).join('\n')).toContain('User actions logged: 2 (last: Buzzer Volume = 3 — written to the device)')
+  })
+})
+
+describe('fast battery trace', () => {
+  const at = (sec: number) => new Date(Date.UTC(2026, 8, 28, 10, 0, sec)).toISOString()
+  // USB pulled at 0 s: VDD sags 10 mV every 3 s, the link drops at 30 s.
+  const trace = Array.from({ length: 10 }, (_, i) => ({ t: at(i * 3), device: 'FBSV.9BFC', mV: 3600 - i * 10, pct: null }))
+  const events = [{ t: at(30), event: 'disconnected' }]
+
+  it('measures the voltage slope in mV per minute', () => {
+    expect(voltageRate(trace)).toBeCloseTo(-200, 5)
+  })
+
+  it('needs two voltage readings for a rate', () => {
+    expect(voltageRate(trace.slice(0, 1))).toBeNull()
+    expect(voltageRate([{ t: at(0), device: null, mV: null, pct: 80 }, { t: at(3), device: null, mV: null, pct: 79 }])).toBeNull()
+  })
+
+  it('names the last reading before each disconnect', () => {
+    const [d] = disconnectsWithBattery({ events, batteryTrace: trace })
+    expect(d.last?.mV).toBe(3510)
+    expect(d.agoSec).toBe(3)
+  })
+
+  it('shows the drop in the summary and the timeline in the text', () => {
+    const r = report({ batteryTrace: trace, events })
+    const lines = summaryLines(r).join('\n')
+    expect(lines).toContain('Disconnected 10:00:30: last reading 3510 mV 3 s before')
+    expect(batteryTraceSummary(trace)).toContain('min 3510 mV, max 3600 mV')
+    const txt = reportText(r)
+    expect(txt).toContain(`${at(27)} 3510 mV\n${at(30)} ** disconnected`)
   })
 })

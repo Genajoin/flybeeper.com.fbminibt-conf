@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { Router } from 'vue-router'
 import log from 'loglevel'
 import { SmpTransport, bootloaderInfo, hex, imageStateRead, osInfo } from '~/lib/smp'
@@ -24,6 +24,7 @@ import {
   markDeviceChanged,
   putCharacteristic,
   recordAction,
+  recordBattery,
   recordEvent,
   recordSample,
   setFirmware,
@@ -421,6 +422,103 @@ async function prepareSampling(bt: ReturnType<typeof useBluetoothStore>): Promis
   }
 }
 
+// --- battery trace ----------------------------------------------------------
+
+/** Characteristics whose notifications already feed the trace (per link). */
+const batteryListened = new WeakSet<BleCharacteristic>()
+
+/** battery_voltage comes in volts (CPF exponent -3); a firmware without the exponent sends mV. */
+function toMilliVolts(v: number): number {
+  return Math.round(v > 100 ? v : v * 1000)
+}
+
+/**
+ * Record every battery notification into the journal — no extra traffic,
+ * just a subscriber on what the device pushes anyway.
+ */
+function listenBattery(bt: ReturnType<typeof useBluetoothStore>): void {
+  for (const uuid of [BAT_V_UUID, BAT_PCT_UUID]) {
+    const ch = findChar(bt, uuid)
+    if (!ch || batteryListened.has(ch))
+      continue
+    batteryListened.add(ch)
+    ch.subscribe((v: unknown) => {
+      if (typeof v !== 'number' || !Number.isFinite(v))
+        return
+      recordBattery({
+        t: isoNow(),
+        device: bt.devName || null,
+        mV: uuid === BAT_V_UUID ? toMilliVolts(v) : null,
+        pct: uuid === BAT_PCT_UUID ? v : null,
+      })
+    })
+  }
+}
+
+/** Re-arm period of the fast trace. The device answers a re-arm with a fresh measurement in ~1 s. */
+export const FAST_BATTERY_PERIOD_MS = 3000
+
+/**
+ * Make the device measure the battery NOW: turning notifications off and on
+ * again (CCC write) restarts the firmware's battery timer, and the fresh
+ * value arrives as a notification ~1 s later. Without it SunVario 0.29 serves
+ * a value cached for up to 5 minutes (src/power/battery.c,
+ * FB_BATTERY_CONNECTED_UPDATE_INTERVAL_SEC) — useless for "it dies within a
+ * minute after unplugging USB". Prefers the voltage; falls back to the level
+ * on devices without battery_voltage.
+ */
+async function rearmBattery(bt: ReturnType<typeof useBluetoothStore>): Promise<void> {
+  const ch = findChar(bt, BAT_V_UUID) ?? findChar(bt, BAT_PCT_UUID)
+  if (!ch || !ch.characteristic.properties?.notify)
+    return
+  if (!ch.isInitialized)
+    await ch.initialize()
+  listenBattery(bt)
+  if (!ch.isNotified) {
+    await ch.subscribeToNotifications()
+    return
+  }
+  // Through the GATT queue: CCC writes must not overlap other requests.
+  await gattOp('battery notify off', () => ch.characteristic.stopNotifications())
+  await gattOp('battery notify on', () => ch.characteristic.startNotifications())
+}
+
+/**
+ * Fast battery trace for the page that shows it. Runs only while the page is
+ * mounted, the device is connected and no firmware update is in progress.
+ */
+export function useFastBatteryTrace() {
+  const bt = useBluetoothStore()
+  let busy = false
+  const timer = setInterval(async () => {
+    if (busy || !bt.isConnected || bt.isFetching || bt.isFlashing || otaInProgress.value)
+      return
+    busy = true
+    try {
+      await rearmBattery(bt)
+    }
+    catch (e) {
+      log.debug('battery re-arm failed', e)
+    }
+    finally {
+      busy = false
+    }
+  }, FAST_BATTERY_PERIOD_MS)
+  onBeforeUnmount(() => clearInterval(timer))
+
+  const trace = computed(() => {
+    void journalRev.value
+    const rec = currentDevice()
+    return journal.batteryTrace.filter(b => !rec || b.device === rec.key || b.device === rec.info.name)
+  })
+  const hasVoltage = computed(() => trace.value.some(b => b.mV !== null))
+  const events = computed(() => {
+    void journalRev.value
+    return journal.events.slice()
+  })
+  return { trace, hasVoltage, events }
+}
+
 async function readNumber(bt: ReturnType<typeof useBluetoothStore>, uuid: string, timing?: { ms: number | null }): Promise<number | null> {
   const ch = findChar(bt, uuid)
   if (!ch)
@@ -643,6 +741,7 @@ export function startSessionJournal(router: Router): void {
     }
     await readDisGaps(bt, rec)
     await prepareSampling(bt)
+    listenBattery(bt)
     await takeSample(bt)
   })
 
@@ -730,6 +829,7 @@ export function useDiagnostics() {
       actions: journal.actions.map(a => ({ ...a })),
       // Samples of the report's device only; a second device would skew the trend.
       samples: journal.samples.filter(s => !rec || s.device === rec.key || s.device === rec.info.name),
+      batteryTrace: journal.batteryTrace.filter(b => !rec || b.device === rec.key || b.device === rec.info.name),
       events: journal.events.slice(),
       errors: {
         connect: bt.errorMessage || null,

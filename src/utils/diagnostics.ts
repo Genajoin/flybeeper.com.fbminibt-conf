@@ -45,6 +45,21 @@ export interface DiagSlot {
   permanent: boolean
 }
 
+/**
+ * One battery reading as the device pushed it (notification). The fast trace
+ * on /diagnostics re-arms notifications every few seconds, which makes the
+ * firmware measure again — SunVario 0.29 otherwise re-measures only every
+ * 5 minutes and serves a cached value in between.
+ */
+export interface BatteryReading {
+  t: string
+  device: string | null
+  /** battery_voltage (b0c889e8…), mV. */
+  mV: number | null
+  /** Battery Level (0x2A19), %. */
+  pct: number | null
+}
+
 export interface DiagSample {
   /** ISO timestamp. */
   t: string
@@ -151,6 +166,8 @@ export interface DiagnosticsReport {
   incompleteChars: string[]
   actions: DiagAction[]
   samples: DiagSample[]
+  /** Every battery notification of the report's device, fast-sampled while /diagnostics is open. */
+  batteryTrace: BatteryReading[]
   events: DiagEvent[]
   errors: {
     connect: string | null
@@ -159,6 +176,65 @@ export interface DiagnosticsReport {
   log: { t: string, level: string, msg: string }[]
   /** Fields the page tried to read and could not, for the support engineer. */
   unavailable: string[]
+}
+
+// --- fast battery trace -----------------------------------------------------
+
+/** The text report keeps the tail; the JSON file has every reading. */
+const TRACE_TEXT_MAX = 300
+
+export function readingText(b: BatteryReading): string {
+  return [b.mV !== null ? `${b.mV} mV` : null, b.pct !== null ? `${b.pct} %` : null].filter(Boolean).join(' · ') || '—'
+}
+
+/**
+ * Voltage change in mV per minute over the last `windowSec` of readings
+ * (least squares). null with fewer than two voltage readings in the window.
+ */
+export function voltageRate(trace: BatteryReading[], windowSec = 60): number | null {
+  const pts = trace.filter(b => b.mV !== null).map(b => ({ t: Date.parse(b.t), v: b.mV as number }))
+  if (pts.length < 2)
+    return null
+  const end = pts[pts.length - 1].t
+  const w = pts.filter(p => p.t >= end - windowSec * 1000)
+  if (w.length < 2 || w[w.length - 1].t === w[0].t)
+    return null
+  const xs = w.map(p => (p.t - w[0].t) / 60_000)
+  const mx = xs.reduce((a, b) => a + b, 0) / xs.length
+  const my = w.reduce((a, p) => a + p.v, 0) / w.length
+  let num = 0
+  let den = 0
+  xs.forEach((x, i) => {
+    num += (x - mx) * (w[i].v - my)
+    den += (x - mx) ** 2
+  })
+  return den ? num / den : null
+}
+
+export function batteryTraceSummary(trace: BatteryReading[]): string | null {
+  if (!trace.length)
+    return null
+  const mv = trace.filter(b => b.mV !== null).map(b => b.mV as number)
+  const last = trace[trace.length - 1]
+  const spanMin = (Date.parse(last.t) - Date.parse(trace[0].t)) / 60_000
+  const parts = [`${trace.length} readings over ${spanMin.toFixed(1)} min`, `last ${readingText(last)}`]
+  if (mv.length)
+    parts.push(`min ${Math.min(...mv)} mV, max ${Math.max(...mv)} mV`)
+  const rate = voltageRate(trace)
+  if (rate !== null)
+    parts.push(`${rate > 0 ? '+' : ''}${rate.toFixed(0)} mV/min over the last minute`)
+  return parts.join(', ')
+}
+
+/** Every disconnect in the session with the last battery reading before it. */
+export function disconnectsWithBattery(r: Pick<DiagnosticsReport, 'events' | 'batteryTrace'>): { t: string, last: BatteryReading | null, agoSec: number }[] {
+  return r.events
+    .filter(e => e.event.startsWith('disconnected'))
+    .map((e) => {
+      const before = r.batteryTrace.filter(b => b.t <= e.t)
+      const last = before.length ? before[before.length - 1] : null
+      return { t: e.t, last, agoSec: last ? Math.round((Date.parse(e.t) - Date.parse(last.t)) / 1000) : 0 }
+    })
 }
 
 /** Characteristics support asks about first; surfaced in the summary. */
@@ -280,6 +356,11 @@ export function summaryLines(r: DiagnosticsReport): string[] {
       lines.push(`Battery: ${pct}`)
     if (volts)
       lines.push(`Battery voltage: ${volts}`)
+    const fast = batteryTraceSummary(r.batteryTrace)
+    if (fast)
+      lines.push(`Battery trace: ${fast}`)
+    for (const d of disconnectsWithBattery(r))
+      lines.push(`Disconnected ${d.t.slice(11, 19)}: ${d.last ? `last reading ${readingText(d.last)} ${d.agoSec} s before` : 'no battery reading before it'}`)
     for (const k of KEY_SETTINGS) {
       const c = charById(r, k.uuid)
       if (c)
@@ -387,6 +468,21 @@ export function reportText(r: DiagnosticsReport): string {
       body.push(`${label}: ${c.display}${seen}${c.error ? ` [error: ${c.error}]` : ''}`)
     }
     out.push(section('Characteristics', body))
+  }
+
+  if (r.batteryTrace.length) {
+    // Readings and connection events on one timeline — the point of the fast
+    // trace is what the voltage did right before the link dropped.
+    const timeline = [
+      ...r.batteryTrace.map(b => ({ t: b.t, line: `${b.t} ${readingText(b)}` })),
+      ...r.events.map(e => ({ t: e.t, line: `${e.t} ** ${e.event}` })),
+    ].sort((a, b) => a.t.localeCompare(b.t))
+      .filter(x => x.t >= r.batteryTrace[0].t)
+    const cut = timeline.length > TRACE_TEXT_MAX ? timeline.length - TRACE_TEXT_MAX : 0
+    out.push(section('Battery trace', [
+      ...(cut ? [`… ${cut} earlier lines are in the JSON file`] : []),
+      ...timeline.slice(cut).map(x => x.line),
+    ]))
   }
 
   if (r.samples.length) {
