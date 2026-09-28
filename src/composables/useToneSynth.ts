@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { recordAction } from '~/utils/sessionJournal'
 
 /**
  * Web Audio tone synthesizer composable (DECISIONS.md §★2, §★4.1).
@@ -226,6 +227,7 @@ export function useToneSynth(): UseToneSynth {
         }
         catch (e) {
           error.value = e instanceof Error ? e : new Error(String(e))
+          recordAction('audio', `browser sound could not resume: ${error.value.message}`)
         }
       }
       return
@@ -252,6 +254,7 @@ export function useToneSynth(): UseToneSynth {
       gain = null
       isReady.value = false
       error.value = e instanceof Error ? e : new Error(String(e))
+      recordAction('audio', `browser sound unavailable: ${error.value.message}`)
     }
   }
 
@@ -273,6 +276,8 @@ export function useToneSynth(): UseToneSynth {
     osc.frequency.cancelScheduledValues(now)
     osc.frequency.setValueAtTime(Math.max(params.frequencyHz, 1), now)
     restartSchedule()
+    if (!isPlaying.value)
+      recordAction('audio', 'browser tone preview playing', 'tone')
     isPlaying.value = true
   }
 

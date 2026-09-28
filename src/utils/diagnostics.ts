@@ -28,6 +28,9 @@ export interface DiagCharacteristic {
   raw: string | null
   props: string
   error?: string
+  /** When the value was last seen, and how: read here, notified, or written by the user. */
+  at?: string
+  source?: 'read' | 'notify' | 'write'
 }
 
 export interface DiagSlot {
@@ -45,6 +48,8 @@ export interface DiagSlot {
 export interface DiagSample {
   /** ISO timestamp. */
   t: string
+  /** BLE name of the device the sample came from. */
+  device: string | null
   connected: boolean
   batteryPct: number | null
   batteryV: number | null
@@ -58,6 +63,34 @@ export interface DiagSample {
 export interface DiagEvent {
   t: string
   event: string
+}
+
+/** Something the pilot did in the configurator (connect, edit, apply, simulator…). */
+export interface DiagAction {
+  t: string
+  kind: string
+  msg: string
+  /** Coalescing key — repeated actions on one control inside a short window fold into one entry. */
+  key?: string
+  /** How many actions were folded into this entry. */
+  n?: number
+}
+
+/**
+ * Append an action, folding a burst on the same control (a slider drag, a
+ * held simulator knob) into its latest value instead of flooding the log.
+ */
+export function pushAction(list: DiagAction[], a: DiagAction, coalesceMs: number, max: number): void {
+  const last = list[list.length - 1]
+  if (a.key && last?.key === a.key && Date.parse(a.t) - Date.parse(last.t) <= coalesceMs) {
+    last.msg = a.msg
+    last.t = a.t
+    last.n = (last.n ?? 1) + 1
+    return
+  }
+  list.push({ ...a })
+  if (list.length > max)
+    list.splice(0, list.length - max)
 }
 
 export interface DiagnosticsReport {
@@ -98,8 +131,13 @@ export interface DiagnosticsReport {
     osInfo: string | null
     error: string | null
   } | null
+  /** When the report's device was first and last connected in this session. */
+  deviceSeen: { first: string, last: string } | null
+  /** Other devices connected earlier in this browser session (BLE names). */
+  otherDevices: string[]
   characteristics: DiagCharacteristic[]
   incompleteChars: string[]
+  actions: DiagAction[]
   samples: DiagSample[]
   events: DiagEvent[]
   errors: {
@@ -249,6 +287,8 @@ export function summaryLines(r: DiagnosticsReport): string[] {
     lines.push(`Firmware update error: ${r.errors.firmwareUpdate}`)
   if (errCount || warnCount)
     lines.push(`Session log: ${errCount} error(s), ${warnCount} warning(s)`)
+  if (r.actions.length)
+    lines.push(`User actions logged: ${r.actions.length} (last: ${r.actions[r.actions.length - 1].msg})`)
   lines.push(`Configurator: ${r.app.build} (${r.app.buildDate})`)
   lines.push(`Browser: ${r.env.userAgent}`)
   lines.push(`Report time: ${r.generatedAt}`)
@@ -279,6 +319,8 @@ export function reportText(r: DiagnosticsReport): string {
       `Software revision: ${d.softwareRevision ?? 'not provided'}`,
       `System ID: ${d.systemId ?? 'not provided'}`,
       `PnP ID: ${d.pnpId ?? 'not provided'}`,
+      ...(r.deviceSeen ? [`Connected in this session: ${r.deviceSeen.first} … ${r.deviceSeen.last}`] : []),
+      ...(r.otherDevices.length ? [`Other devices this session: ${r.otherDevices.join(', ')}`] : []),
     ]))
   }
 
@@ -310,7 +352,8 @@ export function reportText(r: DiagnosticsReport): string {
         lastService = c.service
       }
       const label = c.name === c.uuid ? c.uuid : `${c.name} (${c.uuid})`
-      body.push(`${label}: ${c.display}${c.error ? ` [error: ${c.error}]` : ''}`)
+      const seen = c.at ? ` (${c.source ?? 'seen'} ${c.at.slice(11, 19)})` : ''
+      body.push(`${label}: ${c.display}${seen}${c.error ? ` [error: ${c.error}]` : ''}`)
     }
     out.push(section('Characteristics', body))
   }
@@ -327,6 +370,10 @@ export function reportText(r: DiagnosticsReport): string {
       s.readLatencyMs !== null ? `rtt ${s.readLatencyMs} ms` : '',
     ].filter(Boolean).join(' · '))))
   }
+
+  out.push(section('User actions', r.actions.length
+    ? r.actions.map(a => `${a.t} [${a.kind}] ${a.msg}${a.n && a.n > 1 ? ` (×${a.n})` : ''}`)
+    : ['none']))
 
   if (r.events.length)
     out.push(section('Connection events', r.events.map(e => `${e.t} ${e.event}`)))

@@ -1,29 +1,47 @@
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, ref, watch } from 'vue'
+import type { Router } from 'vue-router'
 import log from 'loglevel'
 import { SmpTransport, bootloaderInfo, hex, imageStateRead, osInfo } from '~/lib/smp'
-import { ensureLocaleMessages } from '~/modules/i18n'
+import { ensureLocaleMessages, i18n } from '~/modules/i18n'
 import { useFirmwareFlash } from '~/composables/useFirmwareFlash'
+import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+import { useSettingsStore } from '~/stores/settings'
+import { useSharedPresetStore } from '~/stores/shared-preset'
 import type { BleCharacteristicImpl as BleCharacteristic } from '~/utils/BleCharacteristic'
 import { normalizeUuid } from '~/utils/BleCharacteristic'
 import { gattOp } from '~/utils/gattQueue'
 import { CURVE_COLUMNS } from '~/utils/curve-units'
 import { getSessionLog } from '~/utils/sessionLog'
-import type {
-  DiagCharacteristic,
-  DiagEvent,
-  DiagSample,
-  DiagnosticsReport,
-} from '~/utils/diagnostics'
+import type { DiagCharacteristic, DiagnosticsReport } from '~/utils/diagnostics'
 import { DIAGNOSTICS_SCHEMA } from '~/utils/diagnostics'
+import type { DeviceInfo, DeviceRecord } from '~/utils/sessionJournal'
+import {
+  beginDevice,
+  currentDevice,
+  isoNow,
+  journal,
+  journalRev,
+  markDeviceChanged,
+  putCharacteristic,
+  recordAction,
+  recordEvent,
+  recordSample,
+  setFirmware,
+} from '~/utils/sessionJournal'
 
 /**
- * Collects everything support needs from the connected device (and the
- * browser) into a DiagnosticsReport for /diagnostics.
+ * Diagnostics collection, in two parts.
  *
- * Component-scoped on purpose: sampling runs only while the page is open, and
- * the samples are "what happened while the pilot had the page open" — which is
- * exactly what the report claims.
+ * `startSessionJournal()` runs from app start (modules/session-journal.ts):
+ * it logs what the pilot does, keeps the last known state of every
+ * characteristic the app has seen, and samples battery / pressure while a
+ * device is connected — all into the in-memory journal. That is what lets the
+ * pilot reproduce a problem anywhere in the configurator and only then open
+ * /diagnostics.
+ *
+ * `useDiagnostics()` is the page side: it builds the report from the journal
+ * and reads from the device ONLY what the journal does not have yet on the
+ * current link. Nothing collected earlier is thrown away.
  */
 
 const DIS_SERVICE = '0000180a-0000-1000-8000-00805f9b34fb'
@@ -37,7 +55,7 @@ const DIS = {
   manufacturer: '00002a29-0000-1000-8000-00805f9b34fb',
   pnpId: '00002a50-0000-1000-8000-00805f9b34fb',
 } as const
-type DisField = keyof typeof DIS
+type DisField = Exclude<keyof DeviceInfo, 'name'>
 const BINARY_DIS: DisField[] = ['systemId', 'pnpId']
 
 const BAT_PCT_UUID = '00002a19-0000-1000-8000-00805f9b34fb'
@@ -48,6 +66,8 @@ const VARIO_UUIDS = [
   'b4df8385-16d2-4037-b2ed-2e14e1f4fa27', // vario by pressure
   '830ff7a0-367a-40e7-9038-4f00bda31f84', // vario by altitude
 ]
+/** Sampled on every tick: initialised (and battery notifications started) once per link. */
+const SAMPLED_UUIDS = [BAT_V_UUID, BAT_PCT_UUID, PRESSURE_UUID, TEMP_UUID]
 
 const SERVICE_NAMES: Record<string, string> = {
   '00001800-0000-1000-8000-00805f9b34fb': 'Generic Access',
@@ -70,11 +90,8 @@ const STANDARD_NAMES: Record<string, string> = {
 
 /** Sampling period. Slow enough to add no noticeable GATT load. */
 export const SAMPLE_PERIOD_MS = 15_000
-const MAX_SAMPLES = 480 // two hours at 15 s
 
-function isoNow(): string {
-  return new Date().toISOString()
-}
+// --- formatting helpers ------------------------------------------------------
 
 function dvHex(v: unknown): string | null {
   if (!(v instanceof DataView))
@@ -140,260 +157,472 @@ function jsonSafe(value: unknown): unknown {
   }
 }
 
+/** English label for support, whatever language the UI is in. */
+function englishLabel(uuid: string): string | null {
+  const { t, te } = i18n.global
+  for (const key of [`sett.${uuid}`, `param.${uuid}`]) {
+    if (te(key, 'en'))
+      return t(key, {}, { locale: 'en' })
+  }
+  return STANDARD_NAMES[uuid] ?? null
+}
+
+function labelFor(uuid: string): string {
+  return englishLabel(uuid) ?? uuid
+}
+
+// --- characteristic snapshots (no I/O) ---------------------------------------
+
+function hasValue(ch: BleCharacteristic): boolean {
+  return ch.value instanceof DataView || (ch.formattedValue !== null && ch.formattedValue !== undefined)
+}
+
+function describeChar(ch: BleCharacteristic, seen?: { at: string, source: 'read' | 'notify' | 'write' }): DiagCharacteristic {
+  const c = ch.characteristic
+  const uuid = c.uuid
+  const service = normalizeUuid(c.service.uuid)
+  const p = c.properties
+  const props = [
+    p?.read && 'read',
+    p?.write && 'write',
+    p?.writeWithoutResponse && 'writeNoRsp',
+    p?.notify && 'notify',
+    p?.indicate && 'indicate',
+  ].filter(Boolean).join(',')
+  const { display, unit } = displayValue(uuid, ch.formattedValue, cleanUnit(ch.presentationFormatDescriptor?.unit))
+  const cud = ch.userFormatDescriptor
+  const label = englishLabel(uuid)
+  const error = ch.initError ? errText(ch.initError) : undefined
+  return {
+    service: `${SERVICE_NAMES[service] ?? 'Service'} (${service})`,
+    uuid,
+    name: label && cud && cud !== label ? `${label} [${cud}]` : (label ?? cud ?? uuid),
+    value: jsonSafe(ch.formattedValue),
+    display: hasValue(ch) ? display : (p?.read ? 'not read yet' : 'notify only, no value yet'),
+    unit,
+    raw: dvHex(ch.value),
+    props,
+    ...(error ? { error } : {}),
+    ...(seen && hasValue(ch) ? seen : {}),
+  }
+}
+
+function charsOf(bt: ReturnType<typeof useBluetoothStore>): BleCharacteristic[] {
+  return (bt.bleCharacteristics as BleCharacteristic[])
+    .filter(c => normalizeUuid(c.characteristic.service.uuid) !== DIS_SERVICE)
+}
+
+/**
+ * Copy what the app currently holds into the journal — memory only, no GATT
+ * traffic. A value keeps its timestamp while it stays the same, so `at` means
+ * "first seen with this value", and a characteristic that lost its value
+ * keeps the last one the journal saw.
+ */
+function harvest(bt: ReturnType<typeof useBluetoothStore>, rec: DeviceRecord): void {
+  for (const ch of charsOf(bt)) {
+    const prev = rec.characteristics.get(ch.characteristic.uuid)
+    if (!hasValue(ch)) {
+      if (!prev)
+        putCharacteristic(rec, describeChar(ch))
+      continue
+    }
+    const raw = dvHex(ch.value)
+    const same = prev?.at && prev.raw === raw && JSON.stringify(prev.value) === JSON.stringify(jsonSafe(ch.formattedValue))
+    if (same)
+      continue
+    putCharacteristic(rec, describeChar(ch, { at: isoNow(), source: ch.isNotified ? 'notify' : 'read' }))
+  }
+  rec.incompleteChars = [...bt.incompleteChars]
+  markDeviceChanged()
+}
+
+// --- device reads -----------------------------------------------------------
+
+function deviceInfoFromStore(bt: ReturnType<typeof useBluetoothStore>): DeviceInfo {
+  return {
+    name: bt.devName || null,
+    model: (bt.dis.modelNumberString.value as string | null) ?? null,
+    manufacturer: (bt.dis.manufacturerNameString.value as string | null) ?? null,
+    serial: null,
+    hardwareRevision: null,
+    firmwareRevision: (bt.dis.firmwareRevisionString.value as string | null) ?? null,
+    softwareRevision: null,
+    systemId: null,
+    pnpId: null,
+  }
+}
+
+/** Read the Device Information fields the journal is still missing for this device. */
+async function readDisGaps(bt: ReturnType<typeof useBluetoothStore>, rec: DeviceRecord): Promise<void> {
+  for (const [field, uuid] of Object.entries(DIS) as [DisField, string][]) {
+    if (rec.info[field] !== null)
+      continue
+    const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
+    if (!ch || !bt.isConnected)
+      continue
+    try {
+      const dv = await gattOp(`read DIS ${field}`, () => ch.characteristic.readValue())
+      const bytes = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)
+      rec.info[field] = BINARY_DIS.includes(field)
+        ? hex(bytes)
+        : new TextDecoder().decode(bytes).replace(/\0+$/, '').trim() || null
+    }
+    catch (e) {
+      log.warn(`diagnostics: DIS ${field} read failed`, e)
+    }
+  }
+  markDeviceChanged()
+}
+
+function disGaps(bt: ReturnType<typeof useBluetoothStore>, rec: DeviceRecord): string[] {
+  const out: string[] = []
+  for (const [field, uuid] of Object.entries(DIS) as [DisField, string][]) {
+    if (rec.info[field] !== null)
+      continue
+    const exposed = bt.bleCharacteristics.some(c => c.characteristic.uuid === uuid)
+    out.push(`Device information: ${field} (${exposed || !bt.isConnected ? 'could not be read' : 'not exposed by this firmware'})`)
+  }
+  return out
+}
+
+/**
+ * Read what this link has not produced yet: characteristics never read or
+ * notified since the current connection began. `force` re-reads everything
+ * readable (the page's "Read again").
+ */
+async function readCharGaps(
+  bt: ReturnType<typeof useBluetoothStore>,
+  rec: DeviceRecord,
+  force: boolean,
+  onProgress: () => void,
+): Promise<void> {
+  for (const ch of charsOf(bt)) {
+    if (!bt.isConnected)
+      break
+    const prev = rec.characteristics.get(ch.characteristic.uuid)
+    const fresh = prev?.at && prev.at >= rec.linkStart
+    const readable = !!ch.characteristic.properties?.read
+    if ((fresh && !force) || (!readable && ch.isInitialized)) {
+      onProgress()
+      continue
+    }
+    try {
+      // Non-settings characteristics are not initialised at connect (no CPF
+      // yet): initialise once, which also reads the value.
+      if (!ch.isInitialized)
+        await ch.initialize()
+      else
+        await ch.getFormattedValue()
+    }
+    catch (e) {
+      log.warn('diagnostics: read failed', ch.characteristic.uuid, e)
+    }
+    putCharacteristic(rec, describeChar(ch, { at: isoNow(), source: 'read' }))
+    onProgress()
+  }
+  rec.incompleteChars = [...bt.incompleteChars]
+}
+
+async function readFirmware(bt: ReturnType<typeof useBluetoothStore>, rec: DeviceRecord): Promise<void> {
+  if (bt.isFlashing)
+    return
+  let transport: SmpTransport | null = null
+  try {
+    transport = new SmpTransport(await bt.getSmpCharacteristic(), { timeoutMs: 8000 })
+    await transport.start()
+    const slots = await imageStateRead(transport)
+    const boot = await bootloaderInfo(transport)
+    const os = await osInfo(transport)
+    setFirmware(rec, {
+      slots: slots.map(s => ({
+        image: s.image,
+        slot: s.slot,
+        version: s.version,
+        hash: hex(s.hash),
+        active: s.active,
+        confirmed: s.confirmed,
+        pending: s.pending,
+        bootable: s.bootable,
+        permanent: s.permanent,
+      })),
+      bootloader: boot,
+      osInfo: os,
+      error: null,
+    })
+  }
+  catch (e) {
+    log.warn('diagnostics: SMP image list failed', e)
+    // Keep slots from an earlier successful read; only note the failure.
+    if (rec.firmware)
+      rec.firmware.error = errText(e)
+    else
+      setFirmware(rec, { slots: [], bootloader: null, osInfo: null, error: errText(e) })
+  }
+  finally {
+    await transport?.stop()
+  }
+}
+
+// --- sampling ----------------------------------------------------------------
+
+function findChar(bt: ReturnType<typeof useBluetoothStore>, uuid: string): BleCharacteristic | undefined {
+  return bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid) as BleCharacteristic | undefined
+}
+
+/**
+ * Initialise the sampled characteristics and start battery notifications —
+ * the same thing DeviceInfoStrip does. Vario notifications are NOT started
+ * here: they stream several times a second, so the journal only records vario
+ * while a view that shows it has them running.
+ */
+async function prepareSampling(bt: ReturnType<typeof useBluetoothStore>): Promise<void> {
+  for (const uuid of SAMPLED_UUIDS) {
+    const ch = findChar(bt, uuid)
+    if (!ch || !bt.isConnected)
+      continue
+    try {
+      if (!ch.isInitialized)
+        await ch.initialize()
+      const isBattery = uuid === BAT_V_UUID || uuid === BAT_PCT_UUID
+      if (isBattery && !ch.isNotified && !ch.isBlockNotify && ch.characteristic.properties?.notify)
+        await ch.subscribeToNotifications()
+    }
+    catch { /* best effort — samples show null for it */ }
+  }
+}
+
+async function readNumber(bt: ReturnType<typeof useBluetoothStore>, uuid: string, timing?: { ms: number | null }): Promise<number | null> {
+  const ch = findChar(bt, uuid)
+  if (!ch)
+    return null
+  if (ch.characteristic.properties?.read && ch.isInitialized) {
+    const started = performance.now()
+    try {
+      await ch.getFormattedValue()
+      if (timing && timing.ms === null)
+        timing.ms = Math.round(performance.now() - started)
+    }
+    catch { /* keep the last notified value */ }
+  }
+  return typeof ch.formattedValue === 'number' ? Number(ch.formattedValue.toFixed(4)) : null
+}
+
+let sampling = false
+async function takeSample(bt: ReturnType<typeof useBluetoothStore>): Promise<void> {
+  // Never compete with a firmware upload or the connect-time fetch for the radio.
+  if (sampling || !bt.isConnected || bt.isFlashing || bt.isFetching)
+    return
+  sampling = true
+  try {
+    const timing = { ms: null as number | null }
+    const batteryV = await readNumber(bt, BAT_V_UUID, timing)
+    const batteryPct = await readNumber(bt, BAT_PCT_UUID, timing)
+    const pressurePa = await readNumber(bt, PRESSURE_UUID, timing)
+    const temperatureC = await readNumber(bt, TEMP_UUID)
+    let varioMs: number | null = null
+    for (const u of VARIO_UUIDS) {
+      const v = findChar(bt, u)?.formattedValue
+      if (typeof v === 'number') {
+        varioMs = Number(v.toFixed(2))
+        break
+      }
+    }
+    recordSample({
+      t: isoNow(),
+      device: bt.devName || null,
+      connected: bt.isConnected,
+      batteryPct,
+      batteryV,
+      pressurePa,
+      varioMs,
+      temperatureC,
+      readLatencyMs: timing.ms,
+    })
+    const rec = currentDevice()
+    if (rec && bt.isConnected)
+      harvest(bt, rec)
+  }
+  finally {
+    sampling = false
+  }
+}
+
+// --- the app-wide journal ----------------------------------------------------
+
+function patchSummary(patch: Record<string, unknown>): { key: string, text: string }[] {
+  return Object.entries(patch).map(([uuid, v]) => ({
+    key: uuid,
+    text: `${labelFor(uuid)} → ${displayValue(uuid, v, '').display}`,
+  }))
+}
+
+let started = false
+
+/**
+ * Start collecting for this browser session. Client only; idempotent.
+ */
+export function startSessionJournal(router: Router): void {
+  if (started || typeof window === 'undefined')
+    return
+  started = true
+  void ensureLocaleMessages('en')
+
+  const bt = useBluetoothStore()
+  const settings = useSettingsStore()
+  const shared = useSharedPresetStore()
+
+  bt.$onAction(({ name, args, after, onError }) => {
+    switch (name) {
+      case 'connectToRequestDevice':
+        recordAction('connect', 'open the device chooser')
+        break
+      case 'connectToSavedDevice':
+        recordAction('connect', 'reconnect to a saved device')
+        break
+      case 'repickDevice':
+        recordAction('connect', 'pick the device again (stale GATT cache)')
+        break
+      case 'disconnectDevice':
+        recordAction('connect', 'disconnect')
+        break
+      case 'cancelConnect':
+        recordAction('connect', 'cancel connecting')
+        break
+      case 'connectToDevice':
+        recordEvent(`connecting to ${(args[0] as BluetoothDevice | undefined)?.name ?? 'device'}`)
+        break
+      case 'onDisconnected': {
+        // Runs BEFORE the store wipes its characteristics — last chance to
+        // keep what the link had.
+        const rec = currentDevice()
+        if (rec)
+          harvest(bt, rec)
+        recordEvent(bt.isFlashing ? 'disconnected (firmware update reboot)' : 'disconnected')
+        break
+      }
+      case 'writeCharacteristic': {
+        const [uuid, value] = args as [string, unknown]
+        const unit = cleanUnit(findChar(bt, uuid)?.presentationFormatDescriptor?.unit)
+        const what = `${labelFor(uuid)} = ${displayValue(uuid, value, unit).display}`
+        after(() => {
+          recordAction('write', `${what} — written to the device`, `w:${uuid}`)
+          const ch = findChar(bt, uuid)
+          const rec = currentDevice()
+          if (ch && rec)
+            putCharacteristic(rec, describeChar(ch, { at: isoNow(), source: 'write' }))
+        })
+        onError(e => recordAction('write', `${what} — FAILED: ${errText(e)}`))
+        break
+      }
+      case 'SendSimulationVarioValue':
+        recordAction('simulator', `device simulator vario ${(Number(args[0]) / 100).toFixed(2)} m/s`, 'sim')
+        break
+    }
+  })
+
+  // Settings panels edit `settings.local` directly (useCpfGroup), not through
+  // an action, so edits are caught by diffing against a baseline. Store
+  // actions — slot switches on connect, the device snapshot, presets — move
+  // the baseline instead of counting as the pilot's edits; the ones that are
+  // the pilot's own are logged by name below.
+  let baseline: Record<string, string> = {}
+  let inSettingsAction = 0
+  const flatten = (local: Record<string, unknown> | null | undefined) =>
+    Object.fromEntries(Object.entries(local ?? {}).map(([k, v]) => [k, JSON.stringify(v)]))
+  baseline = flatten(settings.local)
+  watch(() => settings.local, (local, prev) => {
+    const next = flatten(local)
+    // Panels mutate the object in place; a new object means the store swapped
+    // the whole bag (hydrate, slot switch) — even from inside an async action
+    // whose start predates this subscription.
+    if (!inSettingsAction && local === prev) {
+      for (const [k, v] of Object.entries(next)) {
+        if (baseline[k] !== v)
+          recordAction('edit', `${patchSummary({ [k]: local?.[k] })[0].text} (not applied yet)`, `e:${k}`)
+      }
+    }
+    baseline = next
+  }, { deep: true, flush: 'sync' })
+
+  settings.$onAction(({ name, args, after, onError }) => {
+    inSettingsAction++
+    const done = () => {
+      inSettingsAction--
+      baseline = flatten(settings.local)
+    }
+    after(done)
+    onError(done)
+    switch (name) {
+      case 'updateLocal':
+        for (const p of patchSummary(args[0] as Record<string, unknown>))
+          recordAction('edit', `${p.text} (not applied yet)`, `e:${p.key}`)
+        break
+      case 'mergeLocal':
+        recordAction('settings', `preset merged into local settings (${Object.keys(args[0] as object).length} values)`)
+        break
+      case 'replaceLocal':
+        // The first-visit demo seed goes through here too — say so, it is not the pilot.
+        recordAction('settings', JSON.stringify(args[0]) === JSON.stringify(DEMO_SETTINGS)
+          ? 'demo settings loaded (first visit in this browser)'
+          : `local settings replaced (${Object.keys(args[0] as object).length} values)`)
+        break
+      case 'revertTo':
+        recordAction('settings', 'restored settings from history')
+        break
+      case 'revertGroup':
+        recordAction('settings', `reverted ${(args[0] as string[]).length} setting(s) to the device values`)
+        break
+    }
+  })
+
+  shared.$onAction(({ name, args }) => {
+    if (name === 'stage')
+      recordAction('preset', `opened a preset link (${Object.keys((args[0] as { settings?: object }).settings ?? {}).length} settings)`)
+    else if (name === 'clear')
+      recordAction('preset', 'preset link dismissed')
+  })
+
+  router.afterEach((to, from) => {
+    if (to.path !== from.path)
+      recordAction('navigate', `open ${to.path}`)
+  })
+
+  // A connection is "ready" once the settings fetch is over.
+  watch(() => bt.isConnected && !bt.isFetching, async (ready) => {
+    if (!ready)
+      return
+    const key = bt.devName || String(bt.dis.modelNumberString.value ?? 'device')
+    const rec = beginDevice(key, deviceInfoFromStore(bt))
+    recordEvent(`connected ${key}${bt.dis.firmwareRevisionString.value ? ` (FW ${bt.dis.firmwareRevisionString.value})` : ''}`)
+    if (bt.incompleteChars.length)
+      recordEvent(`${bt.incompleteChars.length} setting(s) came back without a value`)
+    harvest(bt, rec)
+    await readDisGaps(bt, rec)
+    await prepareSampling(bt)
+    await takeSample(bt)
+  })
+
+  watch(() => bt.errorMessage, (msg) => {
+    if (msg)
+      recordEvent(`connect error: ${msg}`)
+  })
+  watch(() => bt.staleGattCache, (stale) => {
+    if (stale)
+      recordEvent('settings service missing after reconnect — stale GATT cache')
+  })
+
+  setInterval(() => void takeSample(bt), SAMPLE_PERIOD_MS)
+}
+
+// --- the page side -----------------------------------------------------------
+
 export function useDiagnostics() {
   const bt = useBluetoothStore()
   const flash = useFirmwareFlash()
-  const { t, te, locale } = useI18n()
+  const { locale } = useI18n()
 
-  const report = shallowRef<DiagnosticsReport | null>(null)
   const collecting = ref(false)
   const progress = ref({ done: 0, total: 0 })
-  const samples = ref<DiagSample[]>([])
-  const events = ref<DiagEvent[]>([])
-
-  // --- names --------------------------------------------------------------
-
-  function englishLabel(uuid: string): string | null {
-    for (const key of [`sett.${uuid}`, `param.${uuid}`]) {
-      if (te(key, 'en'))
-        return t(key, {}, { locale: 'en' })
-    }
-    return STANDARD_NAMES[uuid] ?? null
-  }
-
-  // --- device information -------------------------------------------------
-
-  async function readDis(): Promise<{ values: Record<DisField, string | null>, missing: string[] }> {
-    const values = Object.fromEntries(Object.keys(DIS).map(k => [k, null])) as Record<DisField, string | null>
-    const missing: string[] = []
-    for (const [field, uuid] of Object.entries(DIS) as [DisField, string][]) {
-      const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
-      if (!ch) {
-        missing.push(`Device information: ${field} (not exposed by this firmware)`)
-        continue
-      }
-      try {
-        const dv = await gattOp(`read DIS ${field}`, () => ch.characteristic.readValue())
-        const bytes = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)
-        values[field] = BINARY_DIS.includes(field)
-          ? hex(bytes)
-          : new TextDecoder().decode(bytes).replace(/\0+$/, '').trim() || null
-      }
-      catch (e) {
-        missing.push(`Device information: ${field} (read failed: ${errText(e)})`)
-      }
-    }
-    // Fall back to what the store read at connect time.
-    values.model ??= (bt.dis.modelNumberString.value as string | null) ?? null
-    values.firmwareRevision ??= (bt.dis.firmwareRevisionString.value as string | null) ?? null
-    values.manufacturer ??= (bt.dis.manufacturerNameString.value as string | null) ?? null
-    return { values, missing }
-  }
-
-  // --- characteristics ----------------------------------------------------
-
-  async function snapshotChar(ch: BleCharacteristic): Promise<DiagCharacteristic> {
-    const c = ch.characteristic
-    const uuid = c.uuid
-    const service = normalizeUuid(c.service.uuid)
-    const p = c.properties
-    const props = [
-      p?.read && 'read',
-      p?.write && 'write',
-      p?.writeWithoutResponse && 'writeNoRsp',
-      p?.notify && 'notify',
-      p?.indicate && 'indicate',
-    ].filter(Boolean).join(',')
-
-    let error: string | undefined
-    try {
-      // Non-settings characteristics are not initialised at connect (no CPF
-      // yet) — do it here; everything readable is re-read so the report shows
-      // the device, not what the page cached minutes ago.
-      if (!ch.isInitialized)
-        await ch.initialize()
-      else if (p?.read)
-        await ch.getFormattedValue()
-      const initError = ch.initError
-      if (initError)
-        error = errText(initError)
-    }
-    catch (e) {
-      error = errText(e)
-    }
-
-    const cpf = ch.presentationFormatDescriptor
-    const { display, unit } = displayValue(uuid, ch.formattedValue, cleanUnit(cpf?.unit))
-    const cud = ch.userFormatDescriptor
-    const label = englishLabel(uuid)
-    return {
-      service: `${SERVICE_NAMES[service] ?? 'Service'} (${service})`,
-      uuid,
-      name: label && cud && cud !== label ? `${label} [${cud}]` : (label ?? cud ?? uuid),
-      value: jsonSafe(ch.formattedValue),
-      display: p?.read || ch.formattedValue !== null ? display : 'not readable (notify only, no value yet)',
-      unit,
-      raw: dvHex(ch.value),
-      props,
-      ...(error ? { error } : {}),
-    }
-  }
-
-  // --- firmware slots over SMP -------------------------------------------
-
-  async function readFirmware(): Promise<DiagnosticsReport['firmware']> {
-    if (bt.isFlashing)
-      return { slots: [], bootloader: null, osInfo: null, error: 'skipped: a firmware update is running' }
-    let transport: SmpTransport | null = null
-    try {
-      transport = new SmpTransport(await bt.getSmpCharacteristic(), { timeoutMs: 8000 })
-      await transport.start()
-      const slots = await imageStateRead(transport)
-      const boot = await bootloaderInfo(transport)
-      const os = await osInfo(transport)
-      return {
-        slots: slots.map(s => ({
-          image: s.image,
-          slot: s.slot,
-          version: s.version,
-          hash: hex(s.hash),
-          active: s.active,
-          confirmed: s.confirmed,
-          pending: s.pending,
-          bootable: s.bootable,
-          permanent: s.permanent,
-        })),
-        bootloader: boot,
-        osInfo: os,
-        error: null,
-      }
-    }
-    catch (e) {
-      log.warn('diagnostics: SMP image list failed', e)
-      return { slots: [], bootloader: null, osInfo: null, error: errText(e) }
-    }
-    finally {
-      await transport?.stop()
-    }
-  }
-
-  // --- sampling -----------------------------------------------------------
-
-  const findChar = (uuid: string) =>
-    bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid) as BleCharacteristic | undefined
-
-  /**
-   * Notify-only values (vario) only arrive while notifications are on; start
-   * them the same way DeviceInfoStrip does. Left running on unmount — other
-   * views subscribe to the same characteristics and stopping them would cut
-   * those off.
-   */
-  async function ensureLive(uuid: string): Promise<void> {
-    const ch = findChar(uuid)
-    if (!ch)
-      return
-    try {
-      if (!ch.isInitialized)
-        await ch.initialize()
-      if (!ch.isNotified && !ch.isBlockNotify && ch.characteristic.properties?.notify)
-        await ch.subscribeToNotifications()
-    }
-    catch { /* best effort — the sample shows null for it */ }
-  }
-
-  async function readNumber(uuid: string, timing?: { ms: number | null }): Promise<number | null> {
-    const ch = findChar(uuid)
-    if (!ch)
-      return null
-    if (ch.characteristic.properties?.read && ch.isInitialized) {
-      const started = performance.now()
-      try {
-        await ch.getFormattedValue()
-        if (timing && timing.ms === null)
-          timing.ms = Math.round(performance.now() - started)
-      }
-      catch { /* keep the last notified value */ }
-    }
-    return typeof ch.formattedValue === 'number' ? Number(ch.formattedValue.toFixed(4)) : null
-  }
-
-  let sampling = false
-  async function takeSample(): Promise<void> {
-    if (sampling)
-      return
-    sampling = true
-    try {
-      if (!bt.isConnected) {
-        samples.value.push({
-          t: isoNow(),
-          connected: false,
-          batteryPct: null,
-          batteryV: null,
-          pressurePa: null,
-          varioMs: null,
-          temperatureC: null,
-          readLatencyMs: null,
-        })
-      }
-      else {
-        const timing = { ms: null as number | null }
-        const batteryV = await readNumber(BAT_V_UUID, timing)
-        const batteryPct = await readNumber(BAT_PCT_UUID, timing)
-        const pressurePa = await readNumber(PRESSURE_UUID, timing)
-        const temperatureC = await readNumber(TEMP_UUID)
-        let varioMs: number | null = null
-        for (const u of VARIO_UUIDS) {
-          const v = findChar(u)?.formattedValue
-          if (typeof v === 'number') {
-            varioMs = Number(v.toFixed(2))
-            break
-          }
-        }
-        samples.value.push({
-          t: isoNow(),
-          connected: bt.isConnected,
-          batteryPct,
-          batteryV,
-          pressurePa,
-          varioMs,
-          temperatureC,
-          readLatencyMs: timing.ms,
-        })
-      }
-      if (samples.value.length > MAX_SAMPLES)
-        samples.value.splice(0, samples.value.length - MAX_SAMPLES)
-    }
-    finally {
-      sampling = false
-    }
-  }
-
-  let timer: ReturnType<typeof setInterval> | undefined
-
-  async function startSampling(): Promise<void> {
-    for (const u of [BAT_V_UUID, BAT_PCT_UUID, PRESSURE_UUID, TEMP_UUID, ...VARIO_UUIDS])
-      await ensureLive(u)
-    await takeSample()
-  }
-
-  watch(() => bt.isConnected, (on, was) => {
-    if (on !== was && was !== undefined)
-      events.value.push({ t: isoNow(), event: on ? `connected ${bt.devName}` : 'disconnected' })
-    if (on)
-      void startSampling()
-  }, { immediate: true })
-
-  if (typeof window !== 'undefined') {
-    timer = setInterval(() => {
-      // Nothing to learn from an idle page without a device.
-      if (bt.isConnected || bt.hasConnectedThisSession)
-        void takeSample()
-    }, SAMPLE_PERIOD_MS)
-  }
-
-  onBeforeUnmount(() => clearInterval(timer))
-
-  // --- the report ---------------------------------------------------------
 
   function envBlock(): Pick<DiagnosticsReport, 'app' | 'env'> {
     const nav = typeof navigator !== 'undefined' ? navigator : undefined
@@ -417,116 +646,106 @@ export function useDiagnostics() {
     }
   }
 
-  function baseReport(): DiagnosticsReport {
+  /** Build the report from the journal. Pure read — no device traffic. */
+  function build(problem: string): DiagnosticsReport {
+    const rec = currentDevice()
+    const unavailable: string[] = []
+    if (!rec) {
+      unavailable.push(bt.isConnected ? 'Device: still connecting' : 'Device: not connected in this session')
+    }
+    else {
+      if (!bt.isConnected)
+        unavailable.push(`Device: not connected now — showing the last state seen (${rec.lastConnected})`)
+      unavailable.push(...disGaps(bt, rec))
+      if (!rec.firmware)
+        unavailable.push('Firmware slots: not read yet (connect the device and open this page)')
+      else if (rec.firmware.error)
+        unavailable.push(`Firmware slots: ${rec.firmware.error}`)
+      if (rec.firmware && !rec.firmware.error && !rec.firmware.bootloader)
+        unavailable.push('Bootloader: not reported by the device (MCUmgr bootloader info not enabled)')
+      const has = (u: string) => rec.characteristics.has(u)
+      if (!has(BAT_PCT_UUID) && !has(BAT_V_UUID))
+        unavailable.push('Battery: the device exposes neither level nor voltage')
+      if (!VARIO_UUIDS.some(has) && !has(PRESSURE_UUID))
+        unavailable.push('Vario / pressure: not exposed by this device')
+      unavailable.push('Link quality (RSSI): not available to web pages on a live connection — GATT read round-trip is sampled instead')
+    }
     return {
       schema: DIAGNOSTICS_SCHEMA,
       generatedAt: isoNow(),
       ...envBlock(),
-      problem: '',
-      device: null,
-      firmware: null,
-      characteristics: [],
-      incompleteChars: [],
-      samples: samples.value.slice(),
-      events: events.value.slice(),
+      problem,
+      device: rec ? { ...rec.info } : null,
+      deviceSeen: rec ? { first: rec.firstConnected, last: rec.lastConnected } : null,
+      otherDevices: [...journal.devices.keys()].filter(k => k !== rec?.key),
+      firmware: rec?.firmware
+        ? { slots: rec.firmware.slots, bootloader: rec.firmware.bootloader, osInfo: rec.firmware.osInfo, error: rec.firmware.error }
+        : null,
+      characteristics: rec ? rec.order.map(u => rec.characteristics.get(u)!).filter(Boolean) : [],
+      incompleteChars: rec ? [...rec.incompleteChars] : [],
+      actions: journal.actions.map(a => ({ ...a })),
+      // Samples of the report's device only; a second device would skew the trend.
+      samples: journal.samples.filter(s => !rec || s.device === rec.key || s.device === rec.info.name),
+      events: journal.events.slice(),
       errors: {
         connect: bt.errorMessage || null,
         firmwareUpdate: flash.error.value,
       },
       log: getSessionLog(),
-      unavailable: [],
+      unavailable,
     }
   }
 
-  /** Browser-only part — works with no device at all. */
-  function collectOffline(): void {
-    const r = baseReport()
-    if (!bt.isConnected)
-      r.unavailable.push('Device: not connected')
-    report.value = r
-  }
-
-  async function collect(): Promise<void> {
-    if (collecting.value)
+  /**
+   * Fill the gaps for the connected device: DIS fields not read yet,
+   * characteristics without a value on this link, firmware slots if not read
+   * on this link. Everything the journal already has stays as it is.
+   */
+  async function collect(force = false): Promise<void> {
+    if (collecting.value || !bt.isConnected || bt.isFetching)
       return
-    if (!bt.isConnected) {
-      collectOffline()
+    const rec = currentDevice()
+    if (!rec)
       return
-    }
     collecting.value = true
     try {
       await ensureLocaleMessages('en')
-      const r = baseReport()
-      const others = bt.bleCharacteristics.filter(c =>
-        normalizeUuid(c.characteristic.service.uuid) !== DIS_SERVICE) as BleCharacteristic[]
-      progress.value = { done: 0, total: others.length + 2 }
-
-      const dis = await readDis()
+      const chars = charsOf(bt)
+      progress.value = { done: 0, total: chars.length + 2 }
+      await readDisGaps(bt, rec)
       progress.value.done++
-      r.unavailable.push(...dis.missing)
-      r.device = { name: bt.devName || null, ...dis.values }
-
-      for (const ch of others) {
-        if (!bt.isConnected)
-          break
-        r.characteristics.push(await snapshotChar(ch))
-        progress.value.done++
-      }
-      r.incompleteChars = [...bt.incompleteChars]
-
-      r.firmware = bt.isConnected ? await readFirmware() : null
+      await readCharGaps(bt, rec, force, () => progress.value.done++)
+      if (force || !rec.firmware || rec.firmware.at < rec.linkStart || rec.firmware.error)
+        await readFirmware(bt, rec)
       progress.value.done++
-      if (r.firmware?.error)
-        r.unavailable.push(`Firmware slots: ${r.firmware.error}`)
-      if (r.firmware && !r.firmware.bootloader)
-        r.unavailable.push('Bootloader: not reported by the device (MCUmgr bootloader info not enabled)')
-
-      const has = (u: string) => r.characteristics.some(c => c.uuid === u)
-      if (!has(BAT_PCT_UUID) && !has(BAT_V_UUID))
-        r.unavailable.push('Battery: the device exposes neither level nor voltage')
-      if (!VARIO_UUIDS.some(has) && !has(PRESSURE_UUID))
-        r.unavailable.push('Vario / pressure: not exposed by this device')
-      r.unavailable.push('Link quality (RSSI): not available to web pages on a live connection — GATT read round-trip is sampled instead')
-      if (!bt.isConnected)
-        r.unavailable.push('Device disconnected while the report was being collected — it is partial')
-
-      // Take a fresh sample so the report has a data point from right now.
-      await takeSample()
-      r.samples = samples.value.slice()
-      r.events = events.value.slice()
-      r.log = getSessionLog()
-      report.value = r
+      if (force)
+        recordAction('diagnostics', 'read everything again')
+      await takeSample(bt)
     }
     catch (e) {
       log.error('diagnostics: collection failed', e)
-      collectOffline()
     }
     finally {
       collecting.value = false
     }
   }
 
-  /**
-   * Latest report with the live parts (samples, log, events) and the
-   * pilot's problem text brought up to date — what Copy / Download / Send use.
-   */
-  function current(problem: string): DiagnosticsReport {
-    const r = report.value ?? baseReport()
-    return {
-      ...r,
-      ...envBlock(),
-      problem,
-      samples: samples.value.slice(),
-      events: events.value.slice(),
-      log: getSessionLog(),
-      errors: {
-        connect: bt.errorMessage || r.errors.connect,
-        firmwareUpdate: flash.error.value ?? r.errors.firmwareUpdate,
-      },
-    }
-  }
+  const rev = computed(() => journalRev.value)
+  const samples = computed(() => {
+    void journalRev.value
+    const rec = currentDevice()
+    return journal.samples.filter(s => !rec || s.device === rec.key || s.device === rec.info.name)
+  })
+  const actionCount = computed(() => {
+    void journalRev.value
+    return journal.actions.length
+  })
 
-  const sampleCount = computed(() => samples.value.length)
+  /** The journal has opened the record for the device connected right now. */
+  const ready = computed(() => {
+    void journalRev.value
+    return bt.isConnected && !bt.isFetching && !!currentDevice()
+  })
 
-  return { report, collecting, progress, samples, sampleCount, events, collect, collectOffline, current }
+  return { collecting, progress, collect, build, rev, ready, samples, actionCount }
 }

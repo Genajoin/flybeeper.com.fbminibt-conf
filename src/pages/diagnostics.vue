@@ -29,28 +29,23 @@ const busyConnecting = computed(() => bt.isConnecting || bt.isFetching)
 // The report describes the visitor's browser — never render it at prerender
 // time (it would say "Node.js" and mismatch on hydration).
 const mounted = ref(false)
+onMounted(() => (mounted.value = true))
 
-// Collect as soon as the device is fully up; the browser-only part right away.
-onMounted(() => {
-  mounted.value = true
-  if (bt.isConnected)
+// Fill the gaps as soon as the journal has the connected device. Everything
+// read earlier in the session is reused, not read again.
+watch(diag.ready, (ready) => {
+  if (ready)
     void diag.collect()
-  else
-    diag.collectOffline()
-})
-watch(() => bt.isConnected && !bt.isFetching, (ready, was) => {
-  if (ready && !was)
-    void diag.collect()
-})
+}, { immediate: true })
 
-const text = computed(() => {
-  if (!mounted.value)
-    return ''
-  // Re-render when live data moves (samples / report).
-  void diag.sampleCount.value
-  void diag.report.value
-  return reportText(diag.current(problem.value))
+const report = computed(() => {
+  void diag.rev.value
+  return mounted.value ? diag.build(problem.value) : null
 })
+const text = computed(() => (report.value ? reportText(report.value) : ''))
+
+/** A device seen earlier in the session whose last state the report keeps. */
+const lastDevice = computed(() => (!bt.isConnected && report.value?.device ? report.value.device.name || report.value.device.model : null))
 
 const batteryNow = computed(() => {
   const s = diag.samples.value
@@ -86,7 +81,7 @@ async function copy() {
 }
 
 function downloadJson() {
-  const r = diag.current(problem.value)
+  const r = diag.build(problem.value)
   const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -106,7 +101,7 @@ function downloadJson() {
  */
 function send() {
   downloadJson()
-  const r = diag.current(problem.value)
+  const r = diag.build(problem.value)
   const url = mailtoUrl(r, SUPPORT_EMAIL, {
     problemPrompt: t('diag.mail-problem'),
     problem: problem.value,
@@ -133,6 +128,21 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
       :sub="t('diag.sub')"
     />
 
+    <section class="diag__block diag__block--how">
+      <CkEyebrow color="var(--ck-signal)" block>
+        {{ t('diag.how-eyebrow') }}
+      </CkEyebrow>
+      <p class="diag__note">
+        {{ t('diag.how-body') }}
+      </p>
+      <p class="diag__note diag__note--dim">
+        {{ t('diag.how-privacy') }}
+      </p>
+      <p class="diag__note diag__mono">
+        {{ t('diag.logged', { n: diag.actionCount.value }) }}
+      </p>
+    </section>
+
     <section class="diag__block">
       <template v-if="bt.bleBlocked">
         <StateCell :label="t('diag.no-ble-label')" accent="signal">
@@ -141,7 +151,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
       </template>
       <template v-else-if="!bt.isConnected">
         <StateCell :label="t('diag.offline-label')" accent="signal">
-          <span>{{ busyConnecting ? t('diag.connecting') : t('diag.offline-body') }}</span>
+          <span>{{ busyConnecting ? t('diag.connecting') : lastDevice ? t('diag.offline-kept', { name: lastDevice }) : t('diag.offline-body') }}</span>
         </StateCell>
         <button class="diag__btn diag__btn--signal diag__btn--block" type="button" @click="connect">
           {{ busyConnecting ? t('dashboard.cancel-cta') : t('dashboard.connect-cta') }}
@@ -156,7 +166,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
         <p class="diag__note">
           {{ diag.collecting.value
             ? t('diag.collecting', { n: diag.progress.value.done, total: diag.progress.value.total })
-            : t('diag.sampling', { n: diag.sampleCount.value, sec: SAMPLE_PERIOD_MS / 1000, min: elapsedMin }) }}
+            : t('diag.sampling', { n: diag.samples.value.length, sec: SAMPLE_PERIOD_MS / 1000, min: elapsedMin }) }}
         </p>
         <p class="diag__note diag__note--dim">
           {{ t('diag.sampling-hint') }}
@@ -191,7 +201,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
         class="diag__btn"
         type="button"
         :disabled="diag.collecting.value"
-        @click="diag.collect()"
+        @click="diag.collect(true)"
       >
         {{ t('diag.refresh') }}
       </button>

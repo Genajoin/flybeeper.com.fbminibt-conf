@@ -528,6 +528,11 @@ footer:
   alpisto: alpisto.eu ↗
 
 diag:
+  how-eyebrow: How it works
+  how-body: 'While this configurator is open, everything you do is logged — connecting, changed settings, Apply, the simulator, sound preview, firmware updates — together with what the device reports and how its battery changes. To show us a problem, you don''t need to describe every step: use the configurator as usual, try to make the problem happen, then come back to this page and send the report.'
+  how-privacy: 'The log stays in this browser tab only, in memory — nothing is saved on your device or sent anywhere until you press Send, Download or Copy. Reloading or closing the page starts a new log.'
+  logged: '{n} action(s) logged in this session'
+  offline-kept: 'The device is not connected now. The report keeps what was read from {name} earlier in this session; connect it again to add fresh readings.'
   eyebrow: Diagnostics
   title: Report a problem
   sub: Collects your device's firmware, settings and battery readings into one report for support

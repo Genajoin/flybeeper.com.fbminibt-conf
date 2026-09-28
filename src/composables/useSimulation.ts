@@ -9,6 +9,8 @@
  * nothing ever reached the device.
  */
 
+import { recordAction } from '~/utils/sessionJournal'
+
 const SIM_UUID = '904baf04-5814-11ee-8c99-0242ac120002'
 
 // Singleton write queue (module-scope so banner + page share state). Web
@@ -104,6 +106,10 @@ export function useSimulation() {
     if (ch)
       ch.formattedValue = cmS / 100
     offlineCmS.value = cmS
+    // Folded per drag into one journal entry holding the final value.
+    recordAction('simulator', cmS === 0
+      ? 'simulator off'
+      : `simulator vario ${(cmS / 100).toFixed(2)} m/s${bt.isConnected && ch ? ' (sent to the device)' : ' (no device)'}`, 'sim')
 
     if (!bt.isConnected || !ch)
       return

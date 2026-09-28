@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AudioSource } from '~/composables/useAudioSource'
+import { recordAction } from '~/utils/sessionJournal'
 
 const { source } = useAudioSource()
 const { t } = useI18n()
@@ -9,6 +10,12 @@ const options: { value: AudioSource, labelKey: string }[] = [
   { value: 'browser', labelKey: 'audio.source-browser' },
   { value: 'off', labelKey: 'audio.source-off' },
 ]
+
+function pick(value: AudioSource) {
+  if (source.value !== value)
+    recordAction('audio', `sound preview source: ${value}`)
+  source.value = value
+}
 </script>
 
 <template>
@@ -20,7 +27,7 @@ const options: { value: AudioSource, labelKey: string }[] = [
       :class="{ 'seg__option--active': source === opt.value }"
       :aria-checked="source === opt.value"
       role="radio"
-      @click="source = opt.value"
+      @click="pick(opt.value)"
     >
       {{ t(opt.labelKey) }}
     </button>

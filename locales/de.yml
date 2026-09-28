@@ -529,6 +529,11 @@ footer:
   alpisto: alpisto.eu ↗
 
 diag:
+  how-eyebrow: So funktioniert es
+  how-body: 'Solange der Konfigurator geöffnet ist, wird alles protokolliert, was du tust — Verbinden, geänderte Einstellungen, Übernehmen, Simulator, Tonvorschau, Firmware-Updates — zusammen mit dem, was das Gerät meldet, und dem Verlauf des Akkus. Um uns ein Problem zu zeigen, musst du nicht jeden Schritt beschreiben: Benutze den Konfigurator wie gewohnt, lass das Problem auftreten, komm dann auf diese Seite zurück und sende den Bericht.'
+  how-privacy: 'Das Protokoll bleibt nur in diesem Browser-Tab, im Arbeitsspeicher — nichts wird auf deinem Gerät gespeichert oder irgendwohin gesendet, bis du auf Senden, Herunterladen oder Kopieren drückst. Neu laden oder Schließen der Seite beginnt ein neues Protokoll.'
+  logged: '{n} Aktion(en) in dieser Sitzung protokolliert'
+  offline-kept: 'Das Gerät ist gerade nicht verbunden. Der Bericht enthält, was in dieser Sitzung von {name} gelesen wurde; verbinde es erneut für frische Werte.'
   eyebrow: Diagnose
   title: Problem melden
   sub: Fasst Firmware, Einstellungen und Akkuwerte deines Geräts in einem Bericht für den Support zusammen

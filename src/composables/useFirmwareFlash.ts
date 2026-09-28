@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import log from 'loglevel'
+import { recordAction } from '~/utils/sessionJournal'
 import type { ImageSlot, McubootImage } from '~/lib/smp'
 import { needsPermanentSwap } from '~/utils/firmwareVersion'
 import {
@@ -59,6 +60,12 @@ const error = ref<string | null>(null)
 const errorCode = ref<number | null>(null)
 const slots = ref<ImageSlot[]>([])
 const targetVersion = ref<string | null>(null)
+
+// Every phase change goes into the diagnostics journal: an OTA that failed
+// half-way is the report support most needs the history of.
+watch(phase, (p) => {
+  recordAction('firmware', `update${targetVersion.value ? ` to ${targetVersion.value}` : ''}: ${p}${p === 'error' && error.value ? ` — ${error.value}` : ''}`)
+})
 
 let controller: AbortController | null = null
 let pendingImage: McubootImage | null = null

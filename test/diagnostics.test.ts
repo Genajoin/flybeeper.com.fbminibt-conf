@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { DiagSample, DiagnosticsReport } from '../src/utils/diagnostics'
+import type { DiagAction, DiagSample, DiagnosticsReport } from '../src/utils/diagnostics'
 import {
   DIAGNOSTICS_SCHEMA,
   MAILTO_MAX_LENGTH,
   mailSubject,
   mailtoUrl,
+  pushAction,
   reportFileName,
   reportText,
   summaryLines,
@@ -14,6 +15,7 @@ import {
 function sample(minute: number, batteryV: number | null, batteryPct: number | null = null): DiagSample {
   return {
     t: new Date(Date.UTC(2026, 8, 28, 10, minute)).toISOString(),
+    device: 'FBSV.9BFC',
     connected: true,
     batteryPct,
     batteryV,
@@ -58,6 +60,9 @@ function report(overrides: Partial<DiagnosticsReport> = {}): DiagnosticsReport {
       osInfo: null,
       error: null,
     },
+    deviceSeen: { first: '2026-09-28T10:00:00.000Z', last: '2026-09-28T10:00:00.000Z' },
+    otherDevices: [],
+    actions: [],
     characteristics: [
       {
         service: 'FlyBeeper Settings (904baf04-5814-11ee-8c99-0242ac120000)',
@@ -165,5 +170,47 @@ describe('full text and file name', () => {
 
   it('makes a filesystem-safe file name', () => {
     expect(reportFileName(report())).toBe('flybeeper-diagnostics_FBSV.9BFC_2026-09-28T103000Z.json')
+  })
+})
+
+describe('user action log', () => {
+  const at = (sec: number) => new Date(Date.UTC(2026, 8, 28, 10, 0, sec)).toISOString()
+
+  it('folds a slider drag into one entry with the final value', () => {
+    const list: DiagAction[] = []
+    for (const [sec, v] of [[0, 20], [1, 40], [2, 60]] as const)
+      pushAction(list, { t: at(sec), kind: 'edit', msg: `Buzzer Volume → ${v}`, key: 'e:vol' }, 3000, 100)
+    expect(list).toHaveLength(1)
+    expect(list[0].msg).toBe('Buzzer Volume → 60')
+    expect(list[0].n).toBe(3)
+  })
+
+  it('keeps separate entries for different controls and for pauses', () => {
+    const list: DiagAction[] = []
+    pushAction(list, { t: at(0), kind: 'edit', msg: 'a', key: 'e:a' }, 3000, 100)
+    pushAction(list, { t: at(1), kind: 'edit', msg: 'b', key: 'e:b' }, 3000, 100)
+    pushAction(list, { t: at(10), kind: 'edit', msg: 'b2', key: 'e:b' }, 3000, 100)
+    pushAction(list, { t: at(11), kind: 'connect', msg: 'disconnect' }, 3000, 100)
+    pushAction(list, { t: at(11), kind: 'connect', msg: 'disconnect' }, 3000, 100)
+    expect(list.map(a => a.msg)).toEqual(['a', 'b', 'b2', 'disconnect', 'disconnect'])
+  })
+
+  it('drops the oldest entries past the cap', () => {
+    const list: DiagAction[] = []
+    for (let i = 0; i < 5; i++)
+      pushAction(list, { t: at(i), kind: 'navigate', msg: `open /${i}` }, 3000, 3)
+    expect(list.map(a => a.msg)).toEqual(['open /2', 'open /3', 'open /4'])
+  })
+
+  it('prints the actions in the report and counts them in the summary', () => {
+    const r = report({
+      actions: [
+        { t: at(0), kind: 'simulator', msg: 'simulator vario 2.00 m/s (sent to the device)', key: 'sim', n: 12 },
+        { t: at(5), kind: 'write', msg: 'Buzzer Volume = 3 — written to the device' },
+      ],
+    })
+    const txt = reportText(r)
+    expect(txt).toContain('[simulator] simulator vario 2.00 m/s (sent to the device) (×12)')
+    expect(summaryLines(r).join('\n')).toContain('User actions logged: 2 (last: Buzzer Volume = 3 — written to the device)')
   })
 })
