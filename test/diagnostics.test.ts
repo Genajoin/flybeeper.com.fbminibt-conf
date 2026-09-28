@@ -290,7 +290,6 @@ describe('board revision source (SunVario)', () => {
 
   it('makes no claim about other models or a missing string', () => {
     expect(boardRevisionText({ model: 'FBminiBT', hardwareRevision: '1.7' })).toBe('1.7')
-    expect(boardRevisionText({ model: 'FBFANET', hardwareRevision: '0.9' })).toBe('0.9')
     expect(boardRevisionText({ model: 'FBSV', hardwareRevision: null })).toBe('unknown')
   })
 

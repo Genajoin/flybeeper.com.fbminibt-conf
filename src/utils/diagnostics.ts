@@ -301,8 +301,7 @@ export function formatTrend(tr: Trend | null, unit: string, decimals: number): s
  * FBFANET firmware, which writes 0x2A27 at boot from hwrev_get_str(): a
  * provisioned board gives "major.minor" from UICR; an empty UICR gives the
  * board's CONFIG_BT_DIS_HW_REV_STR — "8", "10" (fbsv), "1" (fbfv), all
- * without a dot. FBFANET's own build defaults DO have dots ("0.9"), so there
- * the string cannot tell and is shown as is; the same for other firmwares.
+ * without a dot. Other models are shown as is.
  */
 const REV_SOURCE_MODELS = /^(?:fbsv|fbfv)/i
 
