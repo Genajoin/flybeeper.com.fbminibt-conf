@@ -283,8 +283,14 @@ describe('board revision source (SunVario)', () => {
     expect(boardRevisionText({ model: 'fbsv', hardwareRevision: '8' })).toContain('build, unverified')
   })
 
+  it('applies the same rule to FANET Vario (shared firmware)', () => {
+    expect(boardRevisionText({ model: 'FBFV', hardwareRevision: '1.0' })).toBe('1.0 (UICR)')
+    expect(boardRevisionText({ model: 'FBFV', hardwareRevision: '1' })).toBe('1 (build, unverified)')
+  })
+
   it('makes no claim about other models or a missing string', () => {
     expect(boardRevisionText({ model: 'FBminiBT', hardwareRevision: '1.7' })).toBe('1.7')
+    expect(boardRevisionText({ model: 'FBFANET', hardwareRevision: '0.9' })).toBe('0.9')
     expect(boardRevisionText({ model: 'FBSV', hardwareRevision: null })).toBe('unknown')
   })
 

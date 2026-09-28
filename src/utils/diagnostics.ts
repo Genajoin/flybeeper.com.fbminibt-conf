@@ -297,20 +297,27 @@ export function formatTrend(tr: Trend | null, unit: string, decimals: number): s
 }
 
 /**
- * Board revision with where it came from. SunVario (0.29.1+) writes 0x2A27 at
- * boot from hwrev_get_str(): with a dot ("10.0", "8.0") it was read from the
- * board's UICR and can be trusted; without one ("8", "10") the UICR is empty,
- * the string is the image's build-time value, and the firmware treats the
- * board as rev 8 whatever it really is. Other models set 0x2A27 at build time
- * (Kconfig) — shown as is, no claim about its source.
+ * Models whose 0x2A27 tells its own source. SunVario and FANET Vario share the
+ * FBFANET firmware, which writes 0x2A27 at boot from hwrev_get_str(): a
+ * provisioned board gives "major.minor" from UICR; an empty UICR gives the
+ * board's CONFIG_BT_DIS_HW_REV_STR — "8", "10" (fbsv), "1" (fbfv), all
+ * without a dot. FBFANET's own build defaults DO have dots ("0.9"), so there
+ * the string cannot tell and is shown as is; the same for other firmwares.
  */
+const REV_SOURCE_MODELS = /^(?:fbsv|fbfv)/i
+
+/** Board revision with where it came from, where the firmware makes that knowable. */
 export function boardRevisionText(d: { model: string | null, hardwareRevision: string | null } | null): string {
   const rev = d?.hardwareRevision
   if (!rev)
     return 'unknown'
-  if (!/^fbsv/i.test(d?.model ?? ''))
+  const model = d?.model ?? ''
+  if (!REV_SOURCE_MODELS.test(model))
     return rev
-  return rev.includes('.') ? `${rev} (UICR)` : `${rev} (build, unverified — firmware treats the board as rev 8)`
+  if (rev.includes('.'))
+    return `${rev} (UICR)`
+  // SunVario 0.29.1 picks the battery measurement by revision and falls back to rev 8.
+  return `${rev} (build, unverified${/^fbsv/i.test(model) ? ' — firmware treats the board as rev 8' : ''})`
 }
 
 /**
@@ -353,7 +360,7 @@ export function mailSubject(r: DiagnosticsReport): string {
     parts.push(`FW ${d.firmwareRevision}`)
   // Board revision decides how the battery is measured (rev 8 vs rev 10) —
   // support needs it in the subject line, and "unknown" is an answer too.
-  parts.push(`HW ${d.hardwareRevision ?? 'unknown'}${d.hardwareRevision && /^fbsv/i.test(d.model ?? '') && !d.hardwareRevision.includes('.') ? ' (unverified)' : ''}`)
+  parts.push(`HW ${d.hardwareRevision ?? 'unknown'}${d.hardwareRevision && REV_SOURCE_MODELS.test(d.model ?? '') && !d.hardwareRevision.includes('.') ? ' (unverified)' : ''}`)
   return `FlyBeeper diagnostics: ${parts.join(' · ')}`
 }
 
