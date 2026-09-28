@@ -260,3 +260,28 @@ describe('curve write rejected by the firmware', () => {
     expect(read()).toEqual(wanted)
   })
 })
+
+describe('read-only characteristics without a format', () => {
+  // FBminiBT ≤0.24 appends three placeholder characteristics (0x0001–0x0003,
+  // read-only, no descriptors) to the settings service to dodge a UUID bug.
+  // They are not settings and must not be reported as unreadable ones.
+  it('counts as initialised once the value is read', async () => {
+    const { char } = fakeChar({ uuid: '00000001-0000-1000-8000-00805f9b34fb', writable: false, withCpf: false, initial: 0 })
+    char.getDescriptors = vi.fn(async () => {
+      const err: any = new Error('No Descriptors found in Characteristic.')
+      err.name = 'NotFoundError'
+      throw err
+    })
+    const ch = new BleCharacteristicImpl(char)
+    await ch.initialize()
+    expect(ch.isInitialized).toBe(true)
+    expect(ch.initError).toBeNull()
+  })
+
+  it('still requires a format for a writable characteristic', async () => {
+    const { char } = fakeChar({ uuid: '11111111-2222-3333-4444-555555555555', withCpf: false })
+    const ch = new BleCharacteristicImpl(char)
+    await ch.initialize()
+    expect(ch.isInitialized).toBe(false)
+  })
+})

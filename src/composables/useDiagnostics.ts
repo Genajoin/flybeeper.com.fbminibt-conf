@@ -78,7 +78,11 @@ const SERVICE_NAMES: Record<string, string> = {
   '00001819-0000-1000-8000-00805f9b34fb': 'Location and Navigation',
   '00001815-0000-1000-8000-00805f9b34fb': 'Automation IO',
   '904baf04-5814-11ee-8c99-0242ac120000': 'FlyBeeper Settings',
+  '8d53dc1d-1db7-4cd3-868b-8a527460aa84': 'MCUmgr SMP',
 }
+
+/** SMP is a command channel, not state: listed, never read or subscribed by the journal. */
+const SMP_SERVICE = '8d53dc1d-1db7-4cd3-868b-8a527460aa84'
 
 /** Standard GATT characteristics the locale files do not name. */
 const STANDARD_NAMES: Record<string, string> = {
@@ -86,6 +90,12 @@ const STANDARD_NAMES: Record<string, string> = {
   '00002a6a-0000-1000-8000-00805f9b34fb': 'LN Feature',
   '00002a6b-0000-1000-8000-00805f9b34fb': 'Position Quality',
   '00002a05-0000-1000-8000-00805f9b34fb': 'Service Changed',
+  // FBminiBT firmware appends three read-only dummies to the settings service
+  // to dodge a Zephyr UUID bug (FlyBeeperBT/src/settings.c). Not settings.
+  '00000001-0000-1000-8000-00805f9b34fb': 'Firmware placeholder (not a setting)',
+  '00000002-0000-1000-8000-00805f9b34fb': 'Firmware placeholder (not a setting)',
+  '00000003-0000-1000-8000-00805f9b34fb': 'Firmware placeholder (not a setting)',
+  'da2e7828-fbce-4e01-ae9e-261174997c48': 'SMP (firmware update channel)',
 }
 
 /** Sampling period. Slow enough to add no noticeable GATT load. */
@@ -212,6 +222,10 @@ function charsOf(bt: ReturnType<typeof useBluetoothStore>): BleCharacteristic[] 
     .filter(c => normalizeUuid(c.characteristic.service.uuid) !== DIS_SERVICE)
 }
 
+function isSmp(ch: BleCharacteristic): boolean {
+  return normalizeUuid(ch.characteristic.service.uuid) === SMP_SERVICE
+}
+
 /**
  * Copy what the app currently holds into the journal — memory only, no GATT
  * traffic. A value keeps its timestamp while it stays the same, so `at` means
@@ -302,7 +316,10 @@ async function readCharGaps(
     const prev = rec.characteristics.get(ch.characteristic.uuid)
     const fresh = prev?.at && prev.at >= rec.linkStart
     const readable = !!ch.characteristic.properties?.read
-    if ((fresh && !force) || (!readable && ch.isInitialized)) {
+    // Notify-only characteristics have nothing to read; SMP is read over SMP.
+    if ((fresh && !force) || !readable || isSmp(ch)) {
+      if (!prev)
+        putCharacteristic(rec, describeChar(ch))
       onProgress()
       continue
     }

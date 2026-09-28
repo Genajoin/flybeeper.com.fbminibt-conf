@@ -123,6 +123,11 @@ describe('summary and subject', () => {
     expect(lines).toContain('Bootloader: MCUboot mode 3')
   })
 
+  it('says when a key setting is not exposed by the firmware', () => {
+    const lines = summaryLines(report()).join('\n')
+    expect(lines).toContain('volume: not exposed by this firmware')
+  })
+
   it('says plainly when no device is connected', () => {
     const lines = summaryLines(report({ device: null, firmware: null, characteristics: [] }))
     expect(lines[0]).toBe('Device: not connected')

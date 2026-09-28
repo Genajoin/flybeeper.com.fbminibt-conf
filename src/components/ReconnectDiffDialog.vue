@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import log from 'loglevel'
+import { recordAction } from '~/utils/sessionJournal'
 import { describeWriteError } from '~/utils/write-errors'
 
 const bt = useBluetoothStore()
@@ -52,6 +53,7 @@ const applyErrors = ref<{ key: string, message: string }[]>([])
 async function applyLocal() {
   if (!settings.local || !bt.isConnected)
     return
+  recordAction('settings', `reconnect dialog: write ${diffEntries.value.length} local change(s) to the device`)
   isApplying.value = true
   applyErrors.value = []
   const written: string[] = []
@@ -84,12 +86,14 @@ async function applyLocal() {
 }
 
 function discardLocal() {
+  recordAction('settings', `reconnect dialog: discard ${diffEntries.value.length} local change(s), keep the device values`)
   if (settings.lastDeviceSnapshot)
     settings.replaceLocal(settings.lastDeviceSnapshot)
   open.value = false
 }
 
 function dismiss() {
+  recordAction('settings', 'reconnect dialog: closed without a choice')
   open.value = false
 }
 </script>

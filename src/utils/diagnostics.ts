@@ -268,7 +268,7 @@ export function summaryLines(r: DiagnosticsReport): string[] {
     lines.push(`Firmware: ${d.firmwareRevision ?? '—'}${d.softwareRevision ? ` · SW ${d.softwareRevision}` : ''}`)
     const act = activeSlot(r)
     if (act)
-      lines.push(`Running image: ${act.version} ${act.confirmed ? 'confirmed' : 'NOT confirmed'} (slot ${act.slot})`)
+      lines.push(`Running image: ${act.version === '0.0.0' ? '0.0.0 (build sets no MCUboot version — see Firmware above)' : act.version} ${act.confirmed ? 'confirmed' : 'NOT confirmed'} (slot ${act.slot})`)
     const pending = r.firmware?.slots.find(s => s.pending)
     if (pending)
       lines.push(`Pending image: ${pending.version} (slot ${pending.slot})`)
@@ -284,6 +284,10 @@ export function summaryLines(r: DiagnosticsReport): string[] {
       const c = charById(r, k.uuid)
       if (c)
         lines.push(`${k.label}: ${c.display}`)
+      // Absent is an answer too: FBminiBT firmware, for one, does not expose
+      // ble_never_sleep at all — support should not have to ask.
+      else if (r.characteristics.length)
+        lines.push(`${k.label}: not exposed by this firmware`)
     }
     if (r.incompleteChars.length)
       lines.push(`Unreadable settings: ${r.incompleteChars.length}`)

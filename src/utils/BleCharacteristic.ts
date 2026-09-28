@@ -107,6 +107,12 @@ export class BleCharacteristicImpl implements BleCharacteristic {
 
   initError: unknown = null
 
+  /** Can the app write this characteristic — i.e. is it a setting? */
+  get isWritable(): boolean {
+    const p = this.characteristic.properties
+    return !!(p?.write || p?.writeWithoutResponse)
+  }
+
   // Список подписчиков
   private subscribers: ((value: any) => void)[] = []
 
@@ -249,7 +255,14 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return
     const fallback = VIRTUAL_CPF_FORMAT[this.characteristic.uuid]
     if (!fallback) {
-      log.warn(`no CPF for ${this.characteristic.uuid} (${reason}) and no static fallback — writes will be rejected`)
+      // Only a writable characteristic needs a format — for the read/notify
+      // ones (pressure, battery, the firmware's placeholder characteristics)
+      // there is nothing to reject, and the warning was pure noise in every
+      // support log.
+      if (this.isWritable)
+        log.warn(`no CPF for ${this.characteristic.uuid} (${reason}) and no static fallback — writes will be rejected`)
+      else
+        log.debug(`no CPF for read-only ${this.characteristic.uuid} (${reason})`)
       return
     }
     this.presentationFormatDescriptor = {
@@ -415,7 +428,7 @@ export class BleCharacteristicImpl implements BleCharacteristic {
       return this.formatValueByFormat(value, this.presentationFormatDescriptor.format, this.presentationFormatDescriptor.exponent)
     }
     else {
-      log.warn('Presentation format descriptor is missing.')
+      log.debug('Presentation format descriptor is missing — keeping raw bytes', this.characteristic.uuid)
       return value
     }
   }
@@ -598,6 +611,12 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     }
     catch (error) {
       this.descriptors = []
+      // A characteristic with no descriptors at all is legal — Chrome reports
+      // it as NotFoundError. Only a real failure counts against the read.
+      if ((error as DOMException | undefined)?.name === 'NotFoundError') {
+        log.debug('no descriptors', this.characteristic.uuid)
+        return
+      }
       this.initError = error
       log.warn('Descriptors is missing', this.characteristic.uuid, error)
     }
@@ -627,7 +646,12 @@ export class BleCharacteristicImpl implements BleCharacteristic {
     await this.getFormattedValue()
 
     const needsValue = !!this.characteristic.properties?.read
-    const usable = this.presentationFormatDescriptor !== null
+    // A format is required only to WRITE. Read/notify characteristics decoded
+    // by UUID (pressure, battery…) or kept as raw bytes (FBminiBT's placeholder
+    // 0x0001–0x0003) are complete once their value is in; demanding a CPF
+    // made the connect path retry them twice and report them as settings
+    // "without a device value".
+    const usable = (this.presentationFormatDescriptor !== null || !this.isWritable)
       && (!needsValue || (this.value !== null && this.formattedValue !== null))
     this.isInitialized = usable
     if (usable)
