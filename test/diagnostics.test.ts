@@ -3,6 +3,7 @@ import type { DiagAction, DiagSample, DiagnosticsReport } from '../src/utils/dia
 import {
   DIAGNOSTICS_SCHEMA,
   MAILTO_MAX_LENGTH,
+  actionLine,
   mailSubject,
   mailtoUrl,
   pushAction,
@@ -175,6 +176,22 @@ describe('full text and file name', () => {
 
 describe('user action log', () => {
   const at = (sec: number) => new Date(Date.UTC(2026, 8, 28, 10, 0, sec)).toISOString()
+
+  it('keeps the range and duration of a simulator drag', () => {
+    const list: DiagAction[] = []
+    const vals = [0.5, 2, 4.2, 1, -3.1, 0]
+    vals.forEach((v, i) => pushAction(list, { t: at(i), kind: 'simulator', msg: `device plays simulated vario: ${v} m/s`, key: 'sim:device', value: v, unit: 'm/s' }, 3000, 100))
+    expect(list).toHaveLength(1)
+    expect(actionLine(list[0])).toBe(`${at(0)} [simulator] device plays simulated vario: 0 m/s (×6, range -3.10 … 4.20 m/s, 5 s, until 10:00:05)`)
+  })
+
+  it('does not fold device and browser playback together', () => {
+    const list: DiagAction[] = []
+    pushAction(list, { t: at(0), kind: 'simulator', msg: 'device', key: 'sim:device', value: 1 }, 3000, 100)
+    pushAction(list, { t: at(1), kind: 'audio', msg: 'sound preview source: browser' }, 3000, 100)
+    pushAction(list, { t: at(2), kind: 'simulator', msg: 'browser', key: 'sim:browser', value: 2 }, 3000, 100)
+    expect(list.map(a => a.msg)).toEqual(['device', 'sound preview source: browser', 'browser'])
+  })
 
   it('folds a slider drag into one entry with the final value', () => {
     const list: DiagAction[] = []

@@ -71,8 +71,19 @@ export function isoNow(): string {
   return new Date().toISOString()
 }
 
-export function recordAction(kind: string, msg: string, key?: string): void {
-  pushAction(journal.actions, { t: isoNow(), kind, msg, ...(key ? { key } : {}) }, ACTION_COALESCE_MS, MAX_ACTIONS)
+/**
+ * Log one thing the pilot did. `key` folds a burst on the same control into
+ * one entry; `value` (+ `unit`) keeps the burst's range, so a slider drag
+ * reads "×219, range -3.2 … 5.1 m/s" instead of only its final position.
+ */
+export function recordAction(kind: string, msg: string, key?: string, value?: { v: number, unit?: string }): void {
+  pushAction(journal.actions, {
+    t: isoNow(),
+    kind,
+    msg,
+    ...(key ? { key } : {}),
+    ...(value ? { value: value.v, ...(value.unit ? { unit: value.unit } : {}) } : {}),
+  }, ACTION_COALESCE_MS, MAX_ACTIONS)
   touch()
 }
 

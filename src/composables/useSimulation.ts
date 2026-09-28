@@ -99,17 +99,23 @@ export function useSimulation() {
    * already in flight so the BLE stack never sees a second writeValue before
    * the first resolves.
    */
-  function setValueCmS(cmS: number) {
+  function setValueCmS(cmS: number, log = true) {
     // Reflect locally first so the slider/banner feel instant — UI lag must
     // not depend on BLE round-trip.
     const ch = getSimChar()
     if (ch)
       ch.formattedValue = cmS / 100
     offlineCmS.value = cmS
-    // Folded per drag into one journal entry holding the final value.
-    recordAction('simulator', cmS === 0
-      ? 'simulator off'
-      : `simulator vario ${(cmS / 100).toFixed(2)} m/s${bt.isConnected && ch ? ' (sent to the device)' : ' (no device)'}`, 'sim')
+    // One journal entry per drag, with the range the pilot swept through.
+    if (log) {
+      const onDevice = bt.isConnected && !!ch
+      recordAction(
+        'simulator',
+        `${onDevice ? 'device plays simulated vario' : 'simulator (no device connected)'}: ${(cmS / 100).toFixed(2)} m/s`,
+        onDevice ? 'sim:device' : 'sim:offline',
+        { v: cmS / 100, unit: 'm/s' },
+      )
+    }
 
     if (!bt.isConnected || !ch)
       return
@@ -123,7 +129,10 @@ export function useSimulation() {
   }
 
   function stop() {
-    setValueCmS(0)
+    // Its own entry, never folded into the drag before it.
+    if (valueMs.value !== 0)
+      recordAction('simulator', bt.isConnected ? 'device simulator stopped' : 'simulator stopped')
+    setValueCmS(0, false)
   }
 
   return {

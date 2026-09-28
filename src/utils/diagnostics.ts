@@ -74,6 +74,13 @@ export interface DiagAction {
   key?: string
   /** How many actions were folded into this entry. */
   n?: number
+  /** Numeric value of the action (slider position…), and its spread over the folded burst. */
+  value?: number
+  min?: number
+  max?: number
+  unit?: string
+  /** Time of the last folded action; `t` stays the start of the burst. */
+  until?: string
 }
 
 /**
@@ -82,13 +89,18 @@ export interface DiagAction {
  */
 export function pushAction(list: DiagAction[], a: DiagAction, coalesceMs: number, max: number): void {
   const last = list[list.length - 1]
-  if (a.key && last?.key === a.key && Date.parse(a.t) - Date.parse(last.t) <= coalesceMs) {
+  if (a.key && last?.key === a.key && Date.parse(a.t) - Date.parse(last.until ?? last.t) <= coalesceMs) {
     last.msg = a.msg
-    last.t = a.t
+    last.until = a.t
     last.n = (last.n ?? 1) + 1
+    if (typeof a.value === 'number') {
+      last.value = a.value
+      last.min = Math.min(last.min ?? a.value, a.value)
+      last.max = Math.max(last.max ?? a.value, a.value)
+    }
     return
   }
-  list.push({ ...a })
+  list.push(typeof a.value === 'number' ? { ...a, min: a.value, max: a.value } : { ...a })
   if (list.length > max)
     list.splice(0, list.length - max)
 }
@@ -299,6 +311,21 @@ function section(title: string, body: string[]): string {
   return [`== ${title} ==`, ...body, ''].join('\n')
 }
 
+/** One action as a report line; a folded burst shows its count, spread and end time. */
+export function actionLine(a: DiagAction): string {
+  const extra: string[] = []
+  if (a.n && a.n > 1)
+    extra.push(`×${a.n}`)
+  if (typeof a.min === 'number' && typeof a.max === 'number' && a.min !== a.max)
+    extra.push(`range ${fmtNum(a.min, 2)} … ${fmtNum(a.max, 2)}${a.unit ? ` ${a.unit}` : ''}`)
+  if (a.until) {
+    const sec = Math.round((Date.parse(a.until) - Date.parse(a.t)) / 1000)
+    if (sec >= 1)
+      extra.push(`${sec} s, until ${a.until.slice(11, 19)}`)
+  }
+  return `${a.t} [${a.kind}] ${a.msg}${extra.length ? ` (${extra.join(', ')})` : ''}`
+}
+
 /** Full plain-text report — what "Copy" puts on the clipboard. */
 export function reportText(r: DiagnosticsReport): string {
   const out: string[] = []
@@ -372,7 +399,7 @@ export function reportText(r: DiagnosticsReport): string {
   }
 
   out.push(section('User actions', r.actions.length
-    ? r.actions.map(a => `${a.t} [${a.kind}] ${a.msg}${a.n && a.n > 1 ? ` (×${a.n})` : ''}`)
+    ? r.actions.map(actionLine)
     : ['none']))
 
   if (r.events.length)

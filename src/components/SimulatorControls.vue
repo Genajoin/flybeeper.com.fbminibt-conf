@@ -11,6 +11,7 @@
  */
 
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+import { recordAction } from '~/utils/sessionJournal'
 
 const bt = useBluetoothStore()
 const settings = useSettingsStore()
@@ -204,6 +205,7 @@ watch(sliderMs, (v) => {
   }
   if (source.value !== 'browser')
     return
+  recordAction('simulator', `browser plays simulated vario: ${(cmS / 100).toFixed(2)} m/s`, 'sim:browser', { v: cmS / 100, unit: 'm/s' })
   liveCmS.value = cmS
   // Smooth=OFF mode: the synth's provider will pick up the new value at the
   // next cycle boundary on its own. Don't restart the schedule — that would
@@ -261,6 +263,7 @@ function startDemo() {
   if (isDemoRunning.value)
     return
   isDemoRunning.value = true
+  recordAction('simulator', `demo sweep started (${source.value}): ${DEMO_BOTTOM_MS} … +${DEMO_TOP_MS} m/s`)
   if (source.value === 'browser')
     void synth.ensureContext()
   // Choose direction so we always have somewhere to go from the current
@@ -285,6 +288,8 @@ function startDemo() {
 }
 
 function stopDemo() {
+  if (isDemoRunning.value)
+    recordAction('simulator', 'demo sweep stopped')
   isDemoRunning.value = false
   if (demoTimer)
     clearInterval(demoTimer)

@@ -276,8 +276,6 @@ export function useToneSynth(): UseToneSynth {
     osc.frequency.cancelScheduledValues(now)
     osc.frequency.setValueAtTime(Math.max(params.frequencyHz, 1), now)
     restartSchedule()
-    if (!isPlaying.value)
-      recordAction('audio', 'browser tone preview playing', 'tone')
     isPlaying.value = true
   }
 
