@@ -125,6 +125,14 @@ function writeCurves(next: iVarioCurves) {
   m[CPF_DUTY_UUID].formattedValue = next.buzzer_duty_dots
 }
 
+// Graph or table view of the same curves. Remembered per browser: a pilot who
+// prefers typing numbers should not have to flip it on every visit.
+const curveView = useLocalStorage<'graph' | 'table'>('curve-view', 'graph')
+const viewOptions = computed(() => [
+  { label: t('sett.view-graph'), value: 'graph' as const },
+  { label: t('sett.view-table'), value: 'table' as const },
+])
+
 const presetOptions = [
   { label: 'DEFAULT', value: 'default' as const },
   { label: 'AGGRESSIVE', value: 'aggressive' as const },
@@ -156,11 +164,25 @@ function selectPreset(v: PresetKey | 'custom') {
         <div v-if="curveChars.length" class="sound__curves">
           <div class="sound__curves-head">
             <CkEyebrow>{{ t('sett.group-curves') }} · 12 PTS</CkEyebrow>
-            <span class="sound__curves-hint">{{ t('sett.drag-point-edit') }}</span>
+            <span v-if="curveView === 'graph'" class="sound__curves-hint">{{ t('sett.drag-point-edit') }}</span>
+            <CkSegmentedControl
+              v-model="curveView"
+              class="sound__view"
+              :options="viewOptions"
+              :aria-label="t('sett.view-toggle')"
+            />
           </div>
           <div class="sound__curves-chart">
+            <CurveTable
+              v-if="cpfReady && cpfCurves && curveView === 'table'"
+              :curves="cpfCurves"
+              :climb-on="climbOn"
+              :sink-on="sinkOn"
+              @update:climb-on="writeThreshold(CPF_CLIMB_ON_UUID, $event)"
+              @update:sink-on="writeThreshold(CPF_SINK_ON_UUID, $event)"
+            />
             <CurveEditor
-              v-if="cpfReady"
+              v-else-if="cpfReady"
               :curves-override="cpfCurves"
               :climb-on="climbOn"
               :sink-on="sinkOn"
@@ -237,6 +259,11 @@ function selectPreset(v: PresetKey | 'custom') {
   border-top: var(--ck-stroke-rule) solid var(--ck-ink);
   border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
   background: var(--ck-paper);
+}
+
+.sound__view {
+  display: flex;
+  margin-left: auto;
 }
 
 .sound__presets {

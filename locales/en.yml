@@ -392,6 +392,10 @@ sett:
   group-tas-desc: True Air Speed calibration — Pitot K factor and differential pressure offset.
   slide-to-pan: ↔ SLIDE TO PAN
   drag-point-edit: ● DRAG DOTS TO EDIT
+  view-graph: GRAPH
+  view-table: TABLE
+  view-toggle: Curve view
+  table-hint: 'Values in m/s, Hz, ms, %. Enter or leave the field to apply; out-of-range values are pulled to the nearest allowed one.'
   group-audio-desc: Buzzer volume and the climb / sink thresholds that decide when the tone starts and stops.
   group-curves-desc: Twelve breakpoints mapping vario rate to frequency, cycle and duty.
   group-behaviour-desc: Silent-on-ground, LED indication, HID keyboard.

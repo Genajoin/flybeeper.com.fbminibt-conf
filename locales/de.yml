@@ -293,6 +293,10 @@ sett:
   group-tas-desc: TAS-Kalibrierung — Pitot-K-Faktor und Druckdifferenz-Offset.
   slide-to-pan: ↔ ZUM PANNEN ZIEHEN
   drag-point-edit: ● PUNKT ZIEHEN ZUM ÄNDERN
+  view-graph: GRAFIK
+  view-table: TABELLE
+  view-toggle: Kurvenansicht
+  table-hint: 'Werte in m/s, Hz, ms, %. Enter oder Feld verlassen übernimmt; Werte außerhalb des Bereichs werden auf den nächsten zulässigen Wert gesetzt.'
   revert: Zurücksetzen
   reset: Standard
   reset-confirm: Diese Gruppe auf Werkseinstellungen zurücksetzen?
