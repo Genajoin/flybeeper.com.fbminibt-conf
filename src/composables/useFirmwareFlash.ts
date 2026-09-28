@@ -67,6 +67,16 @@ watch(phase, (p) => {
   recordAction('firmware', `update${targetVersion.value ? ` to ${targetVersion.value}` : ''}: ${p}${p === 'error' && error.value ? ` — ${error.value}` : ''}`)
 })
 
+/**
+ * True from the first upload byte until the update is verified, failed or
+ * abandoned — including the reboot and the reconnect in between, when
+ * `bt.isFlashing` may already be false. Anything else that talks to the
+ * device (the diagnostics journal) must keep off the link meanwhile: SMP
+ * writes bypass the GATT queue, and a concurrent read on Android can fail the
+ * post-update verification of an update that actually succeeded.
+ */
+export const otaInProgress = computed(() => !['idle', 'done', 'error'].includes(phase.value))
+
 let controller: AbortController | null = null
 let pendingImage: McubootImage | null = null
 let deviceId: string | null = null

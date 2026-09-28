@@ -3,7 +3,7 @@ import type { Router } from 'vue-router'
 import log from 'loglevel'
 import { SmpTransport, bootloaderInfo, hex, imageStateRead, osInfo } from '~/lib/smp'
 import { ensureLocaleMessages, i18n } from '~/modules/i18n'
-import { useFirmwareFlash } from '~/composables/useFirmwareFlash'
+import { otaInProgress, useFirmwareFlash } from '~/composables/useFirmwareFlash'
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
 import { useSettingsStore } from '~/stores/settings'
 import { useSharedPresetStore } from '~/stores/shared-preset'
@@ -439,8 +439,8 @@ async function readNumber(bt: ReturnType<typeof useBluetoothStore>, uuid: string
 
 let sampling = false
 async function takeSample(bt: ReturnType<typeof useBluetoothStore>): Promise<void> {
-  // Never compete with a firmware upload or the connect-time fetch for the radio.
-  if (sampling || !bt.isConnected || bt.isFlashing || bt.isFetching)
+  // Never compete with a firmware update or the connect-time fetch for the radio.
+  if (sampling || !bt.isConnected || bt.isFlashing || otaInProgress.value || bt.isFetching)
     return
   sampling = true
   try {
@@ -627,6 +627,20 @@ export function startSessionJournal(router: Router): void {
     if (bt.incompleteChars.length)
       recordEvent(`${bt.incompleteChars.length} setting(s) came back without a value`)
     harvest(bt, rec)
+    // Reconnect after an OTA reboot: the update verification owns the link
+    // until it is done — read only afterwards.
+    if (otaInProgress.value) {
+      await new Promise<void>((resolve) => {
+        const stop = watch(otaInProgress, (busy) => {
+          if (!busy) {
+            stop()
+            resolve()
+          }
+        })
+      })
+      if (!bt.isConnected)
+        return
+    }
     await readDisGaps(bt, rec)
     await prepareSampling(bt)
     await takeSample(bt)
@@ -732,7 +746,7 @@ export function useDiagnostics() {
    * on this link. Everything the journal already has stays as it is.
    */
   async function collect(force = false): Promise<void> {
-    if (collecting.value || !bt.isConnected || bt.isFetching)
+    if (collecting.value || !bt.isConnected || bt.isFetching || otaInProgress.value)
       return
     const rec = currentDevice()
     if (!rec)
