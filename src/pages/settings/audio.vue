@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash.clonedeep'
 import isEqual from 'lodash.isequal'
+import { recordAction } from '~/utils/sessionJournal'
 
 interface iVarioCurves {
   buzzer_vario_dots: number[]
@@ -91,12 +92,25 @@ const presets = {
   },
 } satisfies Record<string, iVarioCurves>
 
+/**
+ * Tone thresholds that belong to a preset, in cm/s. DEFAULT is the factory
+ * sound as a whole — curves AND the firmware's BUZZER_CLIMB/SINK_TONE_ON_THRESHOLD
+ * (5 / -250 in both FbBT and FbFANET) — so moving "start sinking" off the
+ * factory value is a custom sound, and picking DEFAULT puts it back.
+ * AGGRESSIVE / SILENT GND define no thresholds of their own: they only swap
+ * the curves and leave the pilot's thresholds as they are.
+ */
+interface PresetThresholds { climbOnCmS: number, sinkOnCmS: number }
+const presetThresholds: Partial<Record<keyof typeof presets, PresetThresholds>> = {
+  default: { climbOnCmS: 5, sinkOnCmS: -250 },
+}
+
 // Last-known user-customised curves. Module-scoped so it survives audio.vue
 // remounts during a session (e.g. user navigates to /settings/power and back).
 // Captured whenever the user leaves the CUSTOM bucket for a preset, so that
 // returning to CUSTOM restores exactly what they had — instead of leaving them
 // staring at the preset's curves with the CUSTOM segment lit.
-let customSnapshot: iVarioCurves | null = null
+let customSnapshot: { curves: iVarioCurves, climbOn?: number, sinkOn?: number } | null = null
 
 type PresetKey = keyof typeof presets
 
@@ -109,11 +123,19 @@ const activePreset = computed<PresetKey | 'custom'>(() => {
   if (!c)
     return 'custom'
   for (const [name, p] of Object.entries(presets)) {
-    if (isEqual(c, p))
+    if (isEqual(c, p) && thresholdsMatch(presetThresholds[name as PresetKey]))
       return name as PresetKey
   }
   return 'custom'
 })
+
+/** A device without a threshold characteristic cannot contradict the preset. */
+function thresholdsMatch(th: PresetThresholds | undefined): boolean {
+  if (!th)
+    return true
+  const same = (cur: number | undefined, want: number) => cur === undefined || Math.round(cur) === want
+  return same(climbOn.value, th.climbOnCmS) && same(sinkOn.value, th.sinkOnCmS)
+}
 
 function writeCurves(next: iVarioCurves) {
   if (!cpfReady.value)
@@ -141,19 +163,30 @@ const presetOptions = [
 ]
 
 function selectPreset(v: PresetKey | 'custom') {
+  recordAction('settings', `sound preset: ${v.toUpperCase()}`)
   if (v === 'custom') {
-    // Restore the user's last custom shape if we have one stashed. If not
-    // (first ever click on CUSTOM with no prior edits), leave curves alone —
-    // they ARE the implicit starting point for the user's custom editing.
-    if (customSnapshot)
-      writeCurves(cloneDeep(customSnapshot))
+    // Restore the user's last custom sound if we have one stashed. If not
+    // (first ever click on CUSTOM with no prior edits), leave it alone —
+    // it IS the implicit starting point for the user's custom editing.
+    if (customSnapshot) {
+      writeCurves(cloneDeep(customSnapshot.curves))
+      if (customSnapshot.climbOn !== undefined)
+        writeThreshold(CPF_CLIMB_ON_UUID, customSnapshot.climbOn)
+      if (customSnapshot.sinkOn !== undefined)
+        writeThreshold(CPF_SINK_ON_UUID, customSnapshot.sinkOn)
+    }
     return
   }
-  // Leaving CUSTOM for a preset: snapshot the user's work so a later
-  // CUSTOM click can bring it back.
+  // Leaving CUSTOM for a preset: snapshot the user's work (thresholds too)
+  // so a later CUSTOM click can bring it back.
   if (activePreset.value === 'custom' && cpfCurves.value)
-    customSnapshot = cloneDeep(cpfCurves.value)
+    customSnapshot = { curves: cloneDeep(cpfCurves.value), climbOn: climbOn.value, sinkOn: sinkOn.value }
   writeCurves(cloneDeep(presets[v]))
+  const th = presetThresholds[v]
+  if (th) {
+    writeThreshold(CPF_CLIMB_ON_UUID, th.climbOnCmS)
+    writeThreshold(CPF_SINK_ON_UUID, th.sinkOnCmS)
+  }
 }
 </script>
 

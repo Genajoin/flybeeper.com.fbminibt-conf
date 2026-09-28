@@ -208,7 +208,9 @@ function describeChar(ch: BleCharacteristic, seen?: { at: string, source: 'read'
     uuid,
     name: label && cud && cud !== label ? `${label} [${cud}]` : (label ?? cud ?? uuid),
     value: jsonSafe(ch.formattedValue),
-    display: hasValue(ch) ? display : (p?.read ? 'not read yet' : 'notify only, no value yet'),
+    display: hasValue(ch)
+      ? display
+      : isChannel(ch) ? 'data channel — not read' : (p?.read ? 'not read yet' : 'notify only, no value yet'),
     unit,
     raw: dvHex(ch.value),
     props,
@@ -222,8 +224,19 @@ function charsOf(bt: ReturnType<typeof useBluetoothStore>): BleCharacteristic[] 
     .filter(c => normalizeUuid(c.characteristic.service.uuid) !== DIS_SERVICE)
 }
 
-function isSmp(ch: BleCharacteristic): boolean {
-  return normalizeUuid(ch.characteristic.service.uuid) === SMP_SERVICE
+/**
+ * Data channels, not state: SMP (firmware update) and the FANET packet stream.
+ * The FANET one declares READ but has no read handler in the firmware
+ * (FBFANET/src/fanet/fanet.c), so reading it only ever yields "GATT operation
+ * not permitted". Listed in the report, never read or subscribed.
+ */
+const CHANNEL_UUIDS = new Set([
+  'da2e7828-fbce-4e01-ae9e-261174997c48', // SMP
+  'fec81438-cb89-4c37-93d0-badfced4376e', // FANET channel
+])
+
+function isChannel(ch: BleCharacteristic): boolean {
+  return normalizeUuid(ch.characteristic.service.uuid) === SMP_SERVICE || CHANNEL_UUIDS.has(ch.characteristic.uuid)
 }
 
 /**
@@ -317,7 +330,7 @@ async function readCharGaps(
     const fresh = prev?.at && prev.at >= rec.linkStart
     const readable = !!ch.characteristic.properties?.read
     // Notify-only characteristics have nothing to read; SMP is read over SMP.
-    if ((fresh && !force) || !readable || isSmp(ch)) {
+    if ((fresh && !force) || !readable || isChannel(ch)) {
       if (!prev)
         putCharacteristic(rec, describeChar(ch))
       onProgress()
