@@ -317,6 +317,10 @@ audio:
   silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
   silent-device-cta: Audio-Einstellungen öffnen
+  silent-ground-eyebrow: GERÄT AM BODEN LAUTLOS
+  silent-ground-title: „Lautlos am Boden“ ist an
+  silent-ground-body: 'In diesem Modus bleibt der Summer am Boden stumm — auch bei Simulatorwerten und auch, solange das Gerät mit dem Konfigurator verbunden ist. Schalte ihn unter Verhalten aus, um den Simulator am Boden zu hören.'
+  silent-ground-cta: Verhalten öffnen
   preset-strong-sink: −3 m/s
   preset-zero: '0'
   preset-weak-climb: +1 m/s

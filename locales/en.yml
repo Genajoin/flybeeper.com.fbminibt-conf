@@ -422,6 +422,10 @@ audio:
   silent-device-title: Buzzer is silent
   silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
   silent-device-cta: Open audio settings
+  silent-ground-eyebrow: DEVICE SILENT ON THE GROUND
+  silent-ground-title: Silent on the ground is on
+  silent-ground-body: 'The device keeps its buzzer muted on the ground in this mode — simulator values included, even while it is connected to the configurator. Turn it off in Behaviour settings to hear the simulator on the ground.'
+  silent-ground-cta: Open behaviour settings
   preset-strong-sink: -3 m/s
   preset-zero: '0'
   preset-weak-climb: +1 m/s
