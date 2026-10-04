@@ -37,7 +37,9 @@ const frac = computed(() => {
   return Math.max(0, Math.min(1, f))
 })
 
-const zeroPct = computed(() => ((0 - props.min) / (props.max - props.min)) * 100)
+// Zoomed in, zero can sit outside the window — pin the bar's anchor to the
+// nearer edge so the bar never runs off the track.
+const zeroPct = computed(() => Math.max(0, Math.min(100, ((0 - props.min) / (props.max - props.min)) * 100)))
 const sinkBarRightPct = computed(() => 100 - Math.max(frac.value * 100, zeroPct.value))
 const climbBarLeftPct = computed(() => Math.min(frac.value * 100, zeroPct.value))
 
