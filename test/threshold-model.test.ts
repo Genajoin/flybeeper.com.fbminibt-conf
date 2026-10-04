@@ -19,6 +19,25 @@ function firmwareSounds(p: ThresholdParams, vario: number, avg: number): boolean
   return vario > climbTh || vario < p.sinkOn
 }
 
+/** Owner's check preset "climb_tone_off": hold the climb tone down to −0.4. */
+const CLIMB_HOLD: ThresholdParams = { climbOn: 10, climbOff: -40, sinkOn: -250, sinkOff: -180, hyst: 5 }
+
+/** Linear ramp at `ratePerS` m/s per second, one sample per 40 ms tick. */
+function ramp(fromCm: number, toCm: number, ratePerS: number): number[] {
+  const step = ratePerS * 100 * 0.04 * Math.sign(toCm - fromCm)
+  const out: number[] = []
+  for (let v = fromCm; step > 0 ? v <= toCm : v >= toCm; v += step)
+    out.push(Math.round(v))
+  return out
+}
+
+/** Vario value at which the tone first went silent. */
+function offAt(p: ThresholdParams, trace: number[]): number | undefined {
+  const on = run(p, trace)
+  const i = on.findIndex((x, k) => k > 0 && on[k - 1] && !x)
+  return i < 0 ? undefined : trace[i]
+}
+
 /** Feed a vario trace at 40 ms ticks, deciding on every tick. */
 function run(p: ThresholdParams, trace: number[]) {
   let ema = trace[0] * 10
@@ -31,12 +50,12 @@ function run(p: ThresholdParams, trace: number[]) {
 }
 
 describe('threshold model', () => {
-  it('matches the firmware exactly when OFF = ON', () => {
+  it('matches the firmware exactly when OFF = ON and the weakening margin is 0', () => {
     const p = firmwareParams(5, -250, 25)
     for (let vario = -400; vario <= 400; vario += 5) {
       for (let avg = -400; avg <= 400; avg += 15) {
         for (const prev of [false, true])
-          expect(decide(p, prev, vario, avg).toneOn).toBe(firmwareSounds(p, vario, avg))
+          expect(decide(p, prev, vario, avg, 0).toneOn).toBe(firmwareSounds(p, vario, avg))
       }
     }
   })
@@ -75,10 +94,32 @@ describe('threshold model', () => {
     expect(run(p, Array.from({ length: 50 }, () => 20)).at(-1)).toBe(true)
   })
 
+  it('a slow fade (0.2 m/s per second, the demo) keeps the climb hold down to ClimbOff', () => {
+    const trace = [...Array.from({ length: 25 }, () => 100), ...ramp(100, -100, 0.2)]
+    expect(offAt(CLIMB_HOLD, trace)).toBe(-40)
+  })
+
+  it('a thermal dropping out (2 m/s per second) exits early at ClimbOn + hyst', () => {
+    const trace = [...Array.from({ length: 25 }, () => 150), ...ramp(150, -100, 2)]
+    const v = offAt(CLIMB_HOLD, trace)!
+    expect(v).toBeGreaterThan(0)
+    expect(v).toBeLessThanOrEqual(15)
+  })
+
+  it('hyst = 0 switches the trend logic off: even a drop-out holds to ClimbOff', () => {
+    const p = { ...CLIMB_HOLD, hyst: 0 }
+    const trace = [...Array.from({ length: 25 }, () => 150), ...ramp(150, -100, 2)]
+    // 8 cm per tick at this rate: the first sample at or below −0.40.
+    const v = offAt(p, trace)!
+    expect(v).toBeLessThanOrEqual(-40)
+    expect(v).toBeGreaterThan(-48)
+    expect(soundParams(10, -40, -250, -180, 0).hyst).toBe(0)
+  })
+
   it('soundParams treats a "holds to" value on the wrong side as no hold', () => {
     // Old firmware defaults: climb_off +0.30 > climb_on, sink_off −2.70 < sink_on.
     expect(soundParams(5, 30, -250, -270, 25)).toEqual(firmwareParams(5, -250, 25))
-    expect(soundParams(10, 5, -70, -60, 0)).toEqual({ climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 25 })
+    expect(soundParams(10, 5, -70, -60, 0)).toEqual({ climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 0 })
     // A sink window reaching over the climb hold is cut at it.
     expect(soundParams(10, 5, -40, 20, 25).sinkOff).toBe(5)
   })

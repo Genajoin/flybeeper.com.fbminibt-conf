@@ -18,8 +18,17 @@
  * The firmware is stateless: the sound is on iff `vario > climb_th` or
  * `vario < sink_on`. The model adds one memory bit (XCTracer's toneIsOn): once
  * on, the sound turns off only inside [SinkOff … ClimbOffEff]. With
- * ClimbOff = ClimbOn and SinkOff = SinkOn the memory has nothing to hold and
- * the behaviour is identical to the firmware.
+ * ClimbOff = ClimbOn and SinkOff = SinkOn the memory has nothing to hold.
+ *
+ * Two deliberate departures from the firmware's trend logic (owner's call):
+ *  - "weakening" needs the reading to sit more than WEAKENING_MARGIN_CM below
+ *    the average, not just below it. Any steady descent puts the reading under
+ *    the lagging EMA, so the firmware rule fires on every slow fade and the
+ *    early exit swallows the ClimbOff hold entirely;
+ *  - hyst = 0 switches the trend logic off (pure XCTracer). The firmware
+ *    replaces hyst ≤ 0 with 25 instead.
+ * With margin 0 and hyst > 0 decide() is still exactly the firmware rule when
+ * OFF = ON (see the test).
  */
 
 /** All values in cm/s, as on the wire. */
@@ -49,12 +58,23 @@ export function emaValue(emaX10: number): number {
 }
 
 /**
- * Climb is weakening: the current reading is below the average and the average
- * itself is still above ClimbOn. Same expression as the firmware's
- * `is_climb_decrease`.
+ * How far below its average the vario must be for the climb to count as
+ * weakening, cm/s. The firmware EMA (9/10 per 40 ms tick) lags a steady
+ * descent by ≈ 0.36 s × rate: 0.2 m/s per second (the demo, a slowly fading
+ * thermal) lags 6–7 cm/s, 0.5 m/s per second 17–18, a thermal dropping out at
+ * 1–2 m/s per second 35–72. 15 cm/s sits at ≈ 0.45 m/s per second: twice the
+ * demo's rate, so a slow fade keeps the ClimbOff hold and a real drop-out
+ * still exits early.
  */
-export function isWeakening(p: ThresholdParams, varioCm: number, emaCm: number): boolean {
-  return varioCm < emaCm && emaCm > p.climbOn
+export const WEAKENING_MARGIN_CM = 15
+
+/**
+ * Climb is weakening: the reading is clearly (more than `margin`) below its
+ * average and the average itself is still above ClimbOn. With margin 0 this
+ * is the firmware's `is_climb_decrease`. Never true with hyst = 0.
+ */
+export function isWeakening(p: ThresholdParams, varioCm: number, emaCm: number, margin = WEAKENING_MARGIN_CM): boolean {
+  return p.hyst > 0 && emaCm - varioCm > margin && emaCm > p.climbOn
 }
 
 /** Thresholds in effect right now, given the trend. */
@@ -81,8 +101,8 @@ export type Reason =
  * One decision, as the firmware takes it in a pause. Returns the new on/off
  * state and why.
  */
-export function decide(p: ThresholdParams, toneOn: boolean, varioCm: number, emaCm: number): { toneOn: boolean, reason: Reason } {
-  const weakening = isWeakening(p, varioCm, emaCm)
+export function decide(p: ThresholdParams, toneOn: boolean, varioCm: number, emaCm: number, margin = WEAKENING_MARGIN_CM): { toneOn: boolean, reason: Reason } {
+  const weakening = isWeakening(p, varioCm, emaCm, margin)
   const { climbOnEff, climbOffEff } = effectiveThresholds(p, weakening)
   if (varioCm > climbOnEff)
     return { toneOn: true, reason: 'climb' }
@@ -142,5 +162,6 @@ export function soundParams(climbOn: number, climbOff: number | null, sinkOn: nu
   const cf = climbOff === null || climbOff > climbOn ? climbOn : climbOff
   let sf = sinkOff === null || sinkOff < sinkOn ? sinkOn : sinkOff
   sf = Math.min(sf, Math.max(cf, sinkOn))
-  return { climbOn, climbOff: Math.max(cf, sf), sinkOn, sinkOff: sf, hyst: hyst > 0 ? hyst : 25 }
+  // hyst = 0 means "no early exit" here, unlike the firmware (see header).
+  return { climbOn, climbOff: Math.max(cf, sf), sinkOn, sinkOff: sf, hyst: Math.max(0, hyst) }
 }
