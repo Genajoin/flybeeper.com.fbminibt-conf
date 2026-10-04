@@ -1,43 +1,33 @@
-import type { Ref } from 'vue'
-import { useStorage } from '@vueuse/core'
 import type { Reason, ThresholdParams } from '~/utils/threshold-model'
 import {
   FIRMWARE_TICK_MS,
-  HUGO_SNIFFER,
-  XCTRACER_DEFAULT,
   decide,
   effectiveThresholds,
   emaStep,
   emaValue,
-  firmwareParams,
   isWeakening,
-  normalizeParams,
+  soundParams,
   zonesFor,
 } from '~/utils/threshold-model'
 
 /**
- * Threshold lab: the sound emulator's ClimbOn/ClimbOff/SinkOn/SinkOff + trend
- * hysteresis, shared by the curve chart (zones, live overlay), the lab panel
- * (fields, presets, status) and SimulatorControls (which runs the emulator).
+ * Sound model state shared by the curve chart (zones, live overlay), the sound
+ * panel (status, history, zone list) and SimulatorControls (which runs the
+ * emulator). The thresholds are the device's own sound settings — Start
+ * climbing/sinking, "tone holds down/up to" and the early-exit hysteresis —
+ * edited in the Sound panel or by dragging their lines on the chart.
  *
- * Emulator only. Nothing here is written to the device: the firmware does not
- * use ClimbOff/SinkOff yet, and the device's own climb_tone_off/sink_tone_off
- * characteristics mean something else. While `linked`, the lab mirrors the
- * device's current ClimbOn/SinkOn/hysteresis (= today's firmware behaviour);
- * the first edit detaches it into a local experiment kept in localStorage.
+ * The current firmware ignores the two "holds to" settings; the browser
+ * emulator already plays them, so the pilot can hear the idea before it ships.
  */
 
 const CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
+const CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
 const SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
+const SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
 const HYST_UUID = '0e984fe9-534c-4f13-969c-58ce03d33527'
 
-export type LabPreset = 'flybeeper' | 'xctracer' | 'hugo' | 'custom'
 export type Scenario = 'demo'
-
-interface Stored {
-  linked: boolean
-  params: ThresholdParams
-}
 
 /**
  * Keyframes in [seconds, m/s]; linear in between, looped until stopped (the
@@ -54,8 +44,6 @@ const SCENARIOS: Record<Scenario, [number, number][]> = {
 
 /** Seconds in the sniffer window before the panel calls it "stuck". */
 export const STUCK_AFTER_S = 5
-
-let stored: Ref<Stored> | null = null
 
 const live = reactive({
   /** True while an emulator loop is running (SimulatorControls mounted). */
@@ -100,51 +88,20 @@ export function useThresholdLab() {
   const bt = useBluetoothStore()
   const settings = useSettingsStore()
 
-  if (!stored)
-    stored = useStorage<Stored>('fb:threshold-lab-v1', { linked: true, params: { ...XCTRACER_DEFAULT } }, undefined, { mergeDefaults: true })
-  const st = stored
-
   function readCmS(uuid: string): number | null {
     const v = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)?.formattedValue
       ?? settings.local?.[uuid]
     return typeof v === 'number' ? Math.round(v * 100) : null
   }
 
-  const deviceParams = computed<ThresholdParams>(() =>
-    firmwareParams(readCmS(CLIMB_ON_UUID) ?? 5, readCmS(SINK_ON_UUID) ?? -250, readCmS(HYST_UUID) ?? 25),
-  )
-
-  const linked = computed(() => st.value.linked)
-  const params = computed<ThresholdParams>(() => st.value.linked ? deviceParams.value : st.value.params)
-
-  const preset = computed<LabPreset>(() => {
-    if (st.value.linked)
-      return 'flybeeper'
-    const same = (a: ThresholdParams, b: ThresholdParams) =>
-      a.climbOn === b.climbOn && a.climbOff === b.climbOff && a.sinkOn === b.sinkOn && a.sinkOff === b.sinkOff && a.hyst === b.hyst
-    if (same(st.value.params, XCTRACER_DEFAULT))
-      return 'xctracer'
-    if (same(st.value.params, HUGO_SNIFFER))
-      return 'hugo'
-    return 'custom'
-  })
-
-  function selectPreset(p: LabPreset) {
-    if (p === 'flybeeper')
-      st.value = { ...st.value, linked: true }
-    else if (p === 'xctracer')
-      st.value = { linked: false, params: { ...XCTRACER_DEFAULT } }
-    else if (p === 'hugo')
-      st.value = { linked: false, params: { ...HUGO_SNIFFER } }
-    else if (st.value.linked)
-      st.value = { linked: false, params: { ...deviceParams.value } }
-  }
-
-  /** Edit one value (cm/s). Detaches from the device on the first edit. */
-  function setParam(key: keyof ThresholdParams, cmS: number) {
-    const base = st.value.linked ? deviceParams.value : st.value.params
-    st.value = { linked: false, params: normalizeParams({ ...base, [key]: Math.round(cmS) }, key) }
-  }
+  /** The sound settings from the Sound panel, ordered for the model. */
+  const params = computed<ThresholdParams>(() => soundParams(
+    readCmS(CLIMB_ON_UUID) ?? 5,
+    readCmS(CLIMB_OFF_UUID),
+    readCmS(SINK_ON_UUID) ?? -250,
+    readCmS(SINK_OFF_UUID),
+    readCmS(HYST_UUID) ?? 25,
+  ))
 
   const zones = computed(() => zonesFor(params.value))
 
@@ -186,12 +143,7 @@ export function useThresholdLab() {
   }
 
   return {
-    linked,
     params,
-    deviceParams,
-    preset,
-    selectPreset,
-    setParam,
     zones,
     live: readonly(live),
     emaCm,

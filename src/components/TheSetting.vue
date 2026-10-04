@@ -53,6 +53,10 @@ function getStepByFormatDescriptor() {
 }
 
 const inputType = computed(() => getTypeFromPresentationFormat())
+
+// Longer description behind a "?" when the locale has one (help.<uuid>).
+const helpKey = computed(() => te(`help.${ch.characteristic.uuid}`) ? `help.${ch.characteristic.uuid}` : null)
+const helpOpen = ref(false)
 </script>
 
 <template>
@@ -67,8 +71,11 @@ const inputType = computed(() => getTypeFromPresentationFormat())
       @input="handelChange"
     >
     <label class="row__label" :for="ch.characteristic.uuid">
-      {{ getTranslation() }}
+      {{ getTranslation() }}<SettingHelpButton v-if="helpKey" v-model="helpOpen" :text="t(helpKey)" />
     </label>
+    <p v-if="helpKey && helpOpen" class="row__help">
+      {{ t(helpKey) }}
+    </p>
   </div>
 </template>
 
@@ -88,6 +95,18 @@ const inputType = computed(() => getTypeFromPresentationFormat())
   font-size: var(--ck-fs-body);
   color: var(--ck-ink);
   text-align: left;
+}
+
+.row__help {
+  contain: inline-size;
+  grid-column: 1 / -1;
+  margin: -6px 0 4px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--ck-signal);
+  font-family: var(--ck-font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ck-ink);
 }
 
 .row__input {

@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { ThresholdParams } from '../src/utils/threshold-model'
 import {
-  HUGO_SNIFFER,
-  XCTRACER_DEFAULT,
   decide,
   emaStep,
   emaValue,
   firmwareParams,
-  normalizeParams,
+  soundParams,
   zonesFor,
 } from '../src/utils/threshold-model'
+
+const XCTRACER_DEFAULT: ThresholdParams = { climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 0 }
+const HUGO_SNIFFER: ThresholdParams = { climbOn: 10, climbOff: 10, sinkOn: -40, sinkOff: 5, hyst: 0 }
 
 /** The firmware's stateless rule, verbatim from buzzer.c. */
 function firmwareSounds(p: ThresholdParams, vario: number, avg: number): boolean {
@@ -74,14 +75,12 @@ describe('threshold model', () => {
     expect(run(p, Array.from({ length: 50 }, () => 20)).at(-1)).toBe(true)
   })
 
-  it('normalizeParams keeps SinkOn ≤ SinkOff ≤ ClimbOff ≤ ClimbOn', () => {
-    const on = normalizeParams({ ...XCTRACER_DEFAULT, climbOn: -80 }, 'climbOn')
-    expect(on).toEqual({ climbOn: -80, climbOff: -80, sinkOn: -80, sinkOff: -80, hyst: 0 })
-    // OFF thresholds stop at their neighbours, the ON ones stay put.
-    expect(normalizeParams({ ...XCTRACER_DEFAULT, climbOff: 50 }, 'climbOff')).toEqual({ ...XCTRACER_DEFAULT, climbOff: 10 })
-    expect(normalizeParams({ ...XCTRACER_DEFAULT, climbOff: -500 }, 'climbOff')).toEqual({ ...XCTRACER_DEFAULT, climbOff: -60 })
-    expect(normalizeParams({ ...XCTRACER_DEFAULT, sinkOff: 20 }, 'sinkOff')).toEqual({ ...XCTRACER_DEFAULT, sinkOff: 5 })
-    expect(normalizeParams({ ...XCTRACER_DEFAULT, hyst: -3 }).hyst).toBe(0)
+  it('soundParams treats a "holds to" value on the wrong side as no hold', () => {
+    // Old firmware defaults: climb_off +0.30 > climb_on, sink_off −2.70 < sink_on.
+    expect(soundParams(5, 30, -250, -270, 25)).toEqual(firmwareParams(5, -250, 25))
+    expect(soundParams(10, 5, -70, -60, 0)).toEqual({ climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 25 })
+    // A sink window reaching over the climb hold is cut at it.
+    expect(soundParams(10, 5, -40, 20, 25).sinkOff).toBe(5)
   })
 
   it('zones: firmware has sink / quiet / early-exit / climb, Hugo has the sniffer window', () => {

@@ -48,6 +48,8 @@ const cpfCurves = computed<iVarioCurves | null>(() => {
 
 const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
 const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
+const CPF_CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
+const CPF_SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
 
 function audioThreshold(uuid: string): number | undefined {
   const ch = audioChars.value.find(c => c.characteristic.uuid === uuid)
@@ -57,21 +59,6 @@ function audioThreshold(uuid: string): number | undefined {
 
 const climbOn = computed(() => audioThreshold(CPF_CLIMB_ON_UUID))
 const sinkOn = computed(() => audioThreshold(CPF_SINK_ON_UUID))
-
-// The chart's CLIMB-ON / SINK-ON lines follow the threshold lab. While the lab
-// is linked to the device (FlyBeeper today) they ARE the device thresholds and
-// dragging them edits the device as before; once the pilot experiments, they
-// move the lab's local values and the device settings stay untouched.
-const lab = useThresholdLab()
-const chartClimbOn = computed(() => lab.linked.value ? climbOn.value : lab.params.value.climbOn)
-const chartSinkOn = computed(() => lab.linked.value ? sinkOn.value : lab.params.value.sinkOn)
-function onChartThreshold(key: 'climbOn' | 'sinkOn', valueCmS: number) {
-  if (!lab.linked.value) {
-    lab.setParam(key, valueCmS)
-    return
-  }
-  writeThreshold(key === 'climbOn' ? CPF_CLIMB_ON_UUID : CPF_SINK_ON_UUID, valueCmS)
-}
 
 // The chart emits cm/s; underlying BLE char stores m/s, so divide by 100
 // when writing back. SettingsPanel picks up the dirty bit via the BleChar's
@@ -244,10 +231,12 @@ function selectPreset(v: PresetKey | 'custom') {
             <CurveEditor
               v-else-if="cpfReady"
               :curves-override="cpfCurves"
-              :climb-on="chartClimbOn"
-              :sink-on="chartSinkOn"
-              @update:climb-on="onChartThreshold('climbOn', $event)"
-              @update:sink-on="onChartThreshold('sinkOn', $event)"
+              :climb-on="climbOn"
+              :sink-on="sinkOn"
+              @update:climb-on="writeThreshold(CPF_CLIMB_ON_UUID, $event)"
+              @update:sink-on="writeThreshold(CPF_SINK_ON_UUID, $event)"
+              @update:climb-off="writeThreshold(CPF_CLIMB_OFF_UUID, $event)"
+              @update:sink-off="writeThreshold(CPF_SINK_OFF_UUID, $event)"
             />
             <p v-else class="empty">
               {{ t('msg.fetching') }}…

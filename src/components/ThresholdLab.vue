@@ -1,44 +1,25 @@
 <script setup lang="ts">
-import type { LabPreset } from '~/composables/useThresholdLab'
-import type { ThresholdParams, ZoneKind } from '~/utils/threshold-model'
+import type { ZoneKind } from '~/utils/threshold-model'
 import { STUCK_AFTER_S } from '~/composables/useThresholdLab'
 import { effectiveThresholds } from '~/utils/threshold-model'
 
 /**
- * Threshold lab panel (emulator only): ClimbOn/Off, SinkOn/Off and the trend
- * hysteresis, presets to compare against, the live sound
- * state with its reason, and the zone legend. Nothing here reaches the device.
+ * What the sound emulator is doing, under the simulator: the current state
+ * and why, the last 20 s on a time axis, and the zone legend. The thresholds
+ * themselves are the device's sound settings in the panel on the right.
+ * Each section folds away; the choice is remembered per browser.
  */
 const { t } = useI18n()
 const lab = useThresholdLab()
-const { source } = useAudioSource()
 
 function ms(cmS: number): string {
   const v = cmS / 100
   return `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(2)}`
 }
 
-const presetOptions = computed(() => [
-  { label: t('lab.preset-flybeeper'), value: 'flybeeper' as LabPreset },
-  { label: t('lab.preset-xctracer'), value: 'xctracer' as LabPreset },
-  { label: t('lab.preset-hugo'), value: 'hugo' as LabPreset },
-  { label: t('lab.preset-custom'), value: 'custom' as LabPreset },
-])
-
-const FIELDS: { key: keyof ThresholdParams, label: string, hint: string }[] = [
-  { key: 'climbOn', label: 'lab.field-climb-on', hint: 'lab.hint-climb-on' },
-  { key: 'climbOff', label: 'lab.field-climb-off', hint: 'lab.hint-climb-off' },
-  { key: 'sinkOn', label: 'lab.field-sink-on', hint: 'lab.hint-sink-on' },
-  { key: 'sinkOff', label: 'lab.field-sink-off', hint: 'lab.hint-sink-off' },
-  { key: 'hyst', label: 'lab.field-hyst', hint: 'lab.hint-hyst' },
-]
-
-function onField(key: keyof ThresholdParams, evt: Event) {
-  const v = Number.parseFloat((evt.target as HTMLInputElement).value.replace(',', '.'))
-  if (Number.isFinite(v))
-    lab.setParam(key, v * 100)
-  else
-    (evt.target as HTMLInputElement).value = (lab.params.value[key] / 100).toFixed(2)
+const open = useLocalStorage('sound-panel-open', { now: true, history: true, zones: true }, { mergeDefaults: true })
+function onToggle(key: 'now' | 'history' | 'zones', evt: Event) {
+  open.value = { ...open.value, [key]: (evt.target as HTMLDetailsElement).open }
 }
 
 const live = lab.live
@@ -73,61 +54,31 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
 
 <template>
   <section class="lab">
-    <CkEyebrow block>
-      {{ t('lab.title') }}
-    </CkEyebrow>
-
-    <CkSegmentedControl
-      class="lab__presets"
-      :model-value="lab.preset.value"
-      :options="presetOptions"
-      :aria-label="t('lab.title')"
-      @update:model-value="lab.selectPreset"
-    />
-    <p class="lab__badge" :class="{ 'lab__badge--local': !lab.linked.value }">
-      {{ lab.linked.value ? t('lab.badge-linked') : t('lab.badge-local') }}
-    </p>
-    <p v-if="source === 'device' && !lab.linked.value" class="lab__warn">
-      {{ t('lab.device-note') }}
-    </p>
-
-    <div class="lab__fields">
-      <label v-for="f in FIELDS" :key="f.key" class="lab__field">
-        <span class="lab__field-label">{{ t(f.label) }}</span>
-        <span class="lab__field-row">
-          <input
-            class="lab__input"
-            type="number"
-            inputmode="decimal"
-            step="0.05"
-            :min="f.key === 'hyst' ? 0 : undefined"
-            :value="(lab.params.value[f.key] / 100).toFixed(2)"
-            @change="onField(f.key, $event)"
-          >
-          <span class="lab__unit">m/s</span>
-        </span>
-        <span class="lab__hint">{{ t(f.hint) }}</span>
-      </label>
-    </div>
-
-    <div class="lab__status" :class="{ 'lab__status--on': live.toneOn }" aria-live="polite">
-      <div class="lab__status-head">
-        <span class="lab__state">{{ live.toneOn ? t('lab.on') : t('lab.off') }}</span>
-        <span class="lab__vario">{{ ms(live.varioCm) }} m/s</span>
+    <details class="lab__sec" :open="open.now" @toggle="onToggle('now', $event)">
+      <summary>{{ t('lab.sec-now') }}</summary>
+      <div class="lab__status" :class="{ 'lab__status--on': live.toneOn }" aria-live="polite">
+        <div class="lab__status-head">
+          <span class="lab__state">{{ live.toneOn ? t('lab.on') : t('lab.off') }}</span>
+          <span class="lab__vario">{{ ms(live.varioCm) }} m/s</span>
+        </div>
+        <p class="lab__reason">
+          {{ reasonText }}
+        </p>
+        <p class="lab__ema">
+          {{ t('lab.ema', { ema: ms(lab.emaCm.value) }) }} · {{ trendText }}
+        </p>
       </div>
-      <p class="lab__reason">
-        {{ reasonText }}
+      <p v-if="stuck" class="lab__warn lab__warn--stuck">
+        {{ t('lab.stuck', { s: live.stuckS, so: ms(lab.params.value.sinkOn), sf: ms(lab.params.value.sinkOff) }) }}
       </p>
-      <p class="lab__ema">
-        {{ t('lab.ema', { ema: ms(lab.emaCm.value) }) }} · {{ trendText }}
-      </p>
-    </div>
-    <LabHistory />
-    <p v-if="stuck" class="lab__warn lab__warn--stuck">
-      {{ t('lab.stuck', { s: live.stuckS, so: ms(lab.params.value.sinkOn), sf: ms(lab.params.value.sinkOff) }) }}
-    </p>
+    </details>
 
-    <details class="lab__zones" open>
+    <details class="lab__sec" :open="open.history" @toggle="onToggle('history', $event)">
+      <summary>{{ t('lab.hist-title') }}</summary>
+      <LabHistory />
+    </details>
+
+    <details class="lab__sec" :open="open.zones" @toggle="onToggle('zones', $event)">
       <summary>{{ t('lab.zones') }}</summary>
       <LabZoneText v-for="k in zoneKinds" :key="k" :kind="k" class="lab__zone" />
     </details>
@@ -143,25 +94,8 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
   border-top: var(--ck-stroke-rule) solid var(--ck-ink);
 }
 
-.lab__presets {
-  display: flex;
-}
-
-.lab__badge,
 .lab__warn {
   margin: 0;
-  font-family: var(--ck-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.3px;
-  color: var(--ck-dim);
-}
-
-.lab__badge--local {
-  color: var(--ck-signal);
-  font-weight: 700;
-}
-
-.lab__warn {
   padding: 8px 10px;
   border: var(--ck-stroke-rule) solid var(--ck-signal);
   color: var(--ck-ink);
@@ -171,51 +105,6 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
 
 .lab__warn--stuck {
   border-color: #e30613;
-}
-
-.lab__fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-.lab__field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.lab__field-label {
-  font-family: var(--ck-font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.lab__field-row {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.lab__input {
-  width: 11ch;
-  padding: 4px 6px;
-  font-family: var(--ck-font-mono);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  background: var(--ck-paper);
-  color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  border-radius: 0;
-}
-
-.lab__unit,
-.lab__hint {
-  font-family: var(--ck-font-mono);
-  font-size: 10px;
-  color: var(--ck-dim);
 }
 
 .lab__status {
@@ -262,7 +151,7 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
   color: var(--ck-dim);
 }
 
-.lab__zones summary {
+.lab__sec summary {
   cursor: pointer;
   font-family: var(--ck-font-mono);
   font-size: var(--ck-fs-eyebrow);
@@ -271,7 +160,7 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
   color: var(--ck-dim);
 }
 
-.lab__zone {
+.lab__sec > :not(summary) {
   margin-top: 10px;
 }
 </style>

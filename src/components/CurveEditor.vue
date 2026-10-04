@@ -34,6 +34,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:climbOn', valueCmS: number): void
   (e: 'update:sinkOn', valueCmS: number): void
+  (e: 'update:climbOff', valueCmS: number): void
+  (e: 'update:sinkOff', valueCmS: number): void
 }>()
 
 const sim = useSimulation()
@@ -377,8 +379,7 @@ const thresholdLines = computed(() => {
       label: fmtMsPrecise(props.sinkOn),
     })
   }
-  // ClimbOff / SinkOff live in the threshold lab only (never on the device).
-  // While they coincide with their ON partner they are drawn only when their
+  // ClimbOff / SinkOff as the sound model reads them. While they coincide with their ON partner they are drawn only when their
   // tab is open, so the default chart stays as uncluttered as before.
   const p = lab.params.value
   const offs: [ThresholdKey, number, number][] = [['climb-off', p.climbOff, p.climbOn], ['sink-off', p.sinkOff, p.sinkOn]]
@@ -492,12 +493,15 @@ function onPointerMove(evt: PointerEvent) {
         next = Math.min(next, props.climbOn)
       emit('update:sinkOn', next)
     }
-    // OFF thresholds edit the lab directly; it keeps the four in order.
+    // "Holds to" thresholds stay inside their window: climb-off between
+    // sink-off and climb-on, sink-off between sink-on and climb-off.
     else if (state.thresholdKind === 'climb-off') {
-      lab.setParam('climbOff', next)
+      const p = lab.params.value
+      emit('update:climbOff', clamp(next, p.sinkOff, p.climbOn))
     }
     else if (state.thresholdKind === 'sink-off') {
-      lab.setParam('sinkOff', next)
+      const p = lab.params.value
+      emit('update:sinkOff', clamp(next, p.sinkOn, p.climbOff))
     }
     return
   }

@@ -100,36 +100,6 @@ export function decide(p: ThresholdParams, toneOn: boolean, varioCm: number, ema
   return { toneOn: false, reason: 'quiet' }
 }
 
-/**
- * Keep the five values consistent: SinkOn ≤ SinkOff ≤ ClimbOff ≤ ClimbOn,
- * hyst ≥ 0. `changed` is the field the pilot just edited: an ON threshold
- * wins and pushes the others out of its way, an OFF threshold is clamped
- * between its neighbours.
- */
-export function normalizeParams(p: ThresholdParams, changed?: keyof ThresholdParams): ThresholdParams {
-  const r = { ...p, hyst: Math.max(0, p.hyst) }
-  switch (changed) {
-    case 'climbOn':
-      r.climbOff = Math.min(r.climbOff, r.climbOn)
-      r.sinkOff = Math.min(r.sinkOff, r.climbOff)
-      r.sinkOn = Math.min(r.sinkOn, r.sinkOff)
-      break
-    // An OFF threshold only ever narrows its own memory window: it stops at
-    // its neighbours instead of shoving the ON thresholds along.
-    case 'climbOff':
-      r.climbOff = Math.min(Math.max(r.climbOff, r.sinkOff), r.climbOn)
-      break
-    case 'sinkOff':
-      r.sinkOff = Math.min(Math.max(r.sinkOff, r.sinkOn), r.climbOff)
-      break
-    default: // sinkOn, hyst, or a whole preset
-      r.sinkOff = Math.max(r.sinkOff, r.sinkOn)
-      r.climbOff = Math.max(r.climbOff, r.sinkOff)
-      r.climbOn = Math.max(r.climbOn, r.climbOff)
-  }
-  return r
-}
-
 export type ZoneKind = 'sink' | 'sink-memory' | 'quiet' | 'climb-memory' | 'early-exit' | 'climb'
 
 export interface Zone {
@@ -161,5 +131,16 @@ export function firmwareParams(climbOn: number, sinkOn: number, hyst: number): T
   return { climbOn, climbOff: climbOn, sinkOn, sinkOff: sinkOn, hyst: hyst > 0 ? hyst : 25 }
 }
 
-export const XCTRACER_DEFAULT: ThresholdParams = { climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 0 }
-export const HUGO_SNIFFER: ThresholdParams = { climbOn: 10, climbOff: 10, sinkOn: -40, sinkOff: 5, hyst: 0 }
+/**
+ * The device's sound settings as the model reads them. ClimbOff / SinkOff
+ * only widen a memory window, so a value on the wrong side of its ON partner
+ * (the old firmware defaults are +0.30 above climb-on and −2.70 below
+ * sink-on) means "no hold" — the same as the firmware today, which ignores
+ * both fields.
+ */
+export function soundParams(climbOn: number, climbOff: number | null, sinkOn: number, sinkOff: number | null, hyst: number): ThresholdParams {
+  const cf = climbOff === null || climbOff > climbOn ? climbOn : climbOff
+  let sf = sinkOff === null || sinkOff < sinkOn ? sinkOn : sinkOff
+  sf = Math.min(sf, Math.max(cf, sinkOn))
+  return { climbOn, climbOff: Math.max(cf, sf), sinkOn, sinkOff: sf, hyst: hyst > 0 ? hyst : 25 }
+}

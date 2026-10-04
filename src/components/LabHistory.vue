@@ -97,7 +97,6 @@ const caption = computed(() => {
 <template>
   <div class="hist">
     <div class="hist__head">
-      <span class="hist__title">{{ t('lab.hist-title') }}</span>
       <span class="hist__legend">
         <i class="hist__key hist__key--vario" />{{ t('lab.hist-vario') }}
         <i class="hist__key hist__key--ema" />{{ t('lab.hist-ema') }}
@@ -140,14 +139,6 @@ const caption = computed(() => {
   gap: 4px 12px;
   align-items: baseline;
   justify-content: space-between;
-}
-
-.hist__title {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-dim);
 }
 
 .hist__legend {

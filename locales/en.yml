@@ -566,24 +566,7 @@ diag:
   mail-problem: 'Describe the problem here:'
   mail-attach: 'Please attach the diagnostics file you just downloaded ({file}) — it contains the full report.'
 lab:
-  title: Tone thresholds · experiment
-  badge-linked: 'As the device does today: device values, OFF = ON'
-  badge-local: Experiment — these values live only in this browser and are never written to the device
-  device-note: The device plays by its own firmware and does not know the OFF thresholds yet. Switch the source to Browser to hear the experiment.
-  preset-flybeeper: FlyBeeper today
-  preset-xctracer: XCTracer
-  preset-hugo: Hugo sniffer
-  preset-custom: Custom*
-  field-climb-on: Climb ON
-  field-climb-off: Climb OFF
-  field-sink-on: Sink ON
-  field-sink-off: Sink OFF
-  field-hyst: Trend hysteresis
-  hint-climb-on: climb tone starts above
-  hint-climb-off: and once on, holds down to
-  hint-sink-on: sink tone starts below
-  hint-sink-off: and once on, holds up to
-  hint-hyst: 'while the climb is weakening, the tone stops earlier: at Climb ON + this value. 0 = off.'
+  sec-now: Now
   zones: Zones
   on: TONE ON
   off: SILENT
@@ -623,3 +606,12 @@ lab:
   hist-empty: Move the slider or start the demo
   hist-caption: 'How the trend hysteresis works: while the vario is below its ~0.4 s average (dashed), the climb counts as weakening (strip at the bottom) and the climb threshold (orange line) lifts from {co} to {early} m/s — by {h}. That is why a fading thermal goes silent earlier. Once the vario stops falling and catches up with the average, the threshold drops back to {co}.'
   hist-caption-off: 'Trend hysteresis is off (0): the climb threshold is always {co} m/s, whether the climb is fading or building.'
+help:
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'The climb tone starts once the vario is above this value. Below it is silent unless the tone is being held (see “Climb tone holds down to”). Usually +0.05…+0.20 m/s. A negative value turns the device into a “sniffer” that beeps even in weak sink.'
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Climb tone hold. Once the climb tone is on, it does not stop right below “Start climbing” but holds until the vario drops to this value. Only works when the value is below “Start climbing”; equal or above means no hold. While the climb is weakening the tone still stops earlier (see “Early exit on weakening climb”). The current firmware does not use this setting yet — you can hear it only in the simulator with the Browser source.'
+  b713f438-42fe-46fe-b052-371a3b9e433a: 'The sink tone starts once you sink faster than this value, e.g. −2.5 m/s. Between it and “Start climbing” it is silent.'
+  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sink tone hold. Once the sink tone is on, it holds until the vario rises to this value. Only works when the value is above “Start sinking”: with −2.5 and −1.8 the sink tone starts at −2.5 and stops only at −1.8. A value near zero or above makes the device a “sniffer”: after a sink it keeps beeping in weak zero — but hang there and the tone never stops. The current firmware does not use this setting yet — you can hear it only in the simulator with the Browser source.'
+  0e984fe9-534c-4f13-969c-58ce03d33527: 'Early exit from a thermal. While the climb is weakening — vario below its ~0.4 s average — the climb tone threshold lifts by this value, so the tone stops earlier: a hint the lift is ending. Example: start climbing +0.05 with early exit 0.25 — in a fading thermal the tone goes silent already at +0.30. The device does not accept 0 and uses 0.25 instead. See it over time on the “Last 20 seconds” chart under the simulator.'
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: 'On: a beep changes pitch while it sounds, following the vario. Off: each beep keeps the pitch it started with, so changes step from beep to beep.'
+  7e035080-7417-4393-959a-58505ef9cf4a: 'Vario smoothing, in seconds. Longer is calmer but lags; shorter is quicker and jumpier. It acts on the vario reading the sound is driven by. The simulator bypasses it: the slider value goes straight to the sound.'
+  more: More

@@ -567,24 +567,7 @@ diag:
   mail-problem: 'Beschreibe hier das Problem:'
   mail-attach: 'Bitte hänge die gerade heruntergeladene Diagnosedatei ({file}) an — sie enthält den vollständigen Bericht.'
 lab:
-  title: Tonschwellen · Experiment
-  badge-linked: 'Wie das Gerät heute: Gerätewerte, OFF = ON'
-  badge-local: Experiment — diese Werte gelten nur in diesem Browser und werden nie ins Gerät geschrieben
-  device-note: Das Gerät spielt nach seiner eigenen Firmware und kennt die OFF-Schwellen noch nicht. Stelle die Quelle auf Browser, um das Experiment zu hören.
-  preset-flybeeper: FlyBeeper heute
-  preset-xctracer: XCTracer
-  preset-hugo: Hugo-Sniffer
-  preset-custom: Eigene*
-  field-climb-on: Climb ON
-  field-climb-off: Climb OFF
-  field-sink-on: Sink ON
-  field-sink-off: Sink OFF
-  field-hyst: Trend-Hysterese
-  hint-climb-on: Steigton startet über
-  hint-climb-off: und hält, einmal an, bis
-  hint-sink-on: Sinkton startet unter
-  hint-sink-off: und hält, einmal an, bis
-  hint-hyst: 'solange das Steigen nachlässt, endet der Ton früher: bei Climb ON + diesem Wert. 0 = aus.'
+  sec-now: Jetzt
   zones: Zonen
   on: TON AN
   off: STILL
@@ -624,3 +607,12 @@ lab:
   hist-empty: Schieberegler bewegen oder die Demo starten
   hist-caption: 'So wirkt die Trend-Hysterese: solange das Vario unter seinem Mittel über ~0,4 s liegt (gestrichelt), gilt das Steigen als nachlassend (Streifen unten) und die Steigschwelle (orange Linie) hebt sich von {co} auf {early} m/s — um {h}. Darum verstummt ein auslaufender Bart früher. Sobald das Vario nicht mehr fällt und das Mittel einholt, fällt die Schwelle zurück auf {co}.'
   hist-caption-off: 'Trend-Hysterese ist aus (0): die Steigschwelle ist immer {co} m/s, egal ob das Steigen nachlässt oder zunimmt.'
+help:
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'Der Steigton startet, sobald das Vario über diesem Wert liegt. Darunter ist es still, außer der Ton wird gehalten (siehe „Steigton hält bis“). Üblich sind +0,05…+0,20 m/s. Ein negativer Wert macht das Gerät zum „Sniffer“, der auch bei schwachem Sinken piept.'
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Steigton halten. Läuft der Steigton schon, endet er nicht sofort unter „Beginn des Aufstiegs“, sondern hält, bis das Vario auf diesen Wert fällt. Wirkt nur, wenn der Wert unter „Beginn des Aufstiegs“ liegt; gleich oder darüber heißt kein Halten. Lässt das Steigen nach, endet der Ton trotzdem früher (siehe „Früher Ausstieg“). Die aktuelle Firmware nutzt diese Einstellung noch nicht — hörbar nur im Simulator mit der Quelle Browser.'
+  b713f438-42fe-46fe-b052-371a3b9e433a: 'Der Sinkton startet, sobald du stärker als dieser Wert sinkst, z. B. −2,5 m/s. Zwischen ihm und „Beginn des Aufstiegs“ ist es still.'
+  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sinkton halten. Läuft der Sinkton schon, hält er, bis das Vario auf diesen Wert steigt. Wirkt nur, wenn der Wert über „Beginn des Sinkens“ liegt: bei −2,5 und −1,8 startet der Sinkton bei −2,5 und endet erst bei −1,8. Ein Wert um null oder darüber macht das Gerät zum „Sniffer“: nach dem Sinken piept es auch im schwachen Null — bleibst du dort, hört der Ton nie auf. Die aktuelle Firmware nutzt diese Einstellung noch nicht — hörbar nur im Simulator mit der Quelle Browser.'
+  0e984fe9-534c-4f13-969c-58ce03d33527: 'Früher Ausstieg aus dem Bart. Lässt das Steigen nach — Vario unter seinem Mittel über ~0,4 s —, hebt sich die Steigton-Schwelle um diesen Wert, und der Ton endet früher: ein Hinweis, dass der Bart ausläuft. Beispiel: Beginn des Aufstiegs +0,05 und früher Ausstieg 0,25 — in einer auslaufenden Thermik verstummt der Ton schon bei +0,30. 0 nimmt das Gerät nicht an und nutzt stattdessen 0,25. Den zeitlichen Verlauf zeigt die Grafik „Letzte 20 Sekunden“ unter dem Simulator.'
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: 'An: ein Piep ändert die Tonhöhe während er klingt, dem Vario folgend. Aus: jeder Piep behält die Tonhöhe seines Beginns, Änderungen springen von Piep zu Piep.'
+  7e035080-7417-4393-959a-58505ef9cf4a: 'Glättung der Vario-Anzeige in Sekunden. Länger ist ruhiger, aber träger; kürzer ist schneller und unruhiger. Wirkt auf den Vario-Wert, nach dem der Ton arbeitet. Der Simulator umgeht sie: der Schiebereglerwert geht direkt in den Ton.'
+  more: Mehr
