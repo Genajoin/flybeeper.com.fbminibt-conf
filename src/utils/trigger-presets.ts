@@ -45,7 +45,7 @@ export const TRIGGER_PRESETS = {
   // Weak broken flatland thermals: keep hearing a weak core.
   flatland: { climbOn: 0.05, climbOff: -0.2, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.4 },
   // Strong rough mountain air: fewer false beeps, calmer tone.
-  mountain: { climbOn: 0.3, climbOff: 0.1, sinkOn: -3, sinkOff: -2.5, hyst: 0, average: 0.8 },
+  mountain: { climbOn: 0.3, climbOff: 0.1, sinkOn: -3, sinkOff: -2.5, hyst: 0, average: 0.6 },
   // Air rising slower than the glider sinks: a tone from −0.3.
   sniffer: { climbOn: -0.3, climbOff: -0.4, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.3 },
   // Almost always sounding: sink tone from −0.4, held after sink up to +0.05.
