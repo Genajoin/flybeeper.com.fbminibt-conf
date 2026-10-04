@@ -50,12 +50,12 @@ function run(p: ThresholdParams, trace: number[]) {
 }
 
 describe('threshold model', () => {
-  it('matches the firmware exactly when OFF = ON and the weakening margin is 0', () => {
+  it('matches the firmware exactly when OFF = ON', () => {
     const p = firmwareParams(5, -250, 25)
     for (let vario = -400; vario <= 400; vario += 5) {
       for (let avg = -400; avg <= 400; avg += 15) {
         for (const prev of [false, true])
-          expect(decide(p, prev, vario, avg, 0).toneOn).toBe(firmwareSounds(p, vario, avg))
+          expect(decide(p, prev, vario, avg).toneOn).toBe(firmwareSounds(p, vario, avg))
       }
     }
   })
@@ -94,9 +94,15 @@ describe('threshold model', () => {
     expect(run(p, Array.from({ length: 50 }, () => 20)).at(-1)).toBe(true)
   })
 
-  it('a slow fade (0.2 m/s per second, the demo) keeps the climb hold down to ClimbOff', () => {
+  it('a slow fade (0.2 m/s per second, the demo) already exits early at ClimbOn + hyst', () => {
     const trace = [...Array.from({ length: 25 }, () => 100), ...ramp(100, -100, 0.2)]
-    expect(offAt(CLIMB_HOLD, trace)).toBe(-40)
+    expect(offAt(CLIMB_HOLD, trace)).toBe(15)
+  })
+
+  it('early exit beats the ClimbOff hold on a fade; hyst = 0 gives the hold back', () => {
+    const trace = [...Array.from({ length: 25 }, () => 100), ...ramp(100, -100, 0.2)]
+    expect(offAt({ ...CLIMB_HOLD, hyst: 25 }, trace)).toBe(35)
+    expect(offAt({ ...CLIMB_HOLD, hyst: 0 }, trace)).toBe(-40)
   })
 
   it('a thermal dropping out (2 m/s per second) exits early at ClimbOn + hyst', () => {
