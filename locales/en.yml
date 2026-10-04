@@ -416,8 +416,6 @@ audio:
   source-device: Device
   source-browser: Browser
   source-off: Off
-  demo: ▶ Demo
-  demo-stop: ■ Stop
   silent-device-eyebrow: DEVICE MUTED
   silent-device-title: Buzzer is silent
   silent-device-body: Buzzer volume on the device is set to 0, so you won't hear anything from the simulator.
@@ -584,10 +582,8 @@ lab:
   hint-sink-on: sink tone starts below
   hint-sink-off: and once on, holds up to
   hint-hyst: 'while the climb is weakening, the tone stops earlier: at Climb ON + this value. 0 = off.'
-  scenarios: Scenarios
   sc-weakening: Thermal fading
   sc-sink-exit: Out of a sink
-  sc-climb-drop: Climb turns to sink
   zones: Zones
   on: TONE ON
   off: SILENT

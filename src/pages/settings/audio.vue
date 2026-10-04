@@ -105,6 +105,15 @@ const presets = {
     buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
     buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   },
+  // Loudest sound the firmware team tuned: climb tones sit around 3.5–3.8 kHz,
+  // the piezo's resonance, where it is loudest. From the shared "max-VOLUME"
+  // preset link.
+  'max-volume': {
+    buzzer_vario_dots: [-1400, -100, 0, 40, 40, 100, 200, 300, 450, 600, 1000, 2000],
+    buzzer_frequency_dots: [200, 390, 3500, 3530, 3560, 3615, 3665, 3700, 3730, 3760, 4000, 4500],
+    buzzer_cycle_dots: [850, 790, 320, 135, 715, 595, 430, 325, 265, 210, 120, 100],
+    buzzer_duty_dots: [100, 98, 15, 75, 38, 41, 43, 46, 49, 54, 78, 90],
+  },
 } satisfies Record<string, iVarioCurves>
 
 /**
@@ -112,12 +121,14 @@ const presets = {
  * sound as a whole — curves AND the firmware's BUZZER_CLIMB/SINK_TONE_ON_THRESHOLD
  * (5 / -250 in both FbBT and FbFANET) — so moving "start sinking" off the
  * factory value is a custom sound, and picking DEFAULT puts it back.
+ * MAX VOLUME carries the thresholds it was tuned with (0 / −2.55).
  * AGGRESSIVE / SILENT GND define no thresholds of their own: they only swap
  * the curves and leave the pilot's thresholds as they are.
  */
 interface PresetThresholds { climbOnCmS: number, sinkOnCmS: number }
 const presetThresholds: Partial<Record<keyof typeof presets, PresetThresholds>> = {
-  default: { climbOnCmS: 5, sinkOnCmS: -250 },
+  'default': { climbOnCmS: 5, sinkOnCmS: -250 },
+  'max-volume': { climbOnCmS: 0, sinkOnCmS: -255 },
 }
 
 // Last-known user-customised curves. Module-scoped so it survives audio.vue
@@ -174,6 +185,7 @@ const presetOptions = [
   { label: 'DEFAULT', value: 'default' as const },
   { label: 'AGGRESSIVE', value: 'aggressive' as const },
   { label: 'SILENT GND', value: 'silent-gnd' as const },
+  { label: 'MAX VOLUME', value: 'max-volume' as const },
   { label: 'CUSTOM*', value: 'custom' as const },
 ]
 

@@ -414,8 +414,6 @@ audio:
   source-device: Устройство
   source-browser: Браузер
   source-off: Выкл
-  demo: ▶ Демо
-  demo-stop: ■ Стоп
   silent-device-eyebrow: ЗВУК УСТРОЙСТВА ВЫКЛЮЧЕН
   silent-device-title: Зумер молчит
   silent-device-body: Громкость зумера на устройстве выставлена в 0 — симулятор играть не будет, пока не увеличите её.
@@ -581,10 +579,8 @@ lab:
   hint-sink-on: звук снижения включается ниже
   hint-sink-off: и, начавшись, держится до
   hint-hyst: 'пока набор слабеет, звук гаснет раньше: на Climb ON + это значение. 0 — выкл.'
-  scenarios: Сценарии
   sc-weakening: Термик слабеет
   sc-sink-exit: Выход из снижения
-  sc-climb-drop: Набор сменился снижением
   zones: Зоны
   on: ЗВУК ВКЛ
   off: ТИШИНА

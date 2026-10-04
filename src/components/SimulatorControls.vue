@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Shared simulator UI — audio source toggle, slider with readout, snap presets,
- * Demo walk-through. Mounted inside the combined Sound page (/settings/audio)
+ * two flight scenarios. Mounted inside the combined Sound page (/settings/audio)
  * under the curve editor so the user can drag breakpoints and hear the result
  * without leaving the page.
  *
@@ -11,6 +11,8 @@
  */
 
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+import type { Scenario } from '~/composables/useThresholdLab'
+import { SIM_MAX_MS, SIM_MIN_MS } from '~/composables/useCurveZoom'
 import { startBuzzerEmulator } from '~/composables/useThresholdLab'
 import { recordAction } from '~/utils/sessionJournal'
 
@@ -37,13 +39,25 @@ function readBoolChar(uuid: string): boolean {
 // beep keeps the pitch it started with.
 const smoothFrequencyChange = computed<boolean>(() => readBoolChar(CPF_SMOOTH_FREQ_UUID))
 
-const SLIDER_MIN_MS = -5
-const SLIDER_MAX_MS = 10
-// Step follows the curve editor's zoom: at 10× the user is fine-tuning
-// around the dead-band so we drop to 0.01 m/s; otherwise 0.1 m/s.
-const { zoomLevel } = useCurveZoom()
-const sliderStepMs = computed(() => (zoomLevel.value >= 10 ? 0.01 : 0.1))
-const sliderDecimals = computed(() => (zoomLevel.value >= 10 ? 2 : 1))
+// The slider shows the same vario window as the chart: −5…+10 m/s at 1×, the
+// chart's visible window when zoomed in (useCurveZoom). The step shrinks with
+// the window so a 1.5 m/s span still has fine resolution.
+const { zoomLevel, viewWindowCmS } = useCurveZoom()
+const sliderMinMs = computed(() => viewWindowCmS.value ? viewWindowCmS.value.min / 100 : SIM_MIN_MS)
+const sliderMaxMs = computed(() => viewWindowCmS.value ? viewWindowCmS.value.max / 100 : SIM_MAX_MS)
+const sliderStepMs = computed(() => (zoomLevel.value >= 10 ? 0.01 : zoomLevel.value > 1 ? 0.05 : 0.1))
+const sliderDecimals = computed(() => (zoomLevel.value > 1 ? 2 : 1))
+const sliderTicks = computed(() => {
+  if (!viewWindowCmS.value)
+    return undefined
+  const lo = sliderMinMs.value
+  const hi = sliderMaxMs.value
+  const step = [0.1, 0.2, 0.25, 0.5, 1, 2].find(s => (hi - lo) / s <= 8) ?? 5
+  const out: number[] = []
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step)
+    out.push(Math.round(v * 100) / 100)
+  return out
+})
 
 const sliderMs = ref(sim.valueMs.value)
 const SYNC_EPS = 0.05
@@ -148,7 +162,6 @@ onMounted(() => {
 watch(() => lab.driveMs.value, (v) => {
   if (v === null)
     return
-  stopDemo()
   sliderMs.value = v
 })
 
@@ -176,60 +189,21 @@ watch(source, (next, prev) => {
     sim.setValueCmS(Math.round(sliderMs.value * 100))
 })
 
-/**
- * Demo: starts from the current slider position and sweeps the slider up to
- * +10 m/s, then back down to −5 m/s, looping until the user toggles the
- * button off. Speed is time-based (m/s per second) so frame-rate jitter
- * doesn't compress the sweep.
- */
-const isDemoRunning = ref(false)
-const DEMO_TOP_MS = 10
-const DEMO_BOTTOM_MS = -5
-const DEMO_SPEED_MS_PER_S = 1.05 // slower than feels-natural so single ticks audibly settle
-const DEMO_TICK_MS = 1000 / 60
-let demoTimer: ReturnType<typeof setInterval> | null = null
-let demoDirection: 1 | -1 = 1
-let demoLastTickAt = 0
+const SCENARIOS: { key: Scenario, label: string }[] = [
+  { key: 'weakening', label: 'lab.sc-weakening' },
+  { key: 'sink-exit', label: 'lab.sc-sink-exit' },
+]
 
-function startDemo() {
-  if (isDemoRunning.value)
+function toggleScenario(key: Scenario) {
+  if (lab.activeScenario.value === key) {
+    lab.stopScenario()
+    recordAction('simulator', `scenario stopped: ${key}`)
     return
-  lab.stopScenario()
-  isDemoRunning.value = true
-  recordAction('simulator', `demo sweep started (${source.value}): ${DEMO_BOTTOM_MS} … +${DEMO_TOP_MS} m/s`)
+  }
   if (source.value === 'browser')
     void synth.ensureContext()
-  // Choose direction so we always have somewhere to go from the current
-  // position — if we're already at (or above) the top, head down first.
-  demoDirection = sliderMs.value >= DEMO_TOP_MS ? -1 : 1
-  demoLastTickAt = performance.now()
-  demoTimer = setInterval(() => {
-    const now = performance.now()
-    const dt = (now - demoLastTickAt) / 1000
-    demoLastTickAt = now
-    let next = sliderMs.value + demoDirection * DEMO_SPEED_MS_PER_S * dt
-    if (next >= DEMO_TOP_MS) {
-      next = DEMO_TOP_MS
-      demoDirection = -1
-    }
-    else if (next <= DEMO_BOTTOM_MS) {
-      next = DEMO_BOTTOM_MS
-      demoDirection = 1
-    }
-    sliderMs.value = next
-  }, DEMO_TICK_MS)
-}
-
-function stopDemo() {
-  if (isDemoRunning.value)
-    recordAction('simulator', 'demo sweep stopped')
-  isDemoRunning.value = false
-  if (demoTimer)
-    clearInterval(demoTimer)
-  demoTimer = null
-  // Intentionally leave sliderMs where the loop happened to stop — feels
-  // more natural than snapping back to zero, and the user can keep editing
-  // curves from that vario position right away.
+  recordAction('simulator', `scenario started (${source.value}): ${key}`)
+  lab.runScenario(key)
 }
 
 function onSliderGrab() {
@@ -242,8 +216,6 @@ function onSliderGrab() {
 // this component (curves + simulator), navigating between them tears down
 // the channel cleanly: onUnmounted on one mount-point, onMounted on the next.
 onUnmounted(() => {
-  if (demoTimer)
-    clearInterval(demoTimer)
   stopEmulator?.()
   lab.stopScenario()
   if (sim.isActive.value)
@@ -269,19 +241,23 @@ onUnmounted(() => {
       </div>
       <ClimbrateSlider
         v-model="sliderMs"
-        :min="SLIDER_MIN_MS"
-        :max="SLIDER_MAX_MS"
+        :min="sliderMinMs"
+        :max="sliderMaxMs"
         :step="sliderStepMs"
+        :ticks="sliderTicks"
         @pointerdown="onSliderGrab"
       >
         <template #extra>
           <span class="ctrl__spacer" />
           <button
+            v-for="sc in SCENARIOS"
+            :key="sc.key"
             type="button"
             class="ctrl__demo"
-            @click="isDemoRunning ? stopDemo() : startDemo()"
+            :class="{ 'ctrl__demo--active': lab.activeScenario.value === sc.key }"
+            @click="toggleScenario(sc.key)"
           >
-            ▶ {{ isDemoRunning ? t('audio.demo-stop') : t('audio.demo') }}
+            {{ lab.activeScenario.value === sc.key ? '■' : '▶' }} {{ t(sc.label) }}
           </button>
         </template>
       </ClimbrateSlider>
@@ -359,5 +335,11 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 0;
   text-transform: uppercase;
+}
+
+.ctrl__demo--active {
+  background: var(--ck-ink);
+  border-color: var(--ck-ink);
+  color: var(--ck-paper);
 }
 </style>

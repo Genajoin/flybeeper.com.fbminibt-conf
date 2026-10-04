@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ZoneKind } from '~/utils/threshold-model'
+import { SIM_SPAN_CMS } from '~/composables/useCurveZoom'
 import {
   CURVE_LIMITS,
   CYCLE_DOTS_UUID,
@@ -141,10 +142,14 @@ const baseCenterCmS = computed(() => (baseMinCmS.value + baseMaxCmS.value) / 2)
 // 10× is the high end (fine-tune around zero); 4× was too coarse for the
 // dead-band region just past the climb-on / sink-on thresholds.
 const ZOOM_PRESETS = [1, 2, 10]
-const { zoomLevel } = useCurveZoom()
+const { zoomLevel, viewWindowCmS } = useCurveZoom()
 const zoomCenterCmS = ref(0)
 
-const visibleRangeCmS = computed(() => baseRangeCmS.value / zoomLevel.value)
+// Zoomed in, the window is the simulator slider's span divided by the zoom,
+// so the slider under the chart covers exactly what the chart shows.
+const visibleRangeCmS = computed(() => zoomLevel.value === 1
+  ? baseRangeCmS.value
+  : Math.min(SIM_SPAN_CMS / zoomLevel.value, baseRangeCmS.value))
 const visibleHalfCmS = computed(() => visibleRangeCmS.value / 2)
 
 const viewMinCmS = computed(() => {
@@ -160,6 +165,13 @@ const viewMinCmS = computed(() => {
 const viewMaxCmS = computed(() => viewMinCmS.value + visibleRangeCmS.value)
 const viewRangeCmS = computed(() => viewMaxCmS.value - viewMinCmS.value || 1)
 
+watchEffect(() => {
+  viewWindowCmS.value = zoomLevel.value === 1 ? null : { min: viewMinCmS.value, max: viewMaxCmS.value }
+})
+onBeforeUnmount(() => {
+  viewWindowCmS.value = null
+})
+
 function setZoom(level: number) {
   const fromOverview = zoomLevel.value === 1 && level > 1
   zoomLevel.value = level
@@ -171,7 +183,7 @@ function setZoom(level: number) {
   // the thresholds and the live overlay all sit around there.
   if (fromOverview)
     zoomCenterCmS.value = sim.previewCmS.value
-  const half = baseRangeCmS.value / level / 2
+  const half = visibleHalfCmS.value
   zoomCenterCmS.value = Math.min(
     Math.max(zoomCenterCmS.value, baseMinCmS.value + half),
     baseMaxCmS.value - half,

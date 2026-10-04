@@ -32,21 +32,25 @@ const SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
 const HYST_UUID = '0e984fe9-534c-4f13-969c-58ce03d33527'
 
 export type LabPreset = 'flybeeper' | 'xctracer' | 'hugo' | 'custom'
-export type Scenario = 'weakening' | 'sink-exit' | 'climb-drop'
+export type Scenario = 'weakening' | 'sink-exit'
 
 interface Stored {
   linked: boolean
   params: ThresholdParams
 }
 
-/** Keyframes in [seconds, m/s]; linear in between. */
+/**
+ * Keyframes in [seconds, m/s]; linear in between. Paced like real air — a
+ * vario reading drifts by a few tenths per second, not metres — so the trend
+ * logic and the thresholds have time to show what they do.
+ */
 const SCENARIOS: Record<Scenario, [number, number][]> = {
-  // Thermal fades out slowly: the trend hysteresis cuts the sound early.
-  'weakening': [[0, 0], [1.2, 2], [3, 2], [9, 0], [11, 0]],
-  // Out of a sink, then stuck just below zero: the sniffer window case.
-  'sink-exit': [[0, -2], [1.5, -2], [3.5, -0.2], [15, -0.2]],
-  // Climb collapses into sink.
-  'climb-drop': [[0, 1.5], [1.5, 1.5], [4.5, -0.6], [7, -0.6], [8, -1], [9.5, -1]],
+  // Thermal builds to +2, holds, then fades out into −1 m/s sink
+  // (−0.2 m/s per second): the trend hysteresis cuts the climb tone early.
+  'weakening': [[0, 0], [5, 2], [11, 2], [26, -1], [31, -1]],
+  // Out of a −2.5 m/s sink up into +1 m/s climb (+0.175 m/s per second):
+  // where the sink tone stops and the climb tone starts.
+  'sink-exit': [[0, -2.5], [4, -2.5], [24, 1], [29, 1]],
 }
 
 /** Seconds in the sniffer window before the panel calls it "stuck". */

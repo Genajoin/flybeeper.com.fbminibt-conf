@@ -311,8 +311,6 @@ audio:
   source-device: Gerät
   source-browser: Browser
   source-off: Aus
-  demo: ▶ Demo
-  demo-stop: ■ Stopp
   silent-device-eyebrow: GERÄT STUMM
   silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
@@ -585,10 +583,8 @@ lab:
   hint-sink-on: Sinkton startet unter
   hint-sink-off: und hält, einmal an, bis
   hint-hyst: 'solange das Steigen nachlässt, endet der Ton früher: bei Climb ON + diesem Wert. 0 = aus.'
-  scenarios: Szenarien
   sc-weakening: Thermik lässt nach
   sc-sink-exit: Raus aus dem Sinken
-  sc-climb-drop: Steigen kippt ins Sinken
   zones: Zonen
   on: TON AN
   off: STILL

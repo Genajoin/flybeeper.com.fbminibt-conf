@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { LabPreset, Scenario } from '~/composables/useThresholdLab'
+import type { LabPreset } from '~/composables/useThresholdLab'
 import type { ThresholdParams, ZoneKind } from '~/utils/threshold-model'
 import { STUCK_AFTER_S } from '~/composables/useThresholdLab'
 import { effectiveThresholds } from '~/utils/threshold-model'
 
 /**
  * Threshold lab panel (emulator only): ClimbOn/Off, SinkOn/Off and the trend
- * hysteresis, presets to compare against, scenario playback, the live sound
+ * hysteresis, presets to compare against, the live sound
  * state with its reason, and the zone legend. Nothing here reaches the device.
  */
 const { t } = useI18n()
@@ -39,20 +39,6 @@ function onField(key: keyof ThresholdParams, evt: Event) {
     lab.setParam(key, v * 100)
   else
     (evt.target as HTMLInputElement).value = (lab.params.value[key] / 100).toFixed(2)
-}
-
-const SCENARIOS: { key: Scenario, label: string }[] = [
-  { key: 'weakening', label: 'lab.sc-weakening' },
-  { key: 'sink-exit', label: 'lab.sc-sink-exit' },
-  { key: 'climb-drop', label: 'lab.sc-climb-drop' },
-]
-
-function playScenario(key: Scenario) {
-  if (lab.activeScenario.value === key) {
-    lab.stopScenario()
-    return
-  }
-  lab.runScenario(key)
 }
 
 const live = lab.live
@@ -139,20 +125,6 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
     <p v-if="stuck" class="lab__warn lab__warn--stuck">
       {{ t('lab.stuck', { s: live.stuckS, so: ms(lab.params.value.sinkOn), sf: ms(lab.params.value.sinkOff) }) }}
     </p>
-
-    <div class="lab__scen">
-      <span class="lab__scen-label">{{ t('lab.scenarios') }}</span>
-      <button
-        v-for="s in SCENARIOS"
-        :key="s.key"
-        type="button"
-        class="lab__scen-btn"
-        :class="{ 'lab__scen-btn--active': lab.activeScenario.value === s.key }"
-        @click="playScenario(s.key)"
-      >
-        {{ lab.activeScenario.value === s.key ? '■' : '▶' }} {{ t(s.label) }}
-      </button>
-    </div>
 
     <details class="lab__zones" open>
       <summary>{{ t('lab.zones') }}</summary>
@@ -287,38 +259,6 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
   font-family: var(--ck-font-mono);
   font-size: 11px;
   color: var(--ck-dim);
-}
-
-.lab__scen {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.lab__scen-label {
-  font-family: var(--ck-font-mono);
-  font-size: var(--ck-fs-eyebrow);
-  letter-spacing: var(--ck-track-eyebrow);
-  text-transform: uppercase;
-  color: var(--ck-dim);
-  margin-right: 4px;
-}
-
-.lab__scen-btn {
-  padding: 5px 10px;
-  background: var(--ck-paper);
-  color: var(--ck-ink);
-  border: var(--ck-stroke-rule) solid var(--ck-ink);
-  font-family: var(--ck-font-mono);
-  font-size: 11px;
-  cursor: pointer;
-  border-radius: 0;
-}
-
-.lab__scen-btn--active {
-  background: var(--ck-ink);
-  color: var(--ck-paper);
 }
 
 .lab__zones summary {
