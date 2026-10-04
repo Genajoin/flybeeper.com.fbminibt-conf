@@ -7,7 +7,6 @@ import {
   TRIGGER_PRESET_KEYS,
   TRIGGER_UUIDS,
   matchTriggerPreset,
-  needsNewFirmware,
 } from '~/utils/trigger-presets'
 
 /**
@@ -98,9 +97,6 @@ const summary = computed(() => {
       <p class="trig__nums">
         {{ summary }}
       </p>
-      <p v-if="needsNewFirmware(TRIGGER_PRESETS[shown])" class="trig__fw">
-        {{ t('trig.fw') }}
-      </p>
     </div>
     <p v-else class="trig__desc">
       {{ t('trig.custom-body') }}
@@ -165,11 +161,5 @@ const summary = computed(() => {
   font-size: 11px;
   color: var(--ck-dim);
   font-variant-numeric: tabular-nums;
-}
-
-.trig__fw {
-  margin-top: 6px !important;
-  padding-left: 8px;
-  border-left: 2px solid var(--ck-signal);
 }
 </style>

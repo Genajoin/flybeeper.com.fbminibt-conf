@@ -58,14 +58,6 @@ export type TriggerPresetKey = keyof typeof TRIGGER_PRESETS
 
 export const TRIGGER_PRESET_KEYS = Object.keys(TRIGGER_PRESETS) as TriggerPresetKey[]
 
-/**
- * Relies on what the current firmware does not do yet: the ClimbOff / SinkOff
- * holds, or early exit 0 (the firmware puts 0.25 instead).
- */
-export function needsNewFirmware(v: TriggerValues): boolean {
-  return v.hyst <= 0 || v.climbOff < v.climbOn || v.sinkOff > v.sinkOn
-}
-
 /** The preset the device's values match, or null. Absent values don't count against. */
 export function matchTriggerPreset(cur: Partial<TriggerValues>): TriggerPresetKey | null {
   if (Object.values(cur).every(v => v === undefined))

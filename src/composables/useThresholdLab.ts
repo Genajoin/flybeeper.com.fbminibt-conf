@@ -181,11 +181,6 @@ export interface EmulatorIo {
   varioCm: () => number
   /** Tone params at a vario value, or null when the curves aren't loaded. */
   toneAt: (cmS: number) => { frequencyHz: number, cycleMs: number, dutyPercent: number } | null
-  /**
-   * Run the slider through the vario averaging, as a real sensor reading is.
-   * False for the device source: the firmware simulator bypasses it.
-   */
-  averaged: () => boolean
   /** Firmware "smooth frequency change": retune during a beep. */
   smooth: () => boolean
   toneOn: (frequencyHz: number) => void
@@ -245,7 +240,8 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
     if (air !== lastAir)
       live.engaged = true
     lastAir = air
-    smoothCm = io.averaged() ? averageStep(smoothCm, air, lab.averageMs.value) : air
+    // The simulated value goes through the vario averaging, as a sensor reading does.
+    smoothCm = averageStep(smoothCm, air, lab.averageMs.value)
     const v = Math.round(smoothCm)
     live.airCm = Math.round(air)
     live.varioCm = v

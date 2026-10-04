@@ -52,7 +52,8 @@ export const FIRMWARE_TICK_MS = 40
  * Firmware's vario averaging (ess.c update_average): an EMA on every 16 ms
  * pressure sample with alpha = 16 / vario_average_ms. One emulator tick of
  * `dtMs` folds those samples in. The firmware falls back to 100 ms outside
- * 16…10000 ms. The device's own simulator bypasses it (buzzer.c takes the
+ * 16…10000 ms. The emulator runs the simulated value through it too, as
+ * the device's simulator is meant to (today's buzzer.c still takes the
  * simulated value as is).
  */
 export const PRESSURE_SAMPLE_MS = 16

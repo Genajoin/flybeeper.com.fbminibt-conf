@@ -1,19 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { soundParams } from '../src/utils/threshold-model'
-import { TRIGGER_PRESETS, TRIGGER_PRESET_KEYS, matchTriggerPreset, needsNewFirmware } from '../src/utils/trigger-presets'
+import { TRIGGER_PRESETS, TRIGGER_PRESET_KEYS, matchTriggerPreset } from '../src/utils/trigger-presets'
 
 const cm = (v: number) => Math.round(v * 100)
 
 describe('trigger presets', () => {
-  it('factory is the firmware defaults and runs on the current firmware', () => {
+  it('factory is the firmware defaults', () => {
     expect(TRIGGER_PRESETS.factory).toEqual({ climbOn: 0.05, climbOff: 0.3, sinkOn: -2.5, sinkOff: -2.7, hyst: 0.25, average: 0.1 })
-    expect(needsNewFirmware(TRIGGER_PRESETS.factory)).toBe(false)
-    expect(needsNewFirmware(TRIGGER_PRESETS.sharp)).toBe(false)
-  })
-
-  it('presets relying on holds or early exit 0 are flagged', () => {
-    for (const k of ['flatland', 'mountain', 'sniffer', 'always'] as const)
-      expect(needsNewFirmware(TRIGGER_PRESETS[k])).toBe(true)
   })
 
   it('every preset matches itself and nothing else', () => {

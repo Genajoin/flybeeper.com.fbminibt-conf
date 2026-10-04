@@ -145,7 +145,6 @@ onMounted(() => {
   stopEmulator = startBuzzerEmulator({
     varioCm: () => Math.round(sliderMs.value * 100),
     toneAt,
-    averaged: () => source.value !== 'device',
     smooth: () => smoothFrequencyChange.value,
     toneOn: (hz) => {
       if (source.value === 'browser')
