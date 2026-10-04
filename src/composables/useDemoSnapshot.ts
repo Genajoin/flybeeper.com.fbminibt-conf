@@ -21,7 +21,7 @@ export const DEMO_SETTINGS: Record<string, unknown> = {
   '8a78979b-1425-4160-b34b-ac5aadddeb21': -1.8, // sink-off
   '0e984fe9-534c-4f13-969c-58ce03d33527': 0.05, // climb hysteresis
   'e88b07e7-9035-4afa-9fe8-206ddc34de61': false, // smooth frequency change
-  '7e035080-7417-4393-959a-58505ef9cf4a': 0.5, // vario averaging (s)
+  '7e035080-7417-4393-959a-58505ef9cf4a': 0.1, // vario averaging (s), firmware FB_SETTINGS_VARIO_AVERAGE
 
   // ── curves (raw cm/s, format 0x1B) — byte-identical to firmware
   // factory defaults (FbBT/src/buzzer.h, FbFANET/src/buzzer/buzzer.h).
@@ -81,7 +81,7 @@ export const VIRTUAL_CPF_FORMAT: Record<string, VirtualCpfFormat> = {
   '8a78979b-1425-4160-b34b-ac5aadddeb21': { format: 0x0E, exponent: -2, unit: 'm/s' },
   '0e984fe9-534c-4f13-969c-58ce03d33527': { format: 0x0E, exponent: -2, unit: 'm/s' },
   'e88b07e7-9035-4afa-9fe8-206ddc34de61': { format: 0x01, exponent: 0 },
-  '7e035080-7417-4393-959a-58505ef9cf4a': { format: 0x04, exponent: -1, unit: 'sec' },
+  '7e035080-7417-4393-959a-58505ef9cf4a': { format: 0x0E, exponent: -3, unit: 'sec' }, // int16 ms, cpf_msec
 
   '512d6d89-7a6f-461c-983e-902b68d40f56': { format: 0x1B, exponent: 0 },
   '8c090502-81c4-4d29-8d10-6db20607ace9': { format: 0x1B, exponent: 0 },

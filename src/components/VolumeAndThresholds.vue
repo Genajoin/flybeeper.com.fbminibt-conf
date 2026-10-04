@@ -64,6 +64,13 @@ function setVolume(v: number) {
 
     <div v-if="otherChars.length" class="vt__block">
       <CkEyebrow block>
+        {{ t('trig.title') }}
+      </CkEyebrow>
+      <SoundTriggerPresets :chars="otherChars" />
+    </div>
+
+    <div v-if="otherChars.length" class="vt__block">
+      <CkEyebrow block>
         {{ t('sett.group-audio') }}
       </CkEyebrow>
       <div class="vt__list">

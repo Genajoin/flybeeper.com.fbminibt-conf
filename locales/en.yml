@@ -606,6 +606,27 @@ lab:
   hist-empty: Move the slider or start the demo
   hist-caption: 'How the early exit works: when the vario drops below its ~0.4 s average (dashed), the climb counts as weakening (strip at the bottom) and the climb threshold (orange line) lifts from {co} to {early} m/s — by {h}. The tone stops before the vario reaches {co}, making up for the smoothing lag. Once the vario rises again, the threshold drops back to {co}.'
   hist-caption-off: 'Early exit is off (0): the climb threshold is always {co} m/s, however fast the climb drops.'
+trig:
+  title: When it sounds
+  custom: Own
+  off: off
+  summary: 'Climb {co} (holds to {cf}) · sink {so} (holds to {sf}) · early exit {h} · averaging {avg} s'
+  fw: 'Fully works with new firmware: the current one has no tone hold and puts early exit 0.25 instead of 0. You can hear it now in the simulator with the Browser source.'
+  custom-body: 'The values match no preset — this is your own setup. Pick a preset to set the thresholds, holds, early exit and averaging at once; the sound curves stay as they are.'
+  factory: Factory
+  factory-body: 'As a new device. Climb from +0.05, early exit 0.25 stops the tone as soon as the climb weakens, sink beyond −2.5. Fast averaging.'
+  sharp: Sharp
+  sharp-body: 'Active centring and competition. Least lag: the tone stops as soon as the climb weakens, before zero — you know right away you left the core. Short averaging, sink tone earlier, from −2.0.'
+  flatland: Flatland
+  flatland-body: 'Weak broken thermals. The tone starts at +0.05 and holds down to −0.20 until the climb is fully gone — a weak core is not lost and the tone does not chatter at the threshold. Medium averaging.'
+  mountain: Mountain
+  mountain-body: 'Strong rough thermals. Tone from +0.30, no false beeps from turbulence; holds down to +0.10. Sink beyond −3.0. Long averaging: calmer but lagging.'
+  sniffer: Sniffer
+  sniffer-body: 'Tone already from −0.30: the air is rising, though slower than the glider sinks. Helps find weak lift — like the Flymaster buzzer or Digifly pre-thermal. Between −0.30 and zero the curve plays its low tone.'
+  always: Always on
+  always-body: 'Almost always sounding (Hugo mode). Sink tone already from −0.40, and after sink it holds up to +0.05 — no silence between sink and climb. Silent only when you come from above into −0.40 … +0.10.'
+  quiet: Quiet
+  quiet-body: 'Minimum of sound: ridge soaring, acro, beginners. Climb from +0.30, sink only beyond −4.0 (spiral).'
 help:
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'The climb tone starts once the vario is above this value. Below it is silent unless the tone is being held (see “Climb tone holds down to”). Usually +0.05…+0.20 m/s. A negative value turns the device into a “sniffer” that beeps even in weak sink.'
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Climb tone hold. Once the climb tone is on, it does not stop right below “Start climbing” but holds until the vario drops to this value — so you keep hearing a weak core and the tone does not chatter at the threshold. Only works when the value is below “Start climbing”; equal or above means no hold. It is the opposite of “Early exit on weakening climb”: that one stops the tone earlier, the hold later. Pick one: for the hold set early exit to 0, otherwise it fires first on a fading climb. The current firmware does not use this setting yet — you can hear it only in the simulator with the Browser source.'

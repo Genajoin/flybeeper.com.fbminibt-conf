@@ -103,52 +103,31 @@ const presets = {
   },
 } satisfies Record<string, iVarioCurves>
 
-/**
- * Tone thresholds that belong to a preset, in cm/s. DEFAULT is the factory
- * sound as a whole — curves AND the firmware's BUZZER_CLIMB/SINK_TONE_ON_THRESHOLD
- * (5 / -250 in both FbBT and FbFANET) — so moving "start sinking" off the
- * factory value is a custom sound, and picking DEFAULT puts it back.
- * MAX VOLUME carries the thresholds it was tuned with (0 / −2.55).
- * AGGRESSIVE / SILENT GND define no thresholds of their own: they only swap
- * the curves and leave the pilot's thresholds as they are.
- */
-interface PresetThresholds { climbOnCmS: number, sinkOnCmS: number }
-const presetThresholds: Partial<Record<keyof typeof presets, PresetThresholds>> = {
-  'default': { climbOnCmS: 5, sinkOnCmS: -250 },
-  'max-volume': { climbOnCmS: 0, sinkOnCmS: -255 },
-}
-
 // Last-known user-customised curves. Module-scoped so it survives audio.vue
 // remounts during a session (e.g. user navigates to /settings/power and back).
 // Captured whenever the user leaves the CUSTOM bucket for a preset, so that
 // returning to CUSTOM restores exactly what they had — instead of leaving them
 // staring at the preset's curves with the CUSTOM segment lit.
-let customSnapshot: { curves: iVarioCurves, climbOn?: number, sinkOn?: number } | null = null
+let customSnapshot: iVarioCurves | null = null
 
 type PresetKey = keyof typeof presets
 
 /**
  * Active preset is derived from the live curves — drag a handle and it
  *  auto-switches to CUSTOM because the shape no longer matches any preset.
+ * Curve presets set how the vario sounds; when it sounds (thresholds, holds,
+ * averaging) has its own presets in the right column (SoundTriggerPresets).
  */
 const activePreset = computed<PresetKey | 'custom'>(() => {
   const c = cpfCurves.value
   if (!c)
     return 'custom'
   for (const [name, p] of Object.entries(presets)) {
-    if (isEqual(c, p) && thresholdsMatch(presetThresholds[name as PresetKey]))
+    if (isEqual(c, p))
       return name as PresetKey
   }
   return 'custom'
 })
-
-/** A device without a threshold characteristic cannot contradict the preset. */
-function thresholdsMatch(th: PresetThresholds | undefined): boolean {
-  if (!th)
-    return true
-  const same = (cur: number | undefined, want: number) => cur === undefined || Math.round(cur) === want
-  return same(climbOn.value, th.climbOnCmS) && same(sinkOn.value, th.sinkOnCmS)
-}
 
 function writeCurves(next: iVarioCurves) {
   if (!cpfReady.value)
@@ -182,25 +161,15 @@ function selectPreset(v: PresetKey | 'custom') {
     // Restore the user's last custom sound if we have one stashed. If not
     // (first ever click on CUSTOM with no prior edits), leave it alone —
     // it IS the implicit starting point for the user's custom editing.
-    if (customSnapshot) {
-      writeCurves(cloneDeep(customSnapshot.curves))
-      if (customSnapshot.climbOn !== undefined)
-        writeThreshold(CPF_CLIMB_ON_UUID, customSnapshot.climbOn)
-      if (customSnapshot.sinkOn !== undefined)
-        writeThreshold(CPF_SINK_ON_UUID, customSnapshot.sinkOn)
-    }
+    if (customSnapshot)
+      writeCurves(cloneDeep(customSnapshot))
     return
   }
-  // Leaving CUSTOM for a preset: snapshot the user's work (thresholds too)
-  // so a later CUSTOM click can bring it back.
+  // Leaving CUSTOM for a preset: snapshot the user's work so a later
+  // CUSTOM click can bring it back.
   if (activePreset.value === 'custom' && cpfCurves.value)
-    customSnapshot = { curves: cloneDeep(cpfCurves.value), climbOn: climbOn.value, sinkOn: sinkOn.value }
+    customSnapshot = cloneDeep(cpfCurves.value)
   writeCurves(cloneDeep(presets[v]))
-  const th = presetThresholds[v]
-  if (th) {
-    writeThreshold(CPF_CLIMB_ON_UUID, th.climbOnCmS)
-    writeThreshold(CPF_SINK_ON_UUID, th.sinkOnCmS)
-  }
 }
 </script>
 

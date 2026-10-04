@@ -607,6 +607,27 @@ lab:
   hist-empty: Schieberegler bewegen oder die Demo starten
   hist-caption: 'So wirkt der frühe Ausstieg: fällt das Vario unter sein Mittel über ~0,4 s (gestrichelt), gilt das Steigen als nachlassend (Streifen unten) und die Steigschwelle (orange Linie) hebt sich von {co} auf {early} m/s — um {h}. Der Ton endet, bevor das Vario {co} erreicht — das gleicht die Glättungsverzögerung aus. Steigt das Vario wieder, fällt die Schwelle zurück auf {co}.'
   hist-caption-off: 'Früher Ausstieg ist aus (0): die Steigschwelle ist immer {co} m/s, egal wie schnell das Steigen abbricht.'
+trig:
+  title: Wann es tönt
+  custom: Eigene
+  off: aus
+  summary: 'Steigen {co} (hält bis {cf}) · Sinken {so} (hält bis {sf}) · früher Ausstieg {h} · Mittelung {avg} s'
+  fw: 'Wirkt vollständig mit neuer Firmware: die aktuelle kann kein Halten und setzt für den frühen Ausstieg 0,25 statt 0. Im Simulator mit der Quelle Browser schon jetzt hörbar.'
+  custom-body: 'Die Werte passen zu keinem Preset — das ist deine eigene Einstellung. Wähle ein Preset, um Schwellen, Halten, frühen Ausstieg und Mittelung auf einmal zu setzen; die Tonkurven bleiben.'
+  factory: Werk
+  factory-body: 'Wie ein neues Gerät. Steigen ab +0,05, früher Ausstieg 0,25 beendet den Ton, sobald das Steigen nachlässt, Sinken ab −2,5. Schnelle Mittelung.'
+  sharp: Scharf
+  sharp-body: 'Aktives Zentrieren und Wettkampf. Geringste Verzögerung: der Ton endet, sobald das Steigen nachlässt, noch vor null — du merkst sofort, dass du aus dem Kern bist. Kurze Mittelung, Sinkton früher, ab −2,0.'
+  flatland: Flachland
+  flatland-body: 'Schwache zerrissene Thermik. Ton ab +0,05, hält bis −0,20, bis das Steigen ganz weg ist — ein schwacher Kern geht nicht verloren, der Ton flattert nicht an der Schwelle. Mittlere Mittelung.'
+  mountain: Berge
+  mountain-body: 'Starke turbulente Thermik. Ton ab +0,30, keine Fehlpiepser durch Turbulenz; hält bis +0,10. Sinken ab −3,0. Lange Mittelung: ruhiger, aber träger.'
+  sniffer: Sniffer
+  sniffer-body: 'Ton schon ab −0,30: die Luft steigt, aber langsamer als der Schirm sinkt. Hilft schwache Thermik zu finden — wie der Flymaster-Buzzer oder Digifly Pre-Thermal. Zwischen −0,30 und null spielt die Kurve ihren tiefen Ton.'
+  always: Immer an
+  always-body: 'Fast immer Ton (Hugo-Modus). Sinkton schon ab −0,40, nach dem Sinken hält er bis +0,05 — keine Stille zwischen Sinken und Steigen. Still nur, wenn du von oben in −0,40 … +0,10 kommst.'
+  quiet: Leise
+  quiet-body: 'Minimum an Ton: Soaring, Acro, Anfänger. Steigen ab +0,30, Sinken erst ab −4,0 (Spirale).'
 help:
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'Der Steigton startet, sobald das Vario über diesem Wert liegt. Darunter ist es still, außer der Ton wird gehalten (siehe „Steigton hält bis“). Üblich sind +0,05…+0,20 m/s. Ein negativer Wert macht das Gerät zum „Sniffer“, der auch bei schwachem Sinken piept.'
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Steigton halten. Läuft der Steigton schon, endet er nicht sofort unter „Beginn des Aufstiegs“, sondern hält, bis das Vario auf diesen Wert fällt — so hörst du einen schwachen Kern und der Ton flattert nicht an der Schwelle. Wirkt nur, wenn der Wert unter „Beginn des Aufstiegs“ liegt; gleich oder darüber heißt kein Halten. Das Gegenteil von „Früher Ausstieg“: der beendet den Ton früher, das Halten später. Meist wählt man eins: für das Halten den frühen Ausstieg auf 0, sonst greift er beim Nachlassen zuerst. Die aktuelle Firmware nutzt diese Einstellung noch nicht — hörbar nur im Simulator mit der Quelle Browser.'
