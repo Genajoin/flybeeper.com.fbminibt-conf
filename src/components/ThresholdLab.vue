@@ -122,6 +122,7 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
         {{ t('lab.ema', { ema: ms(lab.emaCm.value) }) }} · {{ trendText }}
       </p>
     </div>
+    <LabHistory />
     <p v-if="stuck" class="lab__warn lab__warn--stuck">
       {{ t('lab.stuck', { s: live.stuckS, so: ms(lab.params.value.sinkOn), sf: ms(lab.params.value.sinkOff) }) }}
     </p>

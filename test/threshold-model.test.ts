@@ -74,13 +74,13 @@ describe('threshold model', () => {
     expect(run(p, Array.from({ length: 50 }, () => 20)).at(-1)).toBe(true)
   })
 
-  it('normalizeParams keeps SinkOn ≤ SinkOff ≤ ClimbOff ≤ ClimbOn, the edited field wins', () => {
-    const r = normalizeParams({ ...XCTRACER_DEFAULT, climbOff: 50 }, 'climbOff')
-    expect(r.climbOff).toBe(50)
-    expect(r.climbOn).toBe(50)
-    const s = normalizeParams({ ...XCTRACER_DEFAULT, sinkOff: 20 }, 'sinkOff')
-    expect(s.sinkOff).toBe(20)
-    expect(s.climbOff).toBe(20)
+  it('normalizeParams keeps SinkOn ≤ SinkOff ≤ ClimbOff ≤ ClimbOn', () => {
+    const on = normalizeParams({ ...XCTRACER_DEFAULT, climbOn: -80 }, 'climbOn')
+    expect(on).toEqual({ climbOn: -80, climbOff: -80, sinkOn: -80, sinkOff: -80, hyst: 0 })
+    // OFF thresholds stop at their neighbours, the ON ones stay put.
+    expect(normalizeParams({ ...XCTRACER_DEFAULT, climbOff: 50 }, 'climbOff')).toEqual({ ...XCTRACER_DEFAULT, climbOff: 10 })
+    expect(normalizeParams({ ...XCTRACER_DEFAULT, climbOff: -500 }, 'climbOff')).toEqual({ ...XCTRACER_DEFAULT, climbOff: -60 })
+    expect(normalizeParams({ ...XCTRACER_DEFAULT, sinkOff: 20 }, 'sinkOff')).toEqual({ ...XCTRACER_DEFAULT, sinkOff: 5 })
     expect(normalizeParams({ ...XCTRACER_DEFAULT, hyst: -3 }).hyst).toBe(0)
   })
 

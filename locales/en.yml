@@ -333,9 +333,9 @@ sett:
   84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART Protocol (1 - PRS, 2 - POV)
   67f82d94-2b2a-4123-81c9-058e460c3d01: Buzzer Volume
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Start climbing (m/s)
-  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: End of small climb (m/s)
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Climb tone holds down to (m/s)
   b713f438-42fe-46fe-b052-371a3b9e433a: Start sinking (m/s)
-  8a78979b-1425-4160-b34b-ac5aadddeb21: End of small sink (m/s)
+  8a78979b-1425-4160-b34b-ac5aadddeb21: Sink tone holds up to (m/s)
   512d6d89-7a6f-461c-983e-902b68d40f56: Vario
   8c090502-81c4-4d29-8d10-6db20607ace9: Frequency
   9c3b62c0-e227-4f1a-8342-7e647015555d: Cycle
@@ -354,7 +354,7 @@ sett:
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Power off timeout (sec, 0 - off)
   113bb48c-7e3f-4580-a561-acf6c9eb42a5: Data duplication in UART emulator
   e88b07e7-9035-4afa-9fe8-206ddc34de61: Smooth frequency change
-  0e984fe9-534c-4f13-969c-58ce03d33527: End of climb hysteresis (m/s)
+  0e984fe9-534c-4f13-969c-58ce03d33527: Early exit on weakening climb (m/s)
 
   silent: Silent on the ground
   bt-never-sleep: Bluetooth never sleep
@@ -614,3 +614,12 @@ lab:
   z-early-body: 'Climb between {co} and {early} m/s. While the climb holds or grows, the tone is on. When it weakens (readings below the average), the tone stops here — a hint the lift is ending. It starts again above {early} m/s or once the climb stops weakening.'
   z-climb: Climb tone
   z-climb-body: 'Climbing faster than {early} m/s — the climb tone is always on.'
+  hist-title: Last 20 seconds
+  hist-vario: vario
+  hist-ema: average
+  hist-th: climb threshold now
+  hist-tone: tone
+  hist-weak: climb weakening
+  hist-empty: Move the slider or start a scenario
+  hist-caption: 'How the trend hysteresis works: while the vario is below its ~0.4 s average (dashed), the climb counts as weakening (strip at the bottom) and the climb threshold (orange line) lifts from {co} to {early} m/s — by {h}. That is why a fading thermal goes silent earlier. Once the vario stops falling and catches up with the average, the threshold drops back to {co}.'
+  hist-caption-off: 'Trend hysteresis is off (0): the climb threshold is always {co} m/s, whether the climb is fading or building.'

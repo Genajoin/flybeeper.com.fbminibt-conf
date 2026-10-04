@@ -102,8 +102,9 @@ export function decide(p: ThresholdParams, toneOn: boolean, varioCm: number, ema
 
 /**
  * Keep the five values consistent: SinkOn ≤ SinkOff ≤ ClimbOff ≤ ClimbOn,
- * hyst ≥ 0. `changed` is the field the pilot just edited — it wins, the
- * neighbours move out of its way.
+ * hyst ≥ 0. `changed` is the field the pilot just edited: an ON threshold
+ * wins and pushes the others out of its way, an OFF threshold is clamped
+ * between its neighbours.
  */
 export function normalizeParams(p: ThresholdParams, changed?: keyof ThresholdParams): ThresholdParams {
   const r = { ...p, hyst: Math.max(0, p.hyst) }
@@ -113,15 +114,13 @@ export function normalizeParams(p: ThresholdParams, changed?: keyof ThresholdPar
       r.sinkOff = Math.min(r.sinkOff, r.climbOff)
       r.sinkOn = Math.min(r.sinkOn, r.sinkOff)
       break
+    // An OFF threshold only ever narrows its own memory window: it stops at
+    // its neighbours instead of shoving the ON thresholds along.
     case 'climbOff':
-      r.climbOn = Math.max(r.climbOn, r.climbOff)
-      r.sinkOff = Math.min(r.sinkOff, r.climbOff)
-      r.sinkOn = Math.min(r.sinkOn, r.sinkOff)
+      r.climbOff = Math.min(Math.max(r.climbOff, r.sinkOff), r.climbOn)
       break
     case 'sinkOff':
-      r.sinkOn = Math.min(r.sinkOn, r.sinkOff)
-      r.climbOff = Math.max(r.climbOff, r.sinkOff)
-      r.climbOn = Math.max(r.climbOn, r.climbOff)
+      r.sinkOff = Math.min(Math.max(r.sinkOff, r.sinkOn), r.climbOff)
       break
     default: // sinkOn, hyst, or a whole preset
       r.sinkOff = Math.max(r.sinkOff, r.sinkOn)

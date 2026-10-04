@@ -73,6 +73,25 @@ const live = reactive({
   stuckS: 0,
 })
 
+/** One emulator tick, for the time-history strip. Values in cm/s. */
+export interface HistorySample {
+  /** performance.now() */
+  t: number
+  vario: number
+  ema: number
+  /** The climb threshold that decides the next switch: OFF line while the tone is on, ON line while silent. */
+  climbTh: number
+  toneOn: boolean
+  weakening: boolean
+}
+
+export const HISTORY_S = 20
+const HISTORY_LEN = HISTORY_S * 1000 / FIRMWARE_TICK_MS
+/** Plain array (not reactive): 25 pushes a second would thrash Vue. */
+const history: HistorySample[] = []
+/** Bumped a few times a second so the strip redraws. */
+const historyVersion = ref(0)
+
 /** Scenario playback drives the simulator slider through this ref. */
 const driveMs = ref<number | null>(null)
 const activeScenario = ref<Scenario | null>(null)
@@ -186,6 +205,8 @@ export function useThresholdLab() {
     weakening,
     quietWindow,
     driveMs: readonly(driveMs),
+    history,
+    historyVersion: readonly(historyVersion),
     activeScenario: readonly(activeScenario),
     runScenario,
     stopScenario,
@@ -214,6 +235,7 @@ export interface EmulatorIo {
 export function startBuzzerEmulator(io: EmulatorIo): () => void {
   const lab = useThresholdLab()
   let phaseTimer: ReturnType<typeof setTimeout> | null = null
+  let tickNo = 0
 
   function clearPhase() {
     if (phaseTimer)
@@ -276,6 +298,16 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
       }
     }
 
+    const p = lab.params.value
+    const ema = emaValue(live.emaX10)
+    const weak = isWeakening(p, v, ema)
+    const eff = effectiveThresholds(p, weak)
+    history.push({ t: performance.now(), vario: v, ema, climbTh: live.toneOn ? eff.climbOffEff : eff.climbOnEff, toneOn: live.toneOn, weakening: weak })
+    if (history.length > HISTORY_LEN)
+      history.splice(0, history.length - HISTORY_LEN)
+    if (++tickNo % 3 === 0)
+      historyVersion.value++
+
     const held = live.toneOn && live.reason === 'sink-hold'
     if (!held)
       live.sinkHoldSince = 0
@@ -286,6 +318,7 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
 
   live.running = true
   live.engaged = false
+  history.length = 0
   live.varioCm = Math.round(io.varioCm())
   live.emaX10 = live.varioCm * 10
   live.toneOn = false

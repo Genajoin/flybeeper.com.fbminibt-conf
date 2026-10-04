@@ -40,7 +40,7 @@ const sim = useSimulation()
 const { t } = useI18n()
 
 type CurveKey = 'frequency' | 'cycle' | 'duty'
-type ThresholdKey = 'climb-start' | 'sink-start'
+type ThresholdKey = 'climb-start' | 'climb-off' | 'sink-start' | 'sink-off'
 type TabKey = CurveKey | ThresholdKey
 
 interface CurveDef {
@@ -82,22 +82,26 @@ const curveDefs: Record<CurveKey, CurveDef> = {
 }
 
 const CURVE_ORDER: CurveKey[] = ['frequency', 'cycle', 'duty']
-const THRESHOLD_ORDER: ThresholdKey[] = ['climb-start', 'sink-start']
+const THRESHOLD_ORDER: ThresholdKey[] = ['climb-start', 'climb-off', 'sink-start', 'sink-off']
 const TAB_ORDER: TabKey[] = [...CURVE_ORDER, ...THRESHOLD_ORDER]
 
 // Literal hex (not CSS vars): SVG presentation attributes don't reliably
 // resolve var() across engines. With hex we can just pass line.color to
 // :fill / :stroke on the SVG element and trust it. Matches --ck-signal at
 // the time of writing.
-const thresholdMeta: Record<ThresholdKey, { color: string, label: string }> = {
-  'climb-start': { color: '#ff6a00', label: 'CLIMB-ON' },
-  'sink-start': { color: '#e08a00', label: 'SINK-ON' },
+// `level` staggers the value chips vertically so close thresholds (climb-on
+// at +0.10 next to sink-off at +0.05) don't print on top of each other.
+const thresholdMeta: Record<ThresholdKey, { color: string, label: string, level: number }> = {
+  'climb-start': { color: '#ff6a00', label: 'C-ON', level: 0 },
+  'sink-start': { color: '#e08a00', label: 'S-ON', level: 1 },
+  'climb-off': { color: '#ffa766', label: 'C-OFF', level: 2 },
+  'sink-off': { color: '#5cc3ef', label: 'S-OFF', level: 3 },
 }
 
 const activeTab = ref<TabKey>('frequency')
 
 const isThresholdTab = computed<boolean>(() =>
-  activeTab.value === 'climb-start' || activeTab.value === 'sink-start',
+  (THRESHOLD_ORDER as TabKey[]).includes(activeTab.value),
 )
 
 // Visual fall-back curve for axes / ticks when a threshold tab is active —
@@ -316,14 +320,10 @@ const zoneRects = computed(() => lab.zones.value
   .map(z => ({ kind: z.kind, x: clipX(z.from), w: clipX(z.to) - clipX(z.from) }))
   .filter(r => r.w > 0))
 
-/** OFF thresholds and the early-exit edge, as thin non-draggable lines. */
+/** The early-exit edge (ClimbOn + trend hysteresis), a thin non-draggable line. */
 const labLines = computed(() => {
   const p = lab.params.value
   const out: { key: string, x: number, label: string, color: string }[] = []
-  if (p.climbOff !== p.climbOn)
-    out.push({ key: 'c-off', x: xForCmS(p.climbOff), label: `C-OFF ${fmtMsPrecise(p.climbOff)}`, color: '#ff6a00' })
-  if (p.sinkOff !== p.sinkOn)
-    out.push({ key: 's-off', x: xForCmS(p.sinkOff), label: `S-OFF ${fmtMsPrecise(p.sinkOff)}`, color: '#0aa0e0' })
   if (p.hyst > 0)
     out.push({ key: 'early', x: xForCmS(p.climbOn + p.hyst), label: `C+H ${fmtMsPrecise(p.climbOn + p.hyst)}`, color: '#c2410c' })
   return out.filter(l => l.x >= PAD_LEFT && l.x <= PAD_LEFT + plotW)
@@ -376,6 +376,16 @@ const thresholdLines = computed(() => {
       active: activeTab.value === 'sink-start',
       label: fmtMsPrecise(props.sinkOn),
     })
+  }
+  // ClimbOff / SinkOff live in the threshold lab only (never on the device).
+  // While they coincide with their ON partner they are drawn only when their
+  // tab is open, so the default chart stays as uncluttered as before.
+  const p = lab.params.value
+  const offs: [ThresholdKey, number, number][] = [['climb-off', p.climbOff, p.climbOn], ['sink-off', p.sinkOff, p.sinkOn]]
+  for (const [kind, value, partner] of offs) {
+    if (value === partner && activeTab.value !== kind)
+      continue
+    out.push({ x: xForCmS(value), kind, color: thresholdMeta[kind].color, active: activeTab.value === kind, label: fmtMsPrecise(value) })
   }
   return out
 })
@@ -482,6 +492,13 @@ function onPointerMove(evt: PointerEvent) {
         next = Math.min(next, props.climbOn)
       emit('update:sinkOn', next)
     }
+    // OFF thresholds edit the lab directly; it keeps the four in order.
+    else if (state.thresholdKind === 'climb-off') {
+      lab.setParam('climbOff', next)
+    }
+    else if (state.thresholdKind === 'sink-off') {
+      lab.setParam('sinkOff', next)
+    }
     return
   }
 
@@ -559,9 +576,9 @@ const gridXLines = computed(() => xTicks.value.map(t => t.x))
 const gridYLines = computed(() => yTicks.value.map(t => t.y))
 
 function tabColor(key: TabKey): string {
-  if (key === 'climb-start' || key === 'sink-start')
-    return thresholdMeta[key].color
-  return curveDefs[key].color
+  if (key in thresholdMeta)
+    return thresholdMeta[key as ThresholdKey].color
+  return curveDefs[key as CurveKey].color
 }
 
 /**
@@ -590,7 +607,8 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       return { value: `${fmtMsPrecise(xs[i])} m/s`, color: def.value.color }
   }
   if (state.mode === 'drag-threshold' && state.thresholdKind) {
-    const cmS = state.thresholdKind === 'climb-start' ? props.climbOn : props.sinkOn
+    const p = lab.params.value
+    const cmS = { 'climb-start': props.climbOn, 'sink-start': props.sinkOn, 'climb-off': p.climbOff, 'sink-off': p.sinkOff }[state.thresholdKind]
     if (typeof cmS === 'number')
       return { value: `${fmtMsPrecise(cmS)} m/s`, color: thresholdMeta[state.thresholdKind].color }
   }
@@ -754,7 +772,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
            trend arrow. -->
       <g v-if="liveOverlay" class="editor__live">
         <rect
-          :x="liveOverlay.win.x" :y="PAD_TOP + 40" :width="liveOverlay.win.w" :height="plotH - 80"
+          :x="liveOverlay.win.x" :y="PAD_TOP + 100" :width="liveOverlay.win.w" :height="plotH - 140"
           class="editor__live-win"
           :class="{ 'editor__live-win--on': liveOverlay.toneOn }"
           vector-effect="non-scaling-stroke"
@@ -763,7 +781,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
           v-for="(e, i) in liveOverlay.edges"
           :key="`edge-${i}`"
           :x="e.anchor === 'start' ? e.x + 4 : e.x - 4"
-          :y="PAD_TOP + 56"
+          :y="PAD_TOP + 116"
           :text-anchor="e.anchor"
           class="editor__live-label"
           :class="{ 'editor__live-label--on': liveOverlay.toneOn }"
@@ -771,16 +789,16 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
           {{ e.label }}
         </text>
         <line
-          :x1="liveOverlay.emaX" :y1="PAD_TOP + 70" :x2="liveOverlay.emaX" :y2="PAD_TOP + 98"
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 130" :x2="liveOverlay.emaX" :y2="PAD_TOP + 158"
           class="editor__live-ema"
           vector-effect="non-scaling-stroke"
         />
-        <text :x="liveOverlay.emaX" :y="PAD_TOP + 112" text-anchor="middle" class="editor__live-label">
+        <text :x="liveOverlay.emaX" :y="PAD_TOP + 172" text-anchor="middle" class="editor__live-label">
           {{ t('lab.chart-ema') }}
         </text>
         <line
           v-if="Math.abs(liveOverlay.curX - liveOverlay.emaX) > 3"
-          :x1="liveOverlay.emaX" :y1="PAD_TOP + 84" :x2="liveOverlay.curX" :y2="PAD_TOP + 84"
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 144" :x2="liveOverlay.curX" :y2="PAD_TOP + 144"
           class="editor__live-trend"
           :class="{ 'editor__live-trend--weak': liveOverlay.weakening }"
           marker-end="url(#cz-arrow)"
@@ -788,8 +806,8 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
         />
       </g>
 
-      <!-- Threshold verticals: only climb-on / sink-on. Climb-off and
-           sink-off are legacy fields exposed in the settings list only.
+      <!-- Threshold verticals: climb-on / sink-on (device) and the lab's
+           climb-off / sink-off.
            vector-effect pins stroke WIDTH in CSS px so the line stays
            visible on narrow phones; the dasharray is still in SVG units so
            we pick large values (16/10) — on a 360 px screen that lands at
@@ -811,9 +829,9 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
              y = PAD_TOP+2..PAD_TOP+14, so chip starts at PAD_TOP+16). -->
         <g v-for="line in thresholdLines" :key="`thr-chip-${line.kind}`">
           <rect
-            :x="line.x - 22"
-            :y="PAD_TOP + 16"
-            :width="44"
+            :x="line.x - 42"
+            :y="PAD_TOP + 16 + thresholdMeta[line.kind].level * 20"
+            :width="84"
             :height="16"
             :fill="line.color"
             :opacity="line.active ? 1 : 0.95"
@@ -821,12 +839,12 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
           />
           <text
             :x="line.x"
-            :y="PAD_TOP + 27"
+            :y="PAD_TOP + 27 + thresholdMeta[line.kind].level * 20"
             text-anchor="middle"
             class="editor__threshold-label"
             :class="{ 'editor__threshold-label--active': line.active }"
           >
-            {{ line.label }}
+            {{ thresholdMeta[line.kind].label }} {{ line.label }}
           </text>
         </g>
       </g>
