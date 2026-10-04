@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ThresholdParams } from '../src/utils/threshold-model'
 import {
+  averageStep,
   decide,
   emaStep,
   emaValue,
@@ -134,5 +135,18 @@ describe('threshold model', () => {
     expect(zonesFor(firmwareParams(5, -250, 25)).map(z => z.kind)).toEqual(['sink', 'quiet', 'early-exit', 'climb'])
     expect(zonesFor(HUGO_SNIFFER).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb'])
     expect(zonesFor(XCTRACER_DEFAULT).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb-memory', 'climb'])
+  })
+
+  it('vario averaging: firmware EMA per 16 ms sample, 63 % of a step after one period', () => {
+    // 16 ms (the minimum) passes the input straight through.
+    expect(averageStep(0, 100, 16)).toBe(100)
+    // A step of 100 cm/s with 1 s averaging: after 1 s (25 ticks) ≈ 63 %.
+    let v = 0
+    for (let i = 0; i < 25; i++)
+      v = averageStep(v, 100, 1000)
+    expect(v).toBeGreaterThan(60)
+    expect(v).toBeLessThan(66)
+    // Out of the firmware range: the 100 ms default.
+    expect(averageStep(0, 100, 0)).toBeCloseTo(averageStep(0, 100, 100))
   })
 })

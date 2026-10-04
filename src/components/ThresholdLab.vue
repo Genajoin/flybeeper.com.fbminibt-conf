@@ -64,6 +64,9 @@ const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))
         <p class="lab__reason">
           {{ reasonText }}
         </p>
+        <p v-if="live.airCm !== live.varioCm" class="lab__ema">
+          {{ t('lab.avg', { air: ms(live.airCm), s: (lab.averageMs.value / 1000).toFixed(2) }) }}
+        </p>
         <p class="lab__ema">
           {{ t('lab.ema', { ema: ms(lab.emaCm.value) }) }} · {{ trendText }}
         </p>

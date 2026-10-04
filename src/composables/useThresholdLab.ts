@@ -1,6 +1,8 @@
 import type { Reason, ThresholdParams } from '~/utils/threshold-model'
 import {
+  DEFAULT_AVERAGE_MS,
   FIRMWARE_TICK_MS,
+  averageStep,
   decide,
   effectiveThresholds,
   emaStep,
@@ -26,6 +28,7 @@ const CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
 const SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
 const SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
 const HYST_UUID = '0e984fe9-534c-4f13-969c-58ce03d33527'
+const AVERAGE_UUID = '7e035080-7417-4393-959a-58505ef9cf4a'
 
 export type Scenario = 'demo'
 
@@ -51,6 +54,9 @@ const live = reactive({
   running: false,
   /** Has the vario moved since the loop started — gates the chart overlay. */
   engaged: false,
+  /** The slider (simulated air), before the vario averaging. */
+  airCm: 0,
+  /** The vario the sound works from: the slider after the averaging. */
   varioCm: 0,
   emaX10: 0,
   toneOn: false,
@@ -65,6 +71,9 @@ const live = reactive({
 export interface HistorySample {
   /** performance.now() */
   t: number
+  /** The slider, before the vario averaging. */
+  air: number
+  /** What the sound works from: the slider after the vario averaging. */
   vario: number
   ema: number
   /** The climb threshold that decides the next switch: OFF line while the tone is on, ON line while silent. */
@@ -94,6 +103,13 @@ export function useThresholdLab() {
       ?? settings.local?.[uuid]
     return typeof v === 'number' ? Math.round(v * 100) : null
   }
+
+  /** Vario averaging, ms ("Vario averaging time", seconds on the wire). */
+  const averageMs = computed(() => {
+    const v = bt.bleCharacteristics.find(c => c.characteristic.uuid === AVERAGE_UUID)?.formattedValue
+      ?? settings.local?.[AVERAGE_UUID]
+    return typeof v === 'number' ? Math.round(v * 1000) : DEFAULT_AVERAGE_MS
+  })
 
   /** The sound settings from the Sound panel, ordered for the model. */
   const params = computed<ThresholdParams>(() => soundParams(
@@ -145,6 +161,7 @@ export function useThresholdLab() {
 
   return {
     params,
+    averageMs,
     zones,
     live: readonly(live),
     emaCm,
@@ -164,6 +181,11 @@ export interface EmulatorIo {
   varioCm: () => number
   /** Tone params at a vario value, or null when the curves aren't loaded. */
   toneAt: (cmS: number) => { frequencyHz: number, cycleMs: number, dutyPercent: number } | null
+  /**
+   * Run the slider through the vario averaging, as a real sensor reading is.
+   * False for the device source: the firmware simulator bypasses it.
+   */
+  averaged: () => boolean
   /** Firmware "smooth frequency change": retune during a beep. */
   smooth: () => boolean
   toneOn: (frequencyHz: number) => void
@@ -182,6 +204,9 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
   const lab = useThresholdLab()
   let phaseTimer: ReturnType<typeof setTimeout> | null = null
   let tickNo = 0
+  /** Slider value on the previous tick, and the slider after the vario averaging. */
+  let lastAir = 0
+  let smoothCm = 0
 
   function clearPhase() {
     if (phaseTimer)
@@ -216,9 +241,13 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
   }
 
   function tick() {
-    const v = Math.round(io.varioCm())
-    if (v !== live.varioCm)
+    const air = io.varioCm()
+    if (air !== lastAir)
       live.engaged = true
+    lastAir = air
+    smoothCm = io.averaged() ? averageStep(smoothCm, air, lab.averageMs.value) : air
+    const v = Math.round(smoothCm)
+    live.airCm = Math.round(air)
     live.varioCm = v
     live.emaX10 = emaStep(live.emaX10, v)
 
@@ -248,7 +277,7 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
     const ema = emaValue(live.emaX10)
     const weak = isWeakening(p, v, ema)
     const eff = effectiveThresholds(p, weak)
-    history.push({ t: performance.now(), vario: v, ema, climbTh: live.toneOn ? eff.climbOffEff : eff.climbOnEff, toneOn: live.toneOn, weakening: weak })
+    history.push({ t: performance.now(), air: live.airCm, vario: v, ema, climbTh: live.toneOn ? eff.climbOffEff : eff.climbOnEff, toneOn: live.toneOn, weakening: weak })
     if (history.length > HISTORY_LEN)
       history.splice(0, history.length - HISTORY_LEN)
     if (++tickNo % 3 === 0)
@@ -265,7 +294,10 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
   live.running = true
   live.engaged = false
   history.length = 0
-  live.varioCm = Math.round(io.varioCm())
+  lastAir = io.varioCm()
+  smoothCm = lastAir
+  live.varioCm = Math.round(lastAir)
+  live.airCm = live.varioCm
   live.emaX10 = live.varioCm * 10
   live.toneOn = false
   live.phase = 'idle'

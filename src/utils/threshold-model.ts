@@ -48,6 +48,22 @@ export interface ModelState {
 
 export const FIRMWARE_TICK_MS = 40
 
+/**
+ * Firmware's vario averaging (ess.c update_average): an EMA on every 16 ms
+ * pressure sample with alpha = 16 / vario_average_ms. One emulator tick of
+ * `dtMs` folds those samples in. The firmware falls back to 100 ms outside
+ * 16…10000 ms. The device's own simulator bypasses it (buzzer.c takes the
+ * simulated value as is).
+ */
+export const PRESSURE_SAMPLE_MS = 16
+export const DEFAULT_AVERAGE_MS = 100
+
+export function averageStep(avgCm: number, inputCm: number, averageMs: number, dtMs = FIRMWARE_TICK_MS): number {
+  const period = averageMs >= PRESSURE_SAMPLE_MS && averageMs <= 10000 ? averageMs : DEFAULT_AVERAGE_MS
+  const keep = (1 - PRESSURE_SAMPLE_MS / period) ** (dtMs / PRESSURE_SAMPLE_MS)
+  return inputCm + (avgCm - inputCm) * keep
+}
+
 export function emaStep(emaX10: number, varioCm: number): number {
   return Math.trunc(emaX10 * 9 / 10) + varioCm
 }

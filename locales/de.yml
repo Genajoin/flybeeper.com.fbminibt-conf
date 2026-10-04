@@ -567,11 +567,13 @@ diag:
   mail-problem: 'Beschreibe hier das Problem:'
   mail-attach: 'Bitte hänge die gerade heruntergeladene Diagnosedatei ({file}) an — sie enthält den vollständigen Bericht.'
 lab:
+  avg: 'Regler {air} m/s, das Vario folgt mit {s} s Mittelung'
+  hist-air: Regler
   sec-now: Jetzt
   zones: Zonen
   on: TON AN
   off: STILL
-  ema: 'Mittel über ~0,4 s: {ema} m/s'
+  ema: 'Trendmittel (~0,4 s, fest): {ema} m/s'
   trend-weak: Steigen lässt nach
   trend-up: steigend
   trend-down: fallend
@@ -599,8 +601,8 @@ lab:
   z-climb: Steigton
   z-climb-body: 'Steigen stärker als {early} m/s — der Steigton ist immer an.'
   hist-title: Letzte 20 Sekunden
-  hist-vario: Vario
-  hist-ema: Mittel
+  hist-vario: 'Vario (Mittelung {s} s)'
+  hist-ema: Trendmittel (~0,4 s)
   hist-th: Steigschwelle jetzt
   hist-tone: Ton
   hist-weak: Steigen lässt nach
@@ -635,5 +637,5 @@ help:
   8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sinkton halten. Läuft der Sinkton schon, hält er, bis das Vario auf diesen Wert steigt. Wirkt nur, wenn der Wert über „Beginn des Sinkens“ liegt: bei −2,5 und −1,8 startet der Sinkton bei −2,5 und endet erst bei −1,8. Ein Wert um null oder darüber macht das Gerät zum „Sniffer“: nach dem Sinken piept es auch im schwachen Null — bleibst du dort, hört der Ton nie auf. Die aktuelle Firmware nutzt diese Einstellung noch nicht — hörbar nur im Simulator mit der Quelle Browser.'
   0e984fe9-534c-4f13-969c-58ce03d33527: 'Früher Ausstieg aus dem Bart. Sobald das Steigen nachlässt (Vario unter seinem Mittel über ~0,4 s), hebt sich die Steigton-Schwelle um diesen Wert und der Ton endet, bevor das Vario „Beginn des Aufstiegs“ erreicht. Das gleicht die Glättungsverzögerung aus: Steigen hört auf, das Gerät verstummt sofort. Nimmt das Steigen wieder zu, fällt die Schwelle zurück. Beispiel: Beginn des Aufstiegs +0,05 und früher Ausstieg 0,25 — beim Nachlassen verstummt der Ton schon bei +0,30 und startet wie gewohnt über +0,05. 0 schaltet den frühen Ausstieg aus; dann wirkt das Halten „Steigton hält bis“. Die aktuelle Firmware nutzt statt 0 den Wert 0,25. Den zeitlichen Verlauf zeigt die Grafik „Letzte 20 Sekunden“ unter dem Simulator.'
   e88b07e7-9035-4afa-9fe8-206ddc34de61: 'An: ein Piep ändert die Tonhöhe während er klingt, dem Vario folgend. Aus: jeder Piep behält die Tonhöhe seines Beginns, Änderungen springen von Piep zu Piep.'
-  7e035080-7417-4393-959a-58505ef9cf4a: 'Glättung der Vario-Anzeige in Sekunden. Länger ist ruhiger, aber träger; kürzer ist schneller und unruhiger. Wirkt auf den Vario-Wert, nach dem der Ton arbeitet. Der Simulator umgeht sie: der Schiebereglerwert geht direkt in den Ton.'
+  7e035080-7417-4393-959a-58505ef9cf4a: 'Glättung der Vario-Anzeige in Sekunden. Länger ist ruhiger, aber träger; kürzer ist schneller und unruhiger. Wirkt auf den Vario-Wert, nach dem der Ton arbeitet (Werk 0,1 s). Das ist nicht das „Trendmittel“ (~0,4 s, fest), nach dem der frühe Ausstieg arbeitet: das wird erst vom geglätteten Vario gebildet. Der Simulator mit der Quelle Browser glättet den Regler genauso — die Grafik „Letzte 20 Sekunden“ zeigt, wie das Vario dem Regler folgt. Mit der Quelle Gerät gibt die Firmware den Reglerwert direkt, ungeglättet in den Ton.'
   more: Mehr

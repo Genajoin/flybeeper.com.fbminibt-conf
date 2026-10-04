@@ -32,8 +32,8 @@ const view = computed(() => {
   const p = lab.params.value
   const now = h[h.length - 1].t
   const t0 = now - HISTORY_S * 1000
-  let lo = Math.min(p.climbOn, ...h.map(s => Math.min(s.vario, s.ema)))
-  let hi = Math.max(p.climbOn + p.hyst, ...h.map(s => Math.max(s.vario, s.ema)))
+  let lo = Math.min(p.climbOn, ...h.map(s => Math.min(s.air, s.vario, s.ema)))
+  let hi = Math.max(p.climbOn + p.hyst, ...h.map(s => Math.max(s.air, s.vario, s.ema)))
   lo -= 25
   hi += 25
   if (hi - lo < 100) {
@@ -77,6 +77,7 @@ const view = computed(() => {
     .filter((r, _, all) => r.cls !== 'zero' || all.every(o => o.cls === 'zero' || Math.abs(o.y - r.y) > 12))
 
   return {
+    air: line(s => s.air),
     vario: line(s => s.vario),
     ema: line(s => s.ema),
     step,
@@ -85,6 +86,8 @@ const view = computed(() => {
     refs,
   }
 })
+
+const avgS = computed(() => (lab.averageMs.value / 1000).toFixed(lab.averageMs.value < 1000 ? 2 : 1))
 
 const caption = computed(() => {
   const p = lab.params.value
@@ -98,7 +101,8 @@ const caption = computed(() => {
   <div class="hist">
     <div class="hist__head">
       <span class="hist__legend">
-        <i class="hist__key hist__key--vario" />{{ t('lab.hist-vario') }}
+        <i class="hist__key hist__key--air" />{{ t('lab.hist-air') }}
+        <i class="hist__key hist__key--vario" />{{ t('lab.hist-vario', { s: avgS }) }}
         <i class="hist__key hist__key--ema" />{{ t('lab.hist-ema') }}
         <i class="hist__key hist__key--th" />{{ t('lab.hist-th') }}
         <i class="hist__key hist__key--tone" />{{ t('lab.hist-tone') }}
@@ -116,6 +120,7 @@ const caption = computed(() => {
         </g>
         <path :d="view.step" class="hist__th" vector-effect="non-scaling-stroke" />
         <path :d="view.ema" class="hist__ema" vector-effect="non-scaling-stroke" />
+        <path :d="view.air" class="hist__air" vector-effect="non-scaling-stroke" />
         <path :d="view.vario" class="hist__vario" vector-effect="non-scaling-stroke" />
       </template>
       <text v-else :x="plotW / 2" :y="VB_H / 2" text-anchor="middle" class="hist__empty">{{ t('lab.hist-empty') }}</text>
@@ -158,6 +163,10 @@ const caption = computed(() => {
   margin-left: 6px;
 }
 
+.hist__key--air {
+  height: 2px;
+  background: #0aa0e0;
+}
 .hist__key--vario {
   background: var(--ck-ink);
 }
@@ -244,6 +253,13 @@ const caption = computed(() => {
   stroke: var(--ck-dim);
   stroke-width: 2;
   stroke-dasharray: 5 3;
+}
+
+.hist__air {
+  fill: none;
+  stroke: #0aa0e0;
+  stroke-width: 1.5;
+  opacity: 0.7;
 }
 
 .hist__vario {

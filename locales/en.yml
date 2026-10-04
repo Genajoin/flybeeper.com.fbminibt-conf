@@ -566,11 +566,13 @@ diag:
   mail-problem: 'Describe the problem here:'
   mail-attach: 'Please attach the diagnostics file you just downloaded ({file}) — it contains the full report.'
 lab:
+  avg: 'Slider {air} m/s, the vario follows it with {s} s averaging'
+  hist-air: slider
   sec-now: Now
   zones: Zones
   on: TONE ON
   off: SILENT
-  ema: 'Average over ~0.4 s: {ema} m/s'
+  ema: 'Trend average (~0.4 s, fixed): {ema} m/s'
   trend-weak: climb weakening
   trend-up: rising
   trend-down: falling
@@ -598,8 +600,8 @@ lab:
   z-climb: Climb tone
   z-climb-body: 'Climbing faster than {early} m/s — the climb tone is always on.'
   hist-title: Last 20 seconds
-  hist-vario: vario
-  hist-ema: average
+  hist-vario: 'vario (averaging {s} s)'
+  hist-ema: trend average (~0.4 s)
   hist-th: climb threshold now
   hist-tone: tone
   hist-weak: climb weakening
@@ -634,5 +636,5 @@ help:
   8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sink tone hold. Once the sink tone is on, it holds until the vario rises to this value. Only works when the value is above “Start sinking”: with −2.5 and −1.8 the sink tone starts at −2.5 and stops only at −1.8. A value near zero or above makes the device a “sniffer”: after a sink it keeps beeping in weak zero — but hang there and the tone never stops. The current firmware does not use this setting yet — you can hear it only in the simulator with the Browser source.'
   0e984fe9-534c-4f13-969c-58ce03d33527: 'Early exit from a thermal. As soon as the climb weakens (vario below its ~0.4 s average), the climb tone threshold lifts by this value and the tone stops before the vario reaches “Start climbing”. This makes up for the smoothing lag: the climb stops, the device goes quiet right away. Once the climb grows again, the threshold drops back. Example: start climbing +0.05 with early exit 0.25 — on a fade the tone goes silent already at +0.30, and starts as usual above +0.05. 0 switches the early exit off; then the “Climb tone holds down to” hold works. The current firmware uses 0.25 instead of 0. See it over time on the “Last 20 seconds” chart under the simulator.'
   e88b07e7-9035-4afa-9fe8-206ddc34de61: 'On: a beep changes pitch while it sounds, following the vario. Off: each beep keeps the pitch it started with, so changes step from beep to beep.'
-  7e035080-7417-4393-959a-58505ef9cf4a: 'Vario smoothing, in seconds. Longer is calmer but lags; shorter is quicker and jumpier. It acts on the vario reading the sound is driven by. The simulator bypasses it: the slider value goes straight to the sound.'
+  7e035080-7417-4393-959a-58505ef9cf4a: 'Vario smoothing, in seconds. Longer is calmer but lags; shorter is quicker and jumpier. It acts on the vario reading the sound is driven by (factory 0.1 s). It is not the “trend average” (~0.4 s, fixed) the early exit works from: that one is taken from the smoothed vario. The simulator with the Browser source smooths the slider the same way — the “Last 20 seconds” chart shows the vario catching up with the slider. With the Device source the firmware feeds the slider value to the sound directly, unsmoothed.'
   more: More
