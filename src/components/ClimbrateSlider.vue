@@ -210,7 +210,9 @@ function applySnap(v: number) {
   height: 24px;
   background: var(--ck-paper);
   border: 2px solid var(--ck-ink);
-  pointer-events: none;
+  /* Takes the press itself: pinned to an edge (value outside the zoomed
+     window) half of it overhangs the track, and that half must grab too. */
+  cursor: grab;
 }
 
 .climb-slider__axis {

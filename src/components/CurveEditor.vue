@@ -179,15 +179,17 @@ onBeforeUnmount(() => {
 })
 
 function setZoom(level: number) {
-  const fromOverview = zoomLevel.value === 1 && level > 1
+  const levelChanged = zoomLevel.value !== level
   zoomLevel.value = level
   if (level === 1) {
     zoomCenterCmS.value = baseCenterCmS.value
     return
   }
-  // Zooming in from the overview lands on the simulator position (0 when idle):
-  // the thresholds and the live overlay all sit around there.
-  if (fromOverview)
+  // Every zoom switch lands on the simulator position (0 when idle): the
+  // thresholds and the live overlay sit around there, and the slider under
+  // the chart spans this same window — centring on anything else (say, the
+  // previous zoom's centre) can leave the slider value outside its own scale.
+  if (levelChanged)
     zoomCenterCmS.value = sim.previewCmS.value
   const half = visibleHalfCmS.value
   zoomCenterCmS.value = Math.min(
@@ -573,6 +575,19 @@ function onSvgTapEnd(evt: PointerEvent) {
 onBeforeUnmount(() => {
   if (tipTimer)
     clearTimeout(tipTimer)
+})
+
+// Zoomed in, the window follows the simulator: when the value leaves it (demo
+// sweep, a snap button), the window re-centres on it. Otherwise the slider's
+// thumb sits pinned past its own scale and can't be dragged back. A pan the
+// pilot is doing right now wins.
+watch(() => sim.previewCmS.value, (cmS) => {
+  if (zoomLevel.value === 1 || interaction.value.mode === 'pan')
+    return
+  if (cmS >= viewMinCmS.value && cmS <= viewMaxCmS.value)
+    return
+  zoomCenterCmS.value = cmS
+  setZoom(zoomLevel.value)
 })
 
 /* ---------------------------------------------------------------- grid */
