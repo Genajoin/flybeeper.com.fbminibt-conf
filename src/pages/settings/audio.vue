@@ -58,6 +58,21 @@ function audioThreshold(uuid: string): number | undefined {
 const climbOn = computed(() => audioThreshold(CPF_CLIMB_ON_UUID))
 const sinkOn = computed(() => audioThreshold(CPF_SINK_ON_UUID))
 
+// The chart's CLIMB-ON / SINK-ON lines follow the threshold lab. While the lab
+// is linked to the device (FlyBeeper today) they ARE the device thresholds and
+// dragging them edits the device as before; once the pilot experiments, they
+// move the lab's local values and the device settings stay untouched.
+const lab = useThresholdLab()
+const chartClimbOn = computed(() => lab.linked.value ? climbOn.value : lab.params.value.climbOn)
+const chartSinkOn = computed(() => lab.linked.value ? sinkOn.value : lab.params.value.sinkOn)
+function onChartThreshold(key: 'climbOn' | 'sinkOn', valueCmS: number) {
+  if (!lab.linked.value) {
+    lab.setParam(key, valueCmS)
+    return
+  }
+  writeThreshold(key === 'climbOn' ? CPF_CLIMB_ON_UUID : CPF_SINK_ON_UUID, valueCmS)
+}
+
 // The chart emits cm/s; underlying BLE char stores m/s, so divide by 100
 // when writing back. SettingsPanel picks up the dirty bit via the BleChar's
 // formattedValue setter — no extra plumbing needed.
@@ -217,10 +232,10 @@ function selectPreset(v: PresetKey | 'custom') {
             <CurveEditor
               v-else-if="cpfReady"
               :curves-override="cpfCurves"
-              :climb-on="climbOn"
-              :sink-on="sinkOn"
-              @update:climb-on="writeThreshold(CPF_CLIMB_ON_UUID, $event)"
-              @update:sink-on="writeThreshold(CPF_SINK_ON_UUID, $event)"
+              :climb-on="chartClimbOn"
+              :sink-on="chartSinkOn"
+              @update:climb-on="onChartThreshold('climbOn', $event)"
+              @update:sink-on="onChartThreshold('sinkOn', $event)"
             />
             <p v-else class="empty">
               {{ t('msg.fetching') }}…
@@ -238,6 +253,7 @@ function selectPreset(v: PresetKey | 'custom') {
         <div class="sound__sim">
           <SimulatorControls />
         </div>
+        <ThresholdLab />
       </div>
 
       <div class="sound__right">

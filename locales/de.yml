@@ -566,3 +566,56 @@ diag:
   mail-note: '„An den Support senden“ lädt die Berichtsdatei herunter und öffnet eine E-Mail an {email}. Der vollständige Bericht passt nicht in die E-Mail, bitte die Datei anhängen. Öffnet sich keine E-Mail-App, schick die Datei selbst an {email}.'
   mail-problem: 'Beschreibe hier das Problem:'
   mail-attach: 'Bitte hänge die gerade heruntergeladene Diagnosedatei ({file}) an — sie enthält den vollständigen Bericht.'
+lab:
+  title: Tonschwellen · Experiment
+  badge-linked: 'Wie das Gerät heute: Gerätewerte, OFF = ON'
+  badge-local: Experiment — diese Werte gelten nur in diesem Browser und werden nie ins Gerät geschrieben
+  device-note: Das Gerät spielt nach seiner eigenen Firmware und kennt die OFF-Schwellen noch nicht. Stelle die Quelle auf Browser, um das Experiment zu hören.
+  preset-flybeeper: FlyBeeper heute
+  preset-xctracer: XCTracer
+  preset-hugo: Hugo-Sniffer
+  preset-custom: Eigene*
+  field-climb-on: Climb ON
+  field-climb-off: Climb OFF
+  field-sink-on: Sink ON
+  field-sink-off: Sink OFF
+  field-hyst: Trend-Hysterese
+  hint-climb-on: Steigton startet über
+  hint-climb-off: und hält, einmal an, bis
+  hint-sink-on: Sinkton startet unter
+  hint-sink-off: und hält, einmal an, bis
+  hint-hyst: 'solange das Steigen nachlässt, endet der Ton früher: bei Climb ON + diesem Wert. 0 = aus.'
+  scenarios: Szenarien
+  sc-weakening: Thermik lässt nach
+  sc-sink-exit: Raus aus dem Sinken
+  sc-climb-drop: Steigen kippt ins Sinken
+  zones: Zonen
+  on: TON AN
+  off: STILL
+  ema: 'Mittel über ~0,4 s: {ema} m/s'
+  trend-weak: Steigen lässt nach
+  trend-up: steigend
+  trend-down: fallend
+  trend-flat: stabil
+  r-climb: 'Steigen stärker als {th} m/s.'
+  r-sink: 'Sinken stärker als {so} m/s.'
+  r-climb-hold: 'Ton gehalten: du kamst von oben. Endet bei {th} m/s oder sobald das Steigen nachlässt.'
+  r-sink-hold: 'Ton nach dem Sinken gehalten. Endet, sobald das Vario auf {sf} m/s steigt.'
+  r-quiet: 'Stille Zone. Ton startet über {co} oder unter {so} m/s.'
+  r-quiet-early: 'Steigen lässt nach — Ton früh beendet. Startet wieder über {early} m/s oder sobald das Steigen nicht mehr nachlässt.'
+  r-quiet-memory: 'Du kamst von der stillen Seite, daher kein Ton. Startet über {co} oder unter {so} m/s.'
+  stuck: 'Der Sinkton läuft seit {s} s: du hängst im Fenster zwischen {so} und {sf} m/s. Er hört erst auf, wenn du auf {sf} m/s steigst — XCTracer verhält sich genauso.'
+  chart-ema: EMA
+  z-sink: Sinkton
+  z-sink-body: 'Sinken stärker als {so} m/s — der Sinkton ist immer an, egal woher du kommst.'
+  z-sink-memory: Fenster nach dem Sinken (Sniffer)
+  z-sink-memory-body: 'Ton nur, wenn du aus einem Sinken stärker als {so} m/s kommst: dann hält er, bis das Vario auf {sf} m/s steigt. Von oben kommend ist es hier still. Bleibst du in diesem Fenster, hört der Ton nie auf.'
+  z-quiet: Still
+  z-quiet-body: 'Von {sf} bis {cf} m/s ist das Gerät still. Jeder Ton endet hier, egal woher du kommst.'
+  z-climb-memory: Steig-Halten
+  z-climb-memory-body: 'Der Steigton läuft weiter, wenn du von oben kommst (Steigen war stärker als {co} m/s), bis du auf {cf} m/s fällst. Von unten kommend ist es still: der Ton startet erst über {co} m/s.'
+  z-climb-memory-hyst: 'Lässt das Steigen dabei nach, endet der Ton früher — schon bei {early} m/s. Das Halten greift also nur, wenn die Werte nicht mehr fallen.'
+  z-early: Früher Ausstieg
+  z-early-body: 'Steigen zwischen {co} und {early} m/s. Solange es hält oder zunimmt, ist der Ton an. Lässt es nach (Werte unter dem Mittel), endet der Ton hier — ein Hinweis, dass der Bart ausläuft. Startet wieder über {early} m/s oder sobald das Steigen nicht mehr nachlässt.'
+  z-climb: Steigton
+  z-climb-body: 'Steigen stärker als {early} m/s — der Steigton ist immer an.'

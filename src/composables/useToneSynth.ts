@@ -71,6 +71,17 @@ export interface UseToneSynth {
    * cached params are used until `play()` is called again.
    */
   setParamsProvider: (provider: (() => ToneParams | null) | null) => void
+
+  /**
+   * Direct gate for callers that run their own beep timing (the buzzer
+   * emulator ports the firmware's sample/pause chain and switches the tone at
+   * each phase edge). No-op until the AudioContext exists — never creates it,
+   * so a timer firing outside a user gesture stays silent instead of erroring.
+   */
+  gateOn: (frequencyHz: number, volume: number) => void
+  gateOff: () => void
+  /** Retune a tone that is already sounding (firmware frequency adaptation). */
+  setFrequency: (frequencyHz: number) => void
 }
 
 /**
@@ -358,6 +369,36 @@ export function useToneSynth(): UseToneSynth {
     }
   }
 
+  function gateOn(frequencyHz: number, volume: number): void {
+    if (!ctx || !osc || !gain)
+      return
+    if (ctx.state === 'suspended')
+      void ctx.resume()
+    // Leave the scheduled mode entirely: the caller owns the timing now.
+    current = null
+    clearScheduleTimer()
+    const now = ctx.currentTime
+    osc.frequency.cancelScheduledValues(now)
+    osc.frequency.setValueAtTime(Math.max(frequencyHz, 1), now)
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setValueAtTime(Math.min(Math.max(volume, 0), 1), now)
+    isPlaying.value = true
+  }
+
+  function gateOff(): void {
+    if (!ctx || !gain)
+      return
+    gain.gain.cancelScheduledValues(ctx.currentTime)
+    gain.gain.setValueAtTime(0, ctx.currentTime)
+    isPlaying.value = false
+  }
+
+  function setFrequency(frequencyHz: number): void {
+    if (!ctx || !osc)
+      return
+    osc.frequency.setValueAtTime(Math.max(frequencyHz, 1), ctx.currentTime)
+  }
+
   return {
     isReady: readonly(isReady),
     isPlaying: readonly(isPlaying),
@@ -367,5 +408,8 @@ export function useToneSynth(): UseToneSynth {
     stop,
     playForVario,
     setParamsProvider,
+    gateOn,
+    gateOff,
+    setFrequency,
   }
 }

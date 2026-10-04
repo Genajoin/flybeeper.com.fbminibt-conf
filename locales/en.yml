@@ -565,3 +565,56 @@ diag:
   mail-note: '“Send to support” downloads the report file and opens an email to {email}. The full report does not fit into the email, so please attach the file. If no email app opens, send the file to {email} yourself.'
   mail-problem: 'Describe the problem here:'
   mail-attach: 'Please attach the diagnostics file you just downloaded ({file}) — it contains the full report.'
+lab:
+  title: Tone thresholds · experiment
+  badge-linked: 'As the device does today: device values, OFF = ON'
+  badge-local: Experiment — these values live only in this browser and are never written to the device
+  device-note: The device plays by its own firmware and does not know the OFF thresholds yet. Switch the source to Browser to hear the experiment.
+  preset-flybeeper: FlyBeeper today
+  preset-xctracer: XCTracer
+  preset-hugo: Hugo sniffer
+  preset-custom: Custom*
+  field-climb-on: Climb ON
+  field-climb-off: Climb OFF
+  field-sink-on: Sink ON
+  field-sink-off: Sink OFF
+  field-hyst: Trend hysteresis
+  hint-climb-on: climb tone starts above
+  hint-climb-off: and once on, holds down to
+  hint-sink-on: sink tone starts below
+  hint-sink-off: and once on, holds up to
+  hint-hyst: 'while the climb is weakening, the tone stops earlier: at Climb ON + this value. 0 = off.'
+  scenarios: Scenarios
+  sc-weakening: Thermal fading
+  sc-sink-exit: Out of a sink
+  sc-climb-drop: Climb turns to sink
+  zones: Zones
+  on: TONE ON
+  off: SILENT
+  ema: 'Average over ~0.4 s: {ema} m/s'
+  trend-weak: climb weakening
+  trend-up: rising
+  trend-down: falling
+  trend-flat: steady
+  r-climb: 'Climbing faster than {th} m/s.'
+  r-sink: 'Sinking faster than {so} m/s.'
+  r-climb-hold: 'Tone held: you came from above. Stops at {th} m/s or once the climb starts weakening.'
+  r-sink-hold: 'Tone held after the sink. Stops once the vario rises to {sf} m/s.'
+  r-quiet: 'Silent zone. Tone starts above {co} or below {so} m/s.'
+  r-quiet-early: 'Climb weakening — tone cut early. Starts again above {early} m/s or once the climb stops weakening.'
+  r-quiet-memory: 'You came here from the silent side, so no tone. Starts above {co} or below {so} m/s.'
+  stuck: 'The sink tone has been on for {s} s: you are stuck in the window between {so} and {sf} m/s. It will not stop until you rise to {sf} m/s — XCTracer behaves the same.'
+  chart-ema: EMA
+  z-sink: Sink tone
+  z-sink-body: 'Sinking faster than {so} m/s — the sink tone is always on, wherever you came from.'
+  z-sink-memory: After-sink window (sniffer)
+  z-sink-memory-body: 'Tone only if you came here from a sink stronger than {so} m/s: it then holds until the vario rises to {sf} m/s. Coming from above, it is silent here. Hang in this window and the tone never stops.'
+  z-quiet: Silent
+  z-quiet-body: 'From {sf} to {cf} m/s the device is silent. Any tone stops here, wherever you came from.'
+  z-climb-memory: Climb hold
+  z-climb-memory-body: 'The climb tone continues if you came from above (climb was stronger than {co} m/s) until you drop to {cf} m/s. Coming from below it is silent: the tone starts only above {co} m/s.'
+  z-climb-memory-hyst: 'If the climb is weakening, the tone stops earlier — already at {early} m/s. So the hold only works once the readings stop falling.'
+  z-early: Early exit
+  z-early-body: 'Climb between {co} and {early} m/s. While the climb holds or grows, the tone is on. When it weakens (readings below the average), the tone stops here — a hint the lift is ending. It starts again above {early} m/s or once the climb stops weakening.'
+  z-climb: Climb tone
+  z-climb-body: 'Climbing faster than {early} m/s — the climb tone is always on.'

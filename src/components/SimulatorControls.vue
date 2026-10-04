@@ -11,6 +11,7 @@
  */
 
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
+import { startBuzzerEmulator } from '~/composables/useThresholdLab'
 import { recordAction } from '~/utils/sessionJournal'
 
 const bt = useBluetoothStore()
@@ -20,18 +21,7 @@ const { source } = useAudioSource()
 const synth = useToneSynth()
 const sim = useSimulation()
 
-const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
-const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
 const CPF_SMOOTH_FREQ_UUID = 'e88b07e7-9035-4afa-9fe8-206ddc34de61'
-
-function readNumChar(uuid: string): number | null {
-  const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
-  const v = ch?.formattedValue
-  if (typeof v === 'number')
-    return v
-  const local = settings.local?.[uuid]
-  return typeof local === 'number' ? local : null
-}
 
 function readBoolChar(uuid: string): boolean {
   const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === uuid)
@@ -42,22 +32,9 @@ function readBoolChar(uuid: string): boolean {
   return typeof local === 'boolean' ? local : false
 }
 
-// climb-on / sink-on are the start-of-tone thresholds. The buzzer (and the
-// browser preview) stays silent between these two values. Values are
-// presented in m/s after the CPF exponent has been applied, so we convert
-// to cm/s for comparison against the slider's cmS value.
-const climbOnCmS = computed<number>(() => {
-  const v = readNumChar(CPF_CLIMB_ON_UUID)
-  return typeof v === 'number' ? Math.round(v * 100) : 0
-})
-const sinkOnCmS = computed<number>(() => {
-  const v = readNumChar(CPF_SINK_ON_UUID)
-  return typeof v === 'number' ? Math.round(v * 100) : 0
-})
-
-// "Smooth frequency change" CPF char — when off, the synth must lock
-// freq/cycle/duty for the duration of each cycle and only step at the cycle
-// boundary so the user can hear the discrete jumps.
+// "Smooth frequency change" CPF char (firmware buzzer_frequency_adaptation) —
+// when on, a beep that is already sounding follows the vario; when off, each
+// beep keeps the pitch it started with.
 const smoothFrequencyChange = computed<boolean>(() => readBoolChar(CPF_SMOOTH_FREQ_UUID))
 
 const SLIDER_MIN_MS = -5
@@ -132,14 +109,7 @@ function interpolate(xs: number[], ys: number[], x: number): number {
   return ys[n - 1]
 }
 
-// True when the buzzer should be silent at varioCmS, per the climb-on / sink-on
-// thresholds. Climb-on is positive (e.g. +20 cm/s) and sink-on is negative
-// (e.g. -180 cm/s); the dead-band sits between them.
-function inDeadBand(cmS: number): boolean {
-  return cmS < climbOnCmS.value && cmS > sinkOnCmS.value
-}
-
-function paramsForCmS(cmS: number): ReturnType<typeof synth.playForVario> | null {
+function toneAt(cmS: number) {
   const c = synthCurves.value
   if (!c.buzzer_vario_dots || !c.buzzer_frequency_dots || !c.buzzer_cycle_dots || !c.buzzer_duty_dots)
     return null
@@ -147,52 +117,40 @@ function paramsForCmS(cmS: number): ReturnType<typeof synth.playForVario> | null
     frequencyHz: interpolate(c.buzzer_vario_dots, c.buzzer_frequency_dots, cmS),
     cycleMs: interpolate(c.buzzer_vario_dots, c.buzzer_cycle_dots, cmS),
     dutyPercent: interpolate(c.buzzer_vario_dots, c.buzzer_duty_dots, cmS),
-    volume: BROWSER_TONE_VOLUME,
   }
 }
 
-// Latest cmS in a ref so the synth's per-cycle paramsProvider (smooth=OFF
-// mode) can read the live value without us calling play() on every move.
-const liveCmS = ref(0)
+// The browser preview is a port of the firmware's buzzer loop driven by the
+// threshold lab (useThresholdLab): 40 ms ticks, EMA trend, decisions only
+// between beeps, beep/pause lengths fixed when each phase starts. It runs in
+// every audio-source mode so the chart can show the live sound state; only
+// the Browser source actually makes noise.
+const lab = useThresholdLab()
+let stopEmulator: (() => void) | null = null
+onMounted(() => {
+  stopEmulator = startBuzzerEmulator({
+    varioCm: () => Math.round(sliderMs.value * 100),
+    toneAt,
+    smooth: () => smoothFrequencyChange.value,
+    toneOn: (hz) => {
+      if (source.value === 'browser')
+        synth.gateOn(hz, BROWSER_TONE_VOLUME)
+    },
+    toneOff: () => synth.gateOff(),
+    setFrequency: (hz) => {
+      if (source.value === 'browser')
+        synth.setFrequency(hz)
+    },
+  })
+})
 
-function previewBrowser(cmS: number) {
-  liveCmS.value = cmS
-  if (cmS === 0 || inDeadBand(cmS)) {
-    synth.stop()
+// Scenario playback from the lab panel moves the slider.
+watch(() => lab.driveMs.value, (v) => {
+  if (v === null)
     return
-  }
-  const params = paramsForCmS(cmS)
-  if (!params)
-    return
-  // Smooth=ON: each slider move restarts the schedule with fresh params; the
-  // 2-second scheduled horizon glides continuously between calls.
-  // Smooth=OFF: the schedule keeps walking and the provider snapshots fresh
-  // params at every cycle boundary — slider moves between cycle boundaries
-  // don't disturb the in-flight cycle.
-  if (smoothFrequencyChange.value) {
-    synth.setParamsProvider(null)
-    synth.play(params)
-  }
-  else {
-    // Install the provider before play() so the very first cycle is locked.
-    synth.setParamsProvider(() => {
-      const cmS2 = liveCmS.value
-      if (cmS2 === 0 || inDeadBand(cmS2))
-        return null
-      return paramsForCmS(cmS2)
-    })
-    synth.play(params)
-  }
-}
-
-// Re-fire browser tone when curves edits land (the user dragging a curve
-// handle while the slider is held mid-air must hear the new value).
-watch(synthCurves, () => {
-  if (source.value !== 'browser')
-    return
-  const cmS = Math.round(sliderMs.value * 100)
-  previewBrowser(cmS)
-}, { deep: true })
+  stopDemo()
+  sliderMs.value = v
+})
 
 watch(sliderMs, (v) => {
   const cmS = Math.round(v * 100)
@@ -203,45 +161,19 @@ watch(sliderMs, (v) => {
     sim.setValueCmS(cmS)
     return
   }
-  if (source.value !== 'browser')
-    return
-  recordAction('simulator', `browser plays simulated vario: ${(cmS / 100).toFixed(2)} m/s`, 'sim:browser', { v: cmS / 100, unit: 'm/s' })
-  liveCmS.value = cmS
-  // Smooth=OFF mode: the synth's provider will pick up the new value at the
-  // next cycle boundary on its own. Don't restart the schedule — that would
-  // defeat the locking behaviour. We still need to stop when entering the
-  // dead-band or zero, otherwise the cycle keeps audible.
-  if (!smoothFrequencyChange.value && synth.isPlaying.value) {
-    if (cmS === 0 || inDeadBand(cmS))
-      synth.stop()
-    return
-  }
-  previewBrowser(cmS)
-})
-
-// React to threshold or smooth-flag changes while the synth is playing.
-watch([climbOnCmS, sinkOnCmS, smoothFrequencyChange], () => {
-  if (source.value === 'browser') {
-    const cmS = Math.round(sliderMs.value * 100)
-    previewBrowser(cmS)
-  }
+  if (source.value === 'browser')
+    recordAction('simulator', `browser plays simulated vario: ${(cmS / 100).toFixed(2)} m/s`, 'sim:browser', { v: cmS / 100, unit: 'm/s' })
 })
 
 watch(source, (next, prev) => {
   if (prev === 'device' && sim.isActive.value)
     sim.stop()
-  if (prev === 'browser') {
-    synth.setParamsProvider(null)
-    synth.stop()
-  }
-  const cmS = Math.round(sliderMs.value * 100)
-  if (next === 'browser') {
+  if (prev === 'browser')
+    synth.gateOff()
+  if (next === 'browser')
     void synth.ensureContext()
-    previewBrowser(cmS)
-  }
-  else if (next === 'device') {
-    sim.setValueCmS(cmS)
-  }
+  else if (next === 'device')
+    sim.setValueCmS(Math.round(sliderMs.value * 100))
 })
 
 /**
@@ -262,6 +194,7 @@ let demoLastTickAt = 0
 function startDemo() {
   if (isDemoRunning.value)
     return
+  lab.stopScenario()
   isDemoRunning.value = true
   recordAction('simulator', `demo sweep started (${source.value}): ${DEMO_BOTTOM_MS} … +${DEMO_TOP_MS} m/s`)
   if (source.value === 'browser')
@@ -299,12 +232,20 @@ function stopDemo() {
   // curves from that vario position right away.
 }
 
+function onSliderGrab() {
+  lab.stopScenario()
+  if (source.value === 'browser')
+    void synth.ensureContext()
+}
+
 // Leaving the host page takes the device out of simulation. If two pages host
 // this component (curves + simulator), navigating between them tears down
 // the channel cleanly: onUnmounted on one mount-point, onMounted on the next.
 onUnmounted(() => {
   if (demoTimer)
     clearInterval(demoTimer)
+  stopEmulator?.()
+  lab.stopScenario()
   if (sim.isActive.value)
     sim.stop()
   synth.stop()
@@ -331,7 +272,7 @@ onUnmounted(() => {
         :min="SLIDER_MIN_MS"
         :max="SLIDER_MAX_MS"
         :step="sliderStepMs"
-        @pointerdown="source === 'browser' && synth.ensureContext()"
+        @pointerdown="onSliderGrab"
       >
         <template #extra>
           <span class="ctrl__spacer" />

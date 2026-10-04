@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ZoneKind } from '~/utils/threshold-model'
 import {
   CURVE_LIMITS,
   CYCLE_DOTS_UUID,
@@ -160,14 +161,19 @@ const viewMaxCmS = computed(() => viewMinCmS.value + visibleRangeCmS.value)
 const viewRangeCmS = computed(() => viewMaxCmS.value - viewMinCmS.value || 1)
 
 function setZoom(level: number) {
+  const fromOverview = zoomLevel.value === 1 && level > 1
   zoomLevel.value = level
   if (level === 1) {
     zoomCenterCmS.value = baseCenterCmS.value
     return
   }
+  // Zooming in from the overview lands on the simulator position (0 when idle):
+  // the thresholds and the live overlay all sit around there.
+  if (fromOverview)
+    zoomCenterCmS.value = sim.previewCmS.value
   const half = baseRangeCmS.value / level / 2
   zoomCenterCmS.value = Math.min(
-    Math.max(zoomCenterCmS.value || baseCenterCmS.value, baseMinCmS.value + half),
+    Math.max(zoomCenterCmS.value, baseMinCmS.value + half),
     baseMaxCmS.value - half,
   )
 }
@@ -275,19 +281,68 @@ const cursorX = computed(() => {
  * matching the active tab is drawn brighter + has a draggable triangle on
  * the top edge of the plot.
  */
+/* ---------------------------------------------------------------- threshold lab */
+// Zones and the live sound state come from the threshold lab (emulator only —
+// see useThresholdLab). They replace the old flat dead-band rectangle: the
+// silent zone is one of the zones.
+const lab = useThresholdLab()
+
+const ZONE_FILL: Record<ZoneKind, string> = {
+  'sink': 'url(#cz-sink)',
+  'sink-memory': 'url(#cz-sink-memory)',
+  'quiet': 'url(#cz-quiet)',
+  'climb-memory': 'url(#cz-climb-memory)',
+  'early-exit': 'url(#cz-early)',
+  'climb': 'url(#cz-climb)',
+}
+
+function clipX(cmS: number): number {
+  return clamp(xForCmS(cmS), PAD_LEFT, PAD_LEFT + plotW)
+}
+
+const zoneRects = computed(() => lab.zones.value
+  .map(z => ({ kind: z.kind, x: clipX(z.from), w: clipX(z.to) - clipX(z.from) }))
+  .filter(r => r.w > 0))
+
+/** OFF thresholds and the early-exit edge, as thin non-draggable lines. */
+const labLines = computed(() => {
+  const p = lab.params.value
+  const out: { key: string, x: number, label: string, color: string }[] = []
+  if (p.climbOff !== p.climbOn)
+    out.push({ key: 'c-off', x: xForCmS(p.climbOff), label: `C-OFF ${fmtMsPrecise(p.climbOff)}`, color: '#ff6a00' })
+  if (p.sinkOff !== p.sinkOn)
+    out.push({ key: 's-off', x: xForCmS(p.sinkOff), label: `S-OFF ${fmtMsPrecise(p.sinkOff)}`, color: '#0aa0e0' })
+  if (p.hyst > 0)
+    out.push({ key: 'early', x: xForCmS(p.climbOn + p.hyst), label: `C+H ${fmtMsPrecise(p.climbOn + p.hyst)}`, color: '#c2410c' })
+  return out.filter(l => l.x >= PAD_LEFT && l.x <= PAD_LEFT + plotW)
+})
+
 /**
- * Filled rectangle showing the silent zone (climb-on / sink-on dead-band)
- * — visible only when both thresholds are loaded and they don't collapse
- * onto a single point. Drawn beneath the curves so it doesn't muddy them.
+ * Live overlay while the emulator runs: the silent window in effect right now
+ * (it moves with the trend), the EMA and an arrow from the EMA to the current
+ * reading — its length is how fast the vario is moving.
  */
-const deadBandRect = computed<{ x: number, width: number } | null>(() => {
-  if (typeof props.climbOn !== 'number' || typeof props.sinkOn !== 'number')
+const liveOverlay = computed(() => {
+  const l = lab.live
+  if (!l.running || !l.engaged)
     return null
-  if (props.climbOn <= props.sinkOn)
-    return null
-  const xLo = xForCmS(props.sinkOn)
-  const xHi = xForCmS(props.climbOn)
-  return { x: xLo, width: xHi - xLo }
+  const w = lab.quietWindow.value
+  const xLo = clipX(w.from)
+  const xHi = clipX(w.to)
+  // Edge labels: with the tone on, the window is where it would stop; with
+  // the tone off, crossing an edge starts it.
+  const edges = [
+    { x: xForCmS(w.to), anchor: 'start', label: l.toneOn ? `OFF ≤ ${fmtMsPrecise(w.to)}` : `ON > ${fmtMsPrecise(w.to)}` },
+    { x: xForCmS(w.from), anchor: 'end', label: l.toneOn ? `OFF ≥ ${fmtMsPrecise(w.from)}` : `ON < ${fmtMsPrecise(w.from)}` },
+  ].filter(e => e.x >= PAD_LEFT && e.x <= PAD_LEFT + plotW)
+  return {
+    toneOn: l.toneOn,
+    win: { x: xLo, w: Math.max(xHi - xLo, 0) },
+    edges,
+    emaX: xForCmS(lab.emaCm.value),
+    curX: xForCmS(l.varioCm),
+    weakening: lab.weakening.value,
+  }
 })
 
 const thresholdLines = computed(() => {
@@ -434,6 +489,59 @@ function onPointerUp(evt: PointerEvent) {
   interaction.value = { mode: 'idle', handleIndex: -1, thresholdKind: null, panStartX: 0, panStartCenter: 0 }
 }
 
+/* Hover / tap tooltip for the zone under the pointer. */
+const editorRef = ref<HTMLElement | null>(null)
+const tip = ref<{ left: number, top: number, kind: ZoneKind } | null>(null)
+let tipTimer: ReturnType<typeof setTimeout> | null = null
+let tapStart: { x: number, y: number } | null = null
+
+function zoneAt(evt: PointerEvent): ZoneKind | null {
+  const local = pointerToViewbox(evt)
+  if (!local || local.x < PAD_LEFT || local.x > PAD_LEFT + plotW)
+    return null
+  const cmS = cmSForX(local.x)
+  return lab.zones.value.find(z => cmS >= z.from && cmS < z.to)?.kind ?? null
+}
+
+function showTip(evt: PointerEvent) {
+  const host = editorRef.value
+  const kind = zoneAt(evt)
+  if (!host || !kind) {
+    tip.value = null
+    return
+  }
+  const r = host.getBoundingClientRect()
+  tip.value = { left: evt.clientX - r.left, top: evt.clientY - r.top, kind }
+}
+
+function onSvgHover(evt: PointerEvent) {
+  if (evt.pointerType !== 'mouse' || interaction.value.mode !== 'idle')
+    return
+  showTip(evt)
+}
+
+function onSvgTapStart(evt: PointerEvent) {
+  tapStart = { x: evt.clientX, y: evt.clientY }
+}
+
+function onSvgTapEnd(evt: PointerEvent) {
+  if (evt.pointerType === 'mouse' || !tapStart)
+    return
+  const moved = Math.hypot(evt.clientX - tapStart.x, evt.clientY - tapStart.y)
+  tapStart = null
+  if (moved > 8)
+    return
+  showTip(evt)
+  if (tipTimer)
+    clearTimeout(tipTimer)
+  tipTimer = setTimeout(() => (tip.value = null), 5000)
+}
+
+onBeforeUnmount(() => {
+  if (tipTimer)
+    clearTimeout(tipTimer)
+})
+
 /* ---------------------------------------------------------------- grid */
 const gridXLines = computed(() => xTicks.value.map(t => t.x))
 const gridYLines = computed(() => yTicks.value.map(t => t.y))
@@ -479,7 +587,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
 </script>
 
 <template>
-  <div class="editor">
+  <div ref="editorRef" class="editor">
     <div class="editor__bar">
       <div class="editor__tabs" role="tablist">
         <button
@@ -522,11 +630,42 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       :class="{ 'editor__svg--pannable': zoomLevel > 1 }"
       :viewBox="`0 0 ${VB_W} ${VB_H}`"
       preserveAspectRatio="xMidYMid meet"
-      @pointerdown="onSvgPointerDown"
-      @pointermove="onPointerMove"
-      @pointerup="onPointerUp"
+      @pointerdown="onSvgTapStart($event); onSvgPointerDown($event)"
+      @pointermove="onSvgHover($event); onPointerMove($event)"
+      @pointerup="onSvgTapEnd($event); onPointerUp($event)"
       @pointercancel="onPointerUp"
+      @pointerleave="tip = null"
     >
+      <defs>
+        <!-- Literal hex, like the threshold colours: SVG paint servers don't
+             reliably resolve var(). Solid tints = the tone is decided by the
+             vario alone; hatches = memory, the tone depends on where you came
+             from; orange hatch = early exit by trend. -->
+        <pattern id="cz-sink" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#0aa0e0" opacity="0.13" />
+        </pattern>
+        <pattern id="cz-climb" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#ff6a00" opacity="0.12" />
+        </pattern>
+        <pattern id="cz-quiet" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#7a7a7a" opacity="0.08" />
+        </pattern>
+        <pattern id="cz-sink-memory" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="#0aa0e0" opacity="0.05" />
+          <rect width="4" height="12" fill="#0aa0e0" opacity="0.28" />
+        </pattern>
+        <pattern id="cz-climb-memory" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="#ff6a00" opacity="0.05" />
+          <rect width="4" height="12" fill="#ff6a00" opacity="0.28" />
+        </pattern>
+        <pattern id="cz-early" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <rect width="12" height="12" fill="#c2410c" opacity="0.06" />
+          <rect width="2" height="12" fill="#c2410c" opacity="0.4" />
+        </pattern>
+        <marker id="cz-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#e30613" />
+        </marker>
+      </defs>
       <rect
         :x="PAD_LEFT" :y="PAD_TOP" :width="plotW" :height="plotH"
         class="editor__frame"
@@ -570,18 +709,72 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
         {{ watermarkX.value }}
       </text>
 
-      <!-- Dead-band rectangle: the silent zone between sink-on and climb-on.
-           Renders only when both thresholds are known and sink-on < climb-on
-           (collapsed thresholds → no dead band). Makes the silent region
-           visually obvious before the user even reads the threshold values. -->
-      <rect
-        v-if="deadBandRect"
-        :x="deadBandRect.x"
-        :y="PAD_TOP"
-        :width="deadBandRect.width"
-        :height="plotH"
-        class="editor__deadband"
-      />
+      <!-- Threshold-lab zones along the vario axis (beneath the curves). -->
+      <g class="editor__zones">
+        <rect
+          v-for="z in zoneRects"
+          :key="`zone-${z.kind}`"
+          :x="z.x" :y="PAD_TOP" :width="z.w" :height="plotH"
+          :fill="ZONE_FILL[z.kind]"
+        />
+        <line
+          v-for="l in labLines"
+          :key="`labl-${l.key}`"
+          :x1="l.x" :y1="PAD_TOP" :x2="l.x" :y2="PAD_TOP + plotH"
+          :stroke="l.color"
+          stroke-dasharray="3 5"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke"
+        />
+        <text
+          v-for="(l, i) in labLines"
+          :key="`labt-${l.key}`"
+          :x="l.x + 3"
+          :y="PAD_TOP + plotH - 30 - i * 14"
+          class="editor__lab-label"
+          :fill="l.color"
+        >
+          {{ l.label }}
+        </text>
+      </g>
+
+      <!-- Live emulator overlay: silent window in effect now + EMA → vario
+           trend arrow. -->
+      <g v-if="liveOverlay" class="editor__live">
+        <rect
+          :x="liveOverlay.win.x" :y="PAD_TOP + 40" :width="liveOverlay.win.w" :height="plotH - 80"
+          class="editor__live-win"
+          :class="{ 'editor__live-win--on': liveOverlay.toneOn }"
+          vector-effect="non-scaling-stroke"
+        />
+        <text
+          v-for="(e, i) in liveOverlay.edges"
+          :key="`edge-${i}`"
+          :x="e.anchor === 'start' ? e.x + 4 : e.x - 4"
+          :y="PAD_TOP + 56"
+          :text-anchor="e.anchor"
+          class="editor__live-label"
+          :class="{ 'editor__live-label--on': liveOverlay.toneOn }"
+        >
+          {{ e.label }}
+        </text>
+        <line
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 70" :x2="liveOverlay.emaX" :y2="PAD_TOP + 98"
+          class="editor__live-ema"
+          vector-effect="non-scaling-stroke"
+        />
+        <text :x="liveOverlay.emaX" :y="PAD_TOP + 112" text-anchor="middle" class="editor__live-label">
+          {{ t('lab.chart-ema') }}
+        </text>
+        <line
+          v-if="Math.abs(liveOverlay.curX - liveOverlay.emaX) > 3"
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 84" :x2="liveOverlay.curX" :y2="PAD_TOP + 84"
+          class="editor__live-trend"
+          :class="{ 'editor__live-trend--weak': liveOverlay.weakening }"
+          marker-end="url(#cz-arrow)"
+          vector-effect="non-scaling-stroke"
+        />
+      </g>
 
       <!-- Threshold verticals: only climb-on / sink-on. Climb-off and
            sink-off are legacy fields exposed in the settings list only.
@@ -720,6 +913,15 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       </template>
     </svg>
 
+    <div
+      v-if="tip"
+      class="editor__tip"
+      :style="{ left: `${tip.left}px`, top: `${tip.top}px` }"
+      role="tooltip"
+    >
+      <LabZoneText :kind="tip.kind" />
+    </div>
+
     <!-- Footer: legend (left) + x-axis label (right) in a single row. -->
     <div class="editor__footer">
       <div class="editor__legend">
@@ -740,6 +942,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
 
 <style scoped>
 .editor {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--ck-s-sm);
@@ -912,9 +1115,62 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
   pointer-events: none;
 }
 
-.editor__deadband {
-  fill: var(--ck-ink);
-  opacity: 0.06;
+.editor__zones,
+.editor__live {
+  pointer-events: none;
+}
+
+.editor__lab-label,
+.editor__live-label {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.editor__live-label {
+  fill: var(--ck-dim);
+}
+
+.editor__live-label--on {
+  fill: #e30613;
+}
+
+.editor__live-win {
+  fill: none;
+  stroke: var(--ck-dim);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.editor__live-win--on {
+  stroke: #e30613;
+}
+
+.editor__live-ema {
+  stroke: var(--ck-ink);
+  stroke-width: 2;
+}
+
+.editor__live-trend {
+  stroke: #e30613;
+  stroke-width: 3;
+}
+
+.editor__live-trend--weak {
+  stroke-dasharray: 5 3;
+}
+
+.editor__tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, 14px);
+  width: min(300px, 86vw);
+  padding: 10px 12px;
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  border: var(--ck-stroke-rule) solid var(--ck-ink);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
   pointer-events: none;
 }
 
