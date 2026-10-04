@@ -311,6 +311,8 @@ audio:
   source-device: Gerät
   source-browser: Browser
   source-off: Aus
+  demo: Demo
+  demo-stop: Stopp
   silent-device-eyebrow: GERÄT STUMM
   silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
@@ -583,8 +585,6 @@ lab:
   hint-sink-on: Sinkton startet unter
   hint-sink-off: und hält, einmal an, bis
   hint-hyst: 'solange das Steigen nachlässt, endet der Ton früher: bei Climb ON + diesem Wert. 0 = aus.'
-  sc-weakening: Thermik lässt nach
-  sc-sink-exit: Raus aus dem Sinken
   zones: Zonen
   on: TON AN
   off: STILL
@@ -621,6 +621,6 @@ lab:
   hist-th: Steigschwelle jetzt
   hist-tone: Ton
   hist-weak: Steigen lässt nach
-  hist-empty: Schieberegler bewegen oder ein Szenario starten
+  hist-empty: Schieberegler bewegen oder die Demo starten
   hist-caption: 'So wirkt die Trend-Hysterese: solange das Vario unter seinem Mittel über ~0,4 s liegt (gestrichelt), gilt das Steigen als nachlassend (Streifen unten) und die Steigschwelle (orange Linie) hebt sich von {co} auf {early} m/s — um {h}. Darum verstummt ein auslaufender Bart früher. Sobald das Vario nicht mehr fällt und das Mittel einholt, fällt die Schwelle zurück auf {co}.'
   hist-caption-off: 'Trend-Hysterese ist aus (0): die Steigschwelle ist immer {co} m/s, egal ob das Steigen nachlässt oder zunimmt.'

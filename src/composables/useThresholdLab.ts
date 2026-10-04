@@ -32,7 +32,7 @@ const SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
 const HYST_UUID = '0e984fe9-534c-4f13-969c-58ce03d33527'
 
 export type LabPreset = 'flybeeper' | 'xctracer' | 'hugo' | 'custom'
-export type Scenario = 'weakening' | 'sink-exit'
+export type Scenario = 'demo'
 
 interface Stored {
   linked: boolean
@@ -40,17 +40,16 @@ interface Stored {
 }
 
 /**
- * Keyframes in [seconds, m/s]; linear in between. Paced like real air — a
- * vario reading drifts by a few tenths per second, not metres — so the trend
- * logic and the thresholds have time to show what they do.
+ * Keyframes in [seconds, m/s]; linear in between, looped until stopped (the
+ * last frame equals the first). Paced like real air — a vario reading drifts
+ * by a few tenths per second, not metres — so the trend logic and the
+ * thresholds have time to show what they do.
  */
 const SCENARIOS: Record<Scenario, [number, number][]> = {
-  // Thermal builds to +2, holds, then fades out into −1 m/s sink
-  // (−0.2 m/s per second): the trend hysteresis cuts the climb tone early.
-  'weakening': [[0, 0], [5, 2], [11, 2], [26, -1], [31, -1]],
-  // Out of a −2.5 m/s sink up into +1 m/s climb (+0.175 m/s per second):
-  // where the sink tone stops and the climb tone starts.
-  'sink-exit': [[0, -2.5], [4, -2.5], [24, 1], [29, 1]],
+  // Out of a −2 m/s sink up into +1 m/s climb and back down (0.2 m/s per
+  // second): the sink tone stopping, the climb tone starting, then the climb
+  // fading — where the trend hysteresis cuts it early.
+  demo: [[0, -2], [3, -2], [18, 1], [22, 1], [37, -2]],
 }
 
 /** Seconds in the sniffer window before the panel calls it "stuck". */
@@ -176,13 +175,7 @@ export function useThresholdLab() {
     const t0 = performance.now()
     activeScenario.value = name
     scenarioTimer = setInterval(() => {
-      const t = (performance.now() - t0) / 1000
-      const last = frames[frames.length - 1]
-      if (t >= last[0]) {
-        driveMs.value = last[1]
-        stopScenario()
-        return
-      }
+      const t = ((performance.now() - t0) / 1000) % frames[frames.length - 1][0]
       let i = 1
       while (frames[i][0] < t)
         i++

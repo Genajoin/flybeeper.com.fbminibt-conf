@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Shared simulator UI — audio source toggle, slider with readout, snap presets,
- * two flight scenarios. Mounted inside the combined Sound page (/settings/audio)
+ * a looping demo flight (−2 → +1 → −2 m/s). Mounted inside the combined Sound page (/settings/audio)
  * under the curve editor so the user can drag breakpoints and hear the result
  * without leaving the page.
  *
@@ -158,7 +158,7 @@ onMounted(() => {
   })
 })
 
-// Scenario playback from the lab panel moves the slider.
+// Demo playback (useThresholdLab scenario) moves the slider.
 watch(() => lab.driveMs.value, (v) => {
   if (v === null)
     return
@@ -188,11 +188,6 @@ watch(source, (next, prev) => {
   else if (next === 'device')
     sim.setValueCmS(Math.round(sliderMs.value * 100))
 })
-
-const SCENARIOS: { key: Scenario, label: string }[] = [
-  { key: 'weakening', label: 'lab.sc-weakening' },
-  { key: 'sink-exit', label: 'lab.sc-sink-exit' },
-]
 
 function toggleScenario(key: Scenario) {
   if (lab.activeScenario.value === key) {
@@ -250,14 +245,12 @@ onUnmounted(() => {
         <template #extra>
           <span class="ctrl__spacer" />
           <button
-            v-for="sc in SCENARIOS"
-            :key="sc.key"
             type="button"
             class="ctrl__demo"
-            :class="{ 'ctrl__demo--active': lab.activeScenario.value === sc.key }"
-            @click="toggleScenario(sc.key)"
+            :class="{ 'ctrl__demo--active': lab.activeScenario.value === 'demo' }"
+            @click="toggleScenario('demo')"
           >
-            {{ lab.activeScenario.value === sc.key ? '■' : '▶' }} {{ t(sc.label) }}
+            {{ lab.activeScenario.value === 'demo' ? `■ ${t('audio.demo-stop')}` : `▶ ${t('audio.demo')}` }}
           </button>
         </template>
       </ClimbrateSlider>
