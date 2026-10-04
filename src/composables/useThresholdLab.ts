@@ -9,6 +9,7 @@ import {
   emaValue,
   isWeakening,
   soundParams,
+  toneSide,
   zonesFor,
 } from '~/utils/threshold-model'
 
@@ -255,7 +256,7 @@ export function startBuzzerEmulator(io: EmulatorIo): () => void {
       }
     }
     else {
-      const r = decide(lab.params.value, live.toneOn, v, emaValue(live.emaX10))
+      const r = decide(lab.params.value, toneSide(live.reason, live.toneOn), v, emaValue(live.emaX10))
       live.toneOn = r.toneOn
       live.reason = r.reason
       if (!r.toneOn) {

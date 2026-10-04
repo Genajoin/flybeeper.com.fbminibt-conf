@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { StorageSerializers } from '@vueuse/core'
 import cloneDeep from 'lodash.clonedeep'
 import isEqual from 'lodash.isequal'
 import { recordAction } from '~/utils/sessionJournal'
@@ -103,12 +104,11 @@ const presets = {
   },
 } satisfies Record<string, iVarioCurves>
 
-// Last-known user-customised curves. Module-scoped so it survives audio.vue
-// remounts during a session (e.g. user navigates to /settings/power and back).
+// Last-known user-customised curves, kept per browser (survives reloads).
 // Captured whenever the user leaves the CUSTOM bucket for a preset, so that
 // returning to CUSTOM restores exactly what they had — instead of leaving them
 // staring at the preset's curves with the CUSTOM segment lit.
-let customSnapshot: iVarioCurves | null = null
+const customSnapshot = useLocalStorage<iVarioCurves | null>('curves-custom', null, { serializer: StorageSerializers.object })
 
 type PresetKey = keyof typeof presets
 
@@ -161,14 +161,14 @@ function selectPreset(v: PresetKey | 'custom') {
     // Restore the user's last custom sound if we have one stashed. If not
     // (first ever click on CUSTOM with no prior edits), leave it alone —
     // it IS the implicit starting point for the user's custom editing.
-    if (customSnapshot)
-      writeCurves(cloneDeep(customSnapshot))
+    if (customSnapshot.value)
+      writeCurves(cloneDeep(customSnapshot.value))
     return
   }
   // Leaving CUSTOM for a preset: snapshot the user's work so a later
   // CUSTOM click can bring it back.
   if (activePreset.value === 'custom' && cpfCurves.value)
-    customSnapshot = cloneDeep(cpfCurves.value)
+    customSnapshot.value = cloneDeep(cpfCurves.value)
   writeCurves(cloneDeep(presets[v]))
 }
 </script>

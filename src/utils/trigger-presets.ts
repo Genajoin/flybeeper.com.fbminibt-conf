@@ -48,8 +48,9 @@ export const TRIGGER_PRESETS = {
   mountain: { climbOn: 0.3, climbOff: 0.1, sinkOn: -3, sinkOff: -2.5, hyst: 0, average: 0.6 },
   // Air rising slower than the glider sinks: a tone from −0.3.
   sniffer: { climbOn: -0.3, climbOff: -0.4, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.3 },
-  // Almost always sounding: sink tone from −0.4, held after sink up to +0.05.
-  always: { climbOn: 0.1, climbOff: 0.1, sinkOn: -0.4, sinkOff: 0.05, hyst: 0, average: 0.3 },
+  // Hugo's: climb tone from 0, sink tone from −0.6, both held to −0.3. Silent
+  // only on the way between them: −0.3…−0.6 down, −0.3…0 up.
+  always: { climbOn: 0, climbOff: -0.3, sinkOn: -0.6, sinkOff: -0.3, hyst: 0, average: 0.3 },
   // Minimum of sound: ridge soaring, acro, beginners.
   quiet: { climbOn: 0.3, climbOff: 0.3, sinkOn: -4, sinkOff: -4, hyst: 0.1, average: 0.5 },
 } satisfies Record<string, TriggerValues>

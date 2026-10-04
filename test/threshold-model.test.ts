@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ThresholdParams } from '../src/utils/threshold-model'
+import type { ThresholdParams, ToneSide } from '../src/utils/threshold-model'
 import {
   averageStep,
   decide,
@@ -7,6 +7,7 @@ import {
   emaValue,
   firmwareParams,
   soundParams,
+  toneSide,
   zonesFor,
 } from '../src/utils/threshold-model'
 
@@ -42,11 +43,12 @@ function offAt(p: ThresholdParams, trace: number[]): number | undefined {
 /** Feed a vario trace at 40 ms ticks, deciding on every tick. */
 function run(p: ThresholdParams, trace: number[]) {
   let ema = trace[0] * 10
-  let on = false
+  let side: ToneSide | null = null
   return trace.map((v) => {
     ema = emaStep(ema, v)
-    on = decide(p, on, v, emaValue(ema)).toneOn
-    return on
+    const r = decide(p, side, v, emaValue(ema))
+    side = toneSide(r.reason, r.toneOn)
+    return r.toneOn
   })
 }
 
@@ -55,7 +57,7 @@ describe('threshold model', () => {
     const p = firmwareParams(5, -250, 25)
     for (let vario = -400; vario <= 400; vario += 5) {
       for (let avg = -400; avg <= 400; avg += 15) {
-        for (const prev of [false, true])
+        for (const prev of [null, 'climb', 'sink'] as const)
           expect(decide(p, prev, vario, avg).toneOn).toBe(firmwareSounds(p, vario, avg))
       }
     }
@@ -67,17 +69,17 @@ describe('threshold model', () => {
 
   it('the XCTracer preset: climb tone holds between ClimbOff and ClimbOn only when coming from above', () => {
     const p = XCTRACER_DEFAULT
-    expect(decide(p, true, 7, 7).toneOn).toBe(true)
-    expect(decide(p, false, 7, 7).toneOn).toBe(false)
-    expect(decide(p, true, 5, 5).toneOn).toBe(false)
+    expect(decide(p, 'climb', 7, 7).toneOn).toBe(true)
+    expect(decide(p, null, 7, 7).toneOn).toBe(false)
+    expect(decide(p, 'climb', 5, 5).toneOn).toBe(false)
   })
 
   it('the Hugo sniffer: after a sink the tone holds up to +0.05, from above it is silent', () => {
     const p = HUGO_SNIFFER
-    expect(decide(p, true, -20, -20)).toEqual({ toneOn: true, reason: 'sink-hold' })
-    expect(decide(p, true, 4, 4).toneOn).toBe(true)
-    expect(decide(p, true, 5, 5).toneOn).toBe(false)
-    expect(decide(p, false, -20, -20)).toEqual({ toneOn: false, reason: 'quiet-memory' })
+    expect(decide(p, 'sink', -20, -20)).toEqual({ toneOn: true, reason: 'sink-hold' })
+    expect(decide(p, 'sink', 4, 4).toneOn).toBe(true)
+    expect(decide(p, 'sink', 5, 5).toneOn).toBe(false)
+    expect(decide(p, null, -20, -20)).toEqual({ toneOn: false, reason: 'quiet-memory' })
   })
 
   it('the Hugo sniffer: stuck in the window means the tone never stops', () => {
@@ -148,5 +150,14 @@ describe('threshold model', () => {
     expect(v).toBeLessThan(66)
     // Out of the firmware range: the 100 ms default.
     expect(averageStep(0, 100, 0)).toBeCloseTo(averageStep(0, 100, 100))
+  })
+
+  it('each hold keeps only its own tone: meeting holds leave a silent transition', () => {
+    // "Always on": climb 0 / hold −0.30, sink −0.60 / hold −0.30.
+    const p = soundParams(0, -30, -60, -30, 0)
+    const down = run(p, [10, -10, -29, -31, -50, -59, -61])
+    expect(down).toEqual([true, true, true, false, false, false, true])
+    const up = run(p, [-70, -50, -31, -29, -10, 0, 5])
+    expect(up).toEqual([true, true, true, false, false, false, true])
   })
 })

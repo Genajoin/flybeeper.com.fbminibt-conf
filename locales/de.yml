@@ -626,7 +626,7 @@ trig:
   sniffer: Sniffer
   sniffer-body: 'Ton schon ab −0,30: die Luft steigt, aber langsamer als der Schirm sinkt. Hilft schwache Thermik zu finden — wie der Flymaster-Buzzer oder Digifly Pre-Thermal. Zwischen −0,30 und null spielt die Kurve ihren tiefen Ton.'
   always: Immer an
-  always-body: 'Fast immer Ton (Hugo-Modus). Sinkton schon ab −0,40, nach dem Sinken hält er bis +0,05 — keine Stille zwischen Sinken und Steigen. Still nur, wenn du von oben in −0,40 … +0,10 kommst.'
+  always-body: 'Fast immer Ton (Hugo-Modus). Steigen tönt ab 0 und hält bis −0,30, Sinken ab −0,60 und hält bis −0,30. Still nur an den Übergängen: wenn das Steigen nachlässt — von −0,30 bis −0,60; beim Ausleiten aus dem Sinken — von −0,30 bis 0.'
   quiet: Leise
   quiet-body: 'Minimum an Ton: Soaring, Acro, Anfänger. Steigen ab +0,30, Sinken erst ab −4,0 (Spirale).'
 help:

@@ -625,7 +625,7 @@ trig:
   sniffer: Sniffer
   sniffer-body: 'Tone already from −0.30: the air is rising, though slower than the glider sinks. Helps find weak lift — like the Flymaster buzzer or Digifly pre-thermal. Between −0.30 and zero the curve plays its low tone.'
   always: Always on
-  always-body: 'Almost always sounding (Hugo mode). Sink tone already from −0.40, and after sink it holds up to +0.05 — no silence between sink and climb. Silent only when you come from above into −0.40 … +0.10.'
+  always-body: 'Sound almost always (Hugo mode). Climb sounds from 0 and holds down to −0.30, sink from −0.60 and holds up to −0.30. Silent only on the transitions: as a climb fades — from −0.30 to −0.60; coming out of a sink — from −0.30 to 0.'
   quiet: Quiet
   quiet-body: 'Minimum of sound: ridge soaring, acro, beginners. Climb from +0.30, sink only beyond −4.0 (spiral).'
 help:

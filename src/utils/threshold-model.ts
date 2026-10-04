@@ -102,22 +102,32 @@ export type Reason =
   | 'quiet-early' // off because the climb is weakening (early exit)
   | 'quiet-memory' // off, inside a memory zone entered from the silent side
 
+export type ToneSide = 'climb' | 'sink'
+
+/** Which tone a decision left playing, or null when silent. */
+export function toneSide(reason: Reason, toneOn: boolean): ToneSide | null {
+  if (!toneOn)
+    return null
+  return reason === 'sink' || reason === 'sink-hold' ? 'sink' : 'climb'
+}
+
 /**
- * One decision, as the firmware takes it in a pause. Returns the new on/off
- * state and why.
+ * One decision, as the firmware takes it in a pause. `prev` is the tone that
+ * is playing (null = silent): each hold keeps only its own tone — the climb
+ * tone holds down to ClimbOff, the sink tone up to SinkOff — so a climb tone
+ * falling past ClimbOff stops even where the sink hold would begin.
  */
-export function decide(p: ThresholdParams, toneOn: boolean, varioCm: number, emaCm: number): { toneOn: boolean, reason: Reason } {
+export function decide(p: ThresholdParams, prev: ToneSide | null, varioCm: number, emaCm: number): { toneOn: boolean, reason: Reason } {
   const weakening = isWeakening(p, varioCm, emaCm)
   const { climbOnEff, climbOffEff } = effectiveThresholds(p, weakening)
   if (varioCm > climbOnEff)
     return { toneOn: true, reason: 'climb' }
   if (varioCm < p.sinkOn)
     return { toneOn: true, reason: 'sink' }
-  if (toneOn) {
-    const inQuietWindow = varioCm >= p.sinkOff && varioCm <= climbOffEff
-    if (!inQuietWindow)
-      return { toneOn: true, reason: varioCm < p.sinkOff ? 'sink-hold' : 'climb-hold' }
-  }
+  if (prev === 'climb' && varioCm > climbOffEff)
+    return { toneOn: true, reason: 'climb-hold' }
+  if (prev === 'sink' && varioCm < p.sinkOff)
+    return { toneOn: true, reason: 'sink-hold' }
   if (weakening && varioCm > p.climbOff)
     return { toneOn: false, reason: 'quiet-early' }
   if ((varioCm > p.climbOff && varioCm <= p.climbOn) || (varioCm >= p.sinkOn && varioCm < p.sinkOff))

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { StorageSerializers } from '@vueuse/core'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { TriggerPresetKey, TriggerValues } from '~/utils/trigger-presets'
 import { recordAction } from '~/utils/sessionJournal'
@@ -13,6 +14,8 @@ import {
  * Presets for when the vario sounds near zero: thresholds, holds, early exit
  * and averaging in one click. The curves (how it sounds) are left alone.
  * The active one is derived from the device's values, CUSTOM otherwise.
+ * Leaving CUSTOM for a preset stashes the pilot's own values (per browser),
+ * and the CUSTOM button puts them back.
  */
 const props = defineProps<{
   chars: BleCharacteristic[]
@@ -36,14 +39,30 @@ const current = computed<Partial<TriggerValues>>(() => {
 
 const active = computed(() => matchTriggerPreset(current.value))
 
+const customSnapshot = useLocalStorage<Partial<TriggerValues> | null>('trigger-custom', null, { serializer: StorageSerializers.object })
+
+function write(values: Partial<TriggerValues>) {
+  for (const f of Object.keys(values) as (keyof TriggerValues)[]) {
+    const ch = charFor(f)
+    const v = values[f]
+    if (ch && typeof v === 'number')
+      ch.formattedValue = v
+  }
+}
+
 function apply(k: TriggerPresetKey) {
   recordAction('settings', `trigger preset: ${k}`)
-  const p = TRIGGER_PRESETS[k]
-  for (const f of Object.keys(p) as (keyof TriggerValues)[]) {
-    const ch = charFor(f)
-    if (ch)
-      ch.formattedValue = p[f]
-  }
+  if (!active.value && Object.keys(current.value).length)
+    customSnapshot.value = { ...current.value }
+  write(TRIGGER_PRESETS[k])
+}
+
+function applyCustom() {
+  // Already on own values, or nothing stashed yet.
+  if (!active.value || !customSnapshot.value)
+    return
+  recordAction('settings', 'trigger preset: custom')
+  write(customSnapshot.value)
 }
 
 // Description of the hovered preset, else of the active one.
@@ -88,9 +107,17 @@ const summary = computed(() => {
       >
         {{ t(`trig.${k}`) }}
       </button>
-      <span class="trig__btn trig__btn--custom" :class="{ 'trig__btn--active': !active }">
+      <button
+        type="button"
+        role="radio"
+        class="trig__btn"
+        :class="{ 'trig__btn--active': !active }"
+        :aria-checked="!active"
+        :disabled="!!active && !customSnapshot"
+        @click="applyCustom"
+      >
         {{ t('trig.custom') }}
-      </span>
+      </button>
     </div>
     <div v-if="shown" class="trig__desc">
       <p>{{ t(`trig.${shown}-body`) }}</p>
@@ -133,7 +160,7 @@ const summary = computed(() => {
   border-radius: 0;
 }
 
-.trig__btn--custom {
+.trig__btn:disabled {
   cursor: default;
   color: var(--ck-dim);
 }
