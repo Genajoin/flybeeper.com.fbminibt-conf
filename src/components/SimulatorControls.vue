@@ -240,6 +240,8 @@ onUnmounted(() => {
         :max="sliderMaxMs"
         :step="sliderStepMs"
         :ticks="sliderTicks"
+        :limit-min="SIM_MIN_MS"
+        :limit-max="SIM_MAX_MS"
         @pointerdown="onSliderGrab"
       >
         <template #extra>

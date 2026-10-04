@@ -16,6 +16,13 @@ const props = withDefaults(defineProps<{
   snapValues?: number[]
   /** Tick marks + axis labels, m/s. Defaults to the 1× set for −5…+10. */
   ticks?: number[]
+  /**
+   * Outer limits, m/s, when `min`/`max` are only a zoomed window onto them.
+   * Dragging past the track's end then keeps pushing the value towards these
+   * (the host slides the window after it), like panning. Default: min/max.
+   */
+  limitMin?: number
+  limitMax?: number
 }>(), {
   min: -5,
   max: 10,
@@ -43,25 +50,50 @@ const zeroPct = computed(() => Math.max(0, Math.min(100, ((0 - props.min) / (pro
 const sinkBarRightPct = computed(() => 100 - Math.max(frac.value * 100, zeroPct.value))
 const climbBarLeftPct = computed(() => Math.min(frac.value * 100, zeroPct.value))
 
+const lo = computed(() => props.limitMin ?? props.min)
+const hi = computed(() => props.limitMax ?? props.max)
+
+function emitValue(raw: number) {
+  const value = Math.round(raw / props.step) * props.step
+  emit('update:modelValue', Math.max(lo.value, Math.min(hi.value, value)))
+}
+
+/** Unrounded drag position, so slow drags past the end still add up. */
+let dragRaw = 0
+let lastClientX = 0
+
 function setFromClientX(clientX: number) {
   const el = trackEl.value
   if (!el)
     return
   const rect = el.getBoundingClientRect()
-  const x = Math.max(0, Math.min(rect.width, clientX - rect.left))
-  const f = x / rect.width
-  let value = props.min + f * (props.max - props.min)
-  // snap to step
-  value = Math.round(value / props.step) * props.step
-  value = Math.max(props.min, Math.min(props.max, value))
-  emit('update:modelValue', value)
+  const scale = (props.max - props.min) / rect.width
+  if (dragging.value && (clientX > rect.right || clientX < rect.left)) {
+    // Past the end: only outward movement counts, and it moves the value on
+    // from where it is (the window has followed it), not from the pointer's
+    // absolute position — otherwise every event would re-add the whole
+    // overshoot and the window would run away.
+    const dx = clientX - lastClientX
+    const outward = clientX > rect.right ? Math.max(dx, 0) : Math.min(dx, 0)
+    const edge = clientX > rect.right ? props.max : props.min
+    dragRaw = (clientX > rect.right ? Math.max(dragRaw, edge) : Math.min(dragRaw, edge)) + outward * scale
+  }
+  else {
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left))
+    dragRaw = props.min + x * scale
+  }
+  lastClientX = clientX
+  dragRaw = Math.max(lo.value, Math.min(hi.value, dragRaw))
+  emitValue(dragRaw)
 }
 
 function onPointerDown(e: PointerEvent) {
   emit('pointerdown')
-  dragging.value = true;
+  dragging.value = false
+  lastClientX = e.clientX;
   (e.target as Element).setPointerCapture?.(e.pointerId)
   setFromClientX(e.clientX)
+  dragging.value = true
 }
 
 function onPointerMove(e: PointerEvent) {
@@ -97,9 +129,9 @@ function labelStyle(v: number) {
   return { left: `${pct}%`, transform: `translateX(${shift})` }
 }
 
-// Snaps outside the current (possibly zoomed) range would yank the slider off
-// the chart, so only the ones in view are offered.
-const visibleSnaps = computed(() => props.snapValues.filter(v => v >= props.min && v <= props.max))
+// Every snap within the outer limits: zoomed in, the host's window slides to
+// whichever one is picked.
+const visibleSnaps = computed(() => props.snapValues.filter(v => v >= lo.value && v <= hi.value))
 
 function snapMatches(v: number): boolean {
   return Math.round(props.modelValue * 10) / 10 === v

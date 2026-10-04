@@ -577,16 +577,18 @@ onBeforeUnmount(() => {
     clearTimeout(tipTimer)
 })
 
-// Zoomed in, the window follows the simulator: when the value leaves it (demo
-// sweep, a snap button), the window re-centres on it. Otherwise the slider's
-// thumb sits pinned past its own scale and can't be dragged back. A pan the
-// pilot is doing right now wins.
+// Zoomed in, the window follows the simulator: when the value goes past an
+// edge (dragging the slider beyond its end, the demo sweep, a snap button),
+// the window slides just far enough to keep it on that edge — like panning.
+// Otherwise the slider's thumb would sit pinned past its own scale. A pan the
+// pilot is doing on the chart right now wins.
 watch(() => sim.previewCmS.value, (cmS) => {
   if (zoomLevel.value === 1 || interaction.value.mode === 'pan')
     return
-  if (cmS >= viewMinCmS.value && cmS <= viewMaxCmS.value)
+  const over = cmS > viewMaxCmS.value ? cmS - viewMaxCmS.value : cmS < viewMinCmS.value ? cmS - viewMinCmS.value : 0
+  if (!over)
     return
-  zoomCenterCmS.value = cmS
+  zoomCenterCmS.value = (viewMinCmS.value + viewMaxCmS.value) / 2 + over
   setZoom(zoomLevel.value)
 })
 
