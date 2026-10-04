@@ -39,7 +39,8 @@ const SCENARIOS: Record<Scenario, [number, number][]> = {
   // Out of a −2 m/s sink up into +1 m/s climb and back down (0.2 m/s per
   // second): the sink tone stopping, the climb tone starting, then the climb
   // fading — where the trend hysteresis cuts it early.
-  demo: [[0, -2], [3, -2], [18, 1], [22, 1], [37, -2]],
+  // Half a second at each end, like a real turn-around.
+  demo: [[0, -2], [0.5, -2], [15.5, 1], [16, 1], [31, -2]],
 }
 
 /** Seconds in the sniffer window before the panel calls it "stuck". */
