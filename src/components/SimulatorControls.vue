@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Shared simulator UI — audio source toggle, slider with readout, snap presets,
- * a looping demo flight (−2 → +1 → −2 m/s). Mounted inside the combined Sound page (/settings/audio)
+ * a looping demo flight (−3 → +1 → −3 m/s). Mounted inside the combined Sound page (/settings/audio)
  * under the curve editor so the user can drag breakpoints and hear the result
  * without leaving the page.
  *
