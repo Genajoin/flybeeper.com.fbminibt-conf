@@ -38,6 +38,10 @@ const current = computed<Partial<TriggerValues>>(() => {
 })
 
 const active = computed(() => matchTriggerPreset(current.value))
+// A saved profile matching the values lights the profile picker, not "Свой".
+const profiles = useSoundProfiles()
+const profile = computed(() => (active.value ? null : profiles.active('trigger')))
+const own = computed(() => !active.value && !profile.value)
 
 const customSnapshot = useLocalStorage<Partial<TriggerValues> | null>('trigger-custom', null, { serializer: StorageSerializers.object })
 
@@ -50,16 +54,20 @@ function write(values: Partial<TriggerValues>) {
   }
 }
 
+function stashCustom() {
+  if (own.value && Object.keys(current.value).length)
+    customSnapshot.value = { ...current.value }
+}
+
 function apply(k: TriggerPresetKey) {
   recordAction('settings', `trigger preset: ${k}`)
-  if (!active.value && Object.keys(current.value).length)
-    customSnapshot.value = { ...current.value }
+  stashCustom()
   write(TRIGGER_PRESETS[k])
 }
 
 function applyCustom() {
   // Already on own values, or nothing stashed yet.
-  if (!active.value || !customSnapshot.value)
+  if (own.value || !customSnapshot.value)
     return
   recordAction('settings', 'trigger preset: custom')
   write(customSnapshot.value)
@@ -111,13 +119,14 @@ const summary = computed(() => {
         type="button"
         role="radio"
         class="trig__btn"
-        :class="{ 'trig__btn--active': !active }"
-        :aria-checked="!active"
-        :disabled="!!active && !customSnapshot"
+        :class="{ 'trig__btn--active': own }"
+        :aria-checked="own"
+        :disabled="!own && !customSnapshot"
         @click="applyCustom"
       >
         {{ t('trig.custom') }}
       </button>
+      <SoundProfileMenu class="trig__profiles" scope="trigger" :preset-active="!!active" @before-apply="stashCustom" />
     </div>
     <div v-if="shown" class="trig__desc">
       <p>{{ t(`trig.${shown}-body`) }}</p>
@@ -125,6 +134,9 @@ const summary = computed(() => {
         {{ summary }}
       </p>
     </div>
+    <p v-else-if="profile" class="trig__desc">
+      {{ t('prof.trigger-body', { name: profile.name }) }}
+    </p>
     <p v-else class="trig__desc">
       {{ t('trig.custom-body') }}
     </p>
@@ -158,6 +170,17 @@ const summary = computed(() => {
   text-align: center;
   cursor: pointer;
   border-radius: 0;
+}
+
+.trig__profiles {
+  grid-column: 1 / -1;
+  border-right: var(--ck-stroke-rule) solid var(--ck-ink);
+  border-bottom: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.trig__profiles :deep(.prof__toggle) {
+  border: none;
+  padding: 10px 6px;
 }
 
 .trig__btn:disabled {

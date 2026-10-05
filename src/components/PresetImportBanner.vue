@@ -2,6 +2,7 @@
 import { useSharedPresetStore } from '~/stores/shared-preset'
 import { useSettingsStore } from '~/stores/settings'
 import { requestDemo } from '~/composables/useThresholdLab'
+import { pickScope } from '~/utils/sound-profiles'
 
 const shared = useSharedPresetStore()
 const settings = useSettingsStore()
@@ -36,6 +37,23 @@ async function apply() {
   // bounce the user away from a panel they're already reading.
   if (!route.path.startsWith('/settings'))
     await router.push('/settings/audio')
+}
+
+// A link or file with a sound part can go straight into "My profiles",
+// with or without applying it.
+const profiles = useSoundProfiles()
+const savedName = ref('')
+watch(() => shared.pending, () => {
+  savedName.value = ''
+})
+const savable = computed(() => {
+  const s = shared.pending?.settings
+  return Boolean(pickScope(s, 'curves') || pickScope(s, 'trigger'))
+})
+function saveToProfiles() {
+  if (!shared.pending || savedName.value)
+    return
+  savedName.value = profiles.save(shared.pending.name || t('preset.import-default-name'), shared.pending.settings).name
 }
 
 function discard() {
@@ -101,9 +119,15 @@ const sourceLabel = computed(() => {
           <button class="banner-row__primary" type="button" @click="apply">
             {{ t('preset.apply') }}
           </button>
-          <button class="banner-row__secondary" type="button" @click="discard">
-            {{ t('preset.discard') }}
+          <button v-if="savable" class="banner-row__secondary" type="button" :disabled="!!savedName" @click="saveToProfiles">
+            {{ savedName ? t('prof.saved') : t('prof.save-import') }}
           </button>
+          <button class="banner-row__secondary" type="button" @click="discard">
+            {{ savedName ? t('prof.close') : t('preset.discard') }}
+          </button>
+        </div>
+        <div v-if="savedName" class="banner-row__sub">
+          {{ t('prof.saved-hint', { name: savedName }) }}
         </div>
       </div>
     </div>
@@ -185,6 +209,11 @@ const sourceLabel = computed(() => {
 
 .banner-row__secondary {
   border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.banner-row__secondary:disabled {
+  color: var(--ck-dim);
+  cursor: default;
 }
 
 .preset-imp-enter-active,

@@ -87,12 +87,6 @@ const presets = {
     buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
     buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   },
-  'silent-gnd': {
-    buzzer_vario_dots: [-1000, -300, -55, -50, 0, 10, 115, 265, 425, 600, 800, 1000],
-    buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 550, 765, 985, 1235, 1520, 2000],
-    buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
-    buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
-  },
   // Loudest sound the firmware team tuned: climb tones sit around 3.5–3.8 kHz,
   // the piezo's resonance, where it is loudest. From the shared "max-VOLUME"
   // preset link.
@@ -150,25 +144,36 @@ const viewOptions = computed(() => [
 const presetOptions = [
   { label: 'DEFAULT', value: 'default' as const },
   { label: 'AGGRESSIVE', value: 'aggressive' as const },
-  { label: 'SILENT GND', value: 'silent-gnd' as const },
   { label: 'MAX VOLUME', value: 'max-volume' as const },
   { label: 'CUSTOM*', value: 'custom' as const },
 ]
 
-function selectPreset(v: PresetKey | 'custom') {
+// A saved profile matching the curves lights the profile picker instead of
+// CUSTOM: CUSTOM means "values that are nowhere but on the device".
+const profiles = useSoundProfiles()
+const curveProfile = computed(() => (activePreset.value === 'custom' ? profiles.active('curves') : null))
+const segValue = computed<PresetKey | 'custom' | 'profile'>(() => (curveProfile.value ? 'profile' : activePreset.value))
+
+// Leaving own unsaved curves for a preset or a profile: stash them so a later
+// CUSTOM click can bring them back.
+function stashCustom() {
+  if (activePreset.value === 'custom' && !curveProfile.value && cpfCurves.value)
+    customSnapshot.value = cloneDeep(cpfCurves.value)
+}
+
+function selectPreset(v: PresetKey | 'custom' | 'profile') {
+  if (v === 'profile')
+    return
   recordAction('settings', `sound preset: ${v.toUpperCase()}`)
   if (v === 'custom') {
     // Restore the user's last custom sound if we have one stashed. If not
     // (first ever click on CUSTOM with no prior edits), leave it alone —
     // it IS the implicit starting point for the user's custom editing.
-    if (customSnapshot.value)
+    if (customSnapshot.value && (curveProfile.value || activePreset.value !== 'custom'))
       writeCurves(cloneDeep(customSnapshot.value))
     return
   }
-  // Leaving CUSTOM for a preset: snapshot the user's work so a later
-  // CUSTOM click can bring it back.
-  if (activePreset.value === 'custom' && cpfCurves.value)
-    customSnapshot.value = cloneDeep(cpfCurves.value)
+  stashCustom()
   writeCurves(cloneDeep(presets[v]))
 }
 </script>
@@ -211,13 +216,16 @@ function selectPreset(v: PresetKey | 'custom') {
               {{ t('msg.fetching') }}…
             </p>
           </div>
-          <CkSegmentedControl
-            class="sound__presets"
-            :model-value="activePreset"
-            :options="presetOptions"
-            :aria-label="t('sett.group-curves')"
-            @update:model-value="selectPreset"
-          />
+          <div class="sound__presets">
+            <CkSegmentedControl
+              class="sound__presets-seg"
+              :model-value="segValue"
+              :options="presetOptions"
+              :aria-label="t('sett.group-curves')"
+              @update:model-value="selectPreset"
+            />
+            <SoundProfileMenu v-if="cpfReady" class="sound__profiles" scope="curves" :preset-active="activePreset !== 'custom'" @before-apply="stashCustom" />
+          </div>
         </div>
 
         <div class="sound__sim">
@@ -287,7 +295,13 @@ function selectPreset(v: PresetKey | 'custom') {
 
 .sound__presets {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin: 12px 14px 0;
+}
+
+.sound__presets-seg {
+  display: flex;
 }
 
 .sound__sim {

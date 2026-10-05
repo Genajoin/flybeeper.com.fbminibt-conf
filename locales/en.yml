@@ -610,6 +610,28 @@ lab:
   hist-empty: Move the slider or start the demo
   hist-caption: 'How the early exit works: when the vario drops below its ~0.4 s average (dashed), the climb counts as weakening (strip at the bottom) and the climb threshold (orange line) lifts from {co} to {early} m/s — by {h}. The tone stops before the vario reaches {co}, making up for the smoothing lag. Once the vario rises again, the threshold drops back to {co}.'
   hist-caption-off: 'Early exit is off (0): the climb threshold is always {co} m/s, however fast the climb drops.'
+prof:
+  mine: My profiles
+  default-name: My profile
+  name-placeholder: Profile name
+  save-curves: Save curves
+  save-trigger: Save thresholds
+  save-import: To my profiles
+  saved: Saved ✓
+  close: Close
+  saved-hint: 'Saved as "{name}" — pick it in "My profiles" on the Sound page.'
+  empty-curves: No curves of your own yet. Save the current ones under a name and switch between them in one click.
+  empty-trigger: No thresholds of your own yet. Save the current ones under a name and switch between them in one click.
+  download: Download JSON
+  download-all: ⤓ All as JSON
+  upload: ↑ From JSON
+  imported: 'Profiles added: {n}'
+  rename: Rename
+  delete: Delete
+  delete-confirm: Delete?
+  trigger-body: 'Your profile "{name}".'
+  local-note: 'Profiles are kept only in this browser on this device — nothing is sent to a server. Clearing site data, another browser or another phone, and they are not there. To keep them safe, download the JSON: you can load it back any time.'
+
 trig:
   title: When it sounds
   custom: Own

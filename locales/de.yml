@@ -611,6 +611,28 @@ lab:
   hist-empty: Schieberegler bewegen oder die Demo starten
   hist-caption: 'So wirkt der frühe Ausstieg: fällt das Vario unter sein Mittel über ~0,4 s (gestrichelt), gilt das Steigen als nachlassend (Streifen unten) und die Steigschwelle (orange Linie) hebt sich von {co} auf {early} m/s — um {h}. Der Ton endet, bevor das Vario {co} erreicht — das gleicht die Glättungsverzögerung aus. Steigt das Vario wieder, fällt die Schwelle zurück auf {co}.'
   hist-caption-off: 'Früher Ausstieg ist aus (0): die Steigschwelle ist immer {co} m/s, egal wie schnell das Steigen abbricht.'
+prof:
+  mine: Meine Profile
+  default-name: Mein Profil
+  name-placeholder: Profilname
+  save-curves: Kurven speichern
+  save-trigger: Schwellen speichern
+  save-import: Zu meinen Profilen
+  saved: Gespeichert ✓
+  close: Schließen
+  saved-hint: 'Gespeichert als „{name}“ — wählbar unter „Meine Profile“ auf der Ton-Seite.'
+  empty-curves: Noch keine eigenen Kurven. Speichere die aktuellen unter einem Namen und wechsle mit einem Klick.
+  empty-trigger: Noch keine eigenen Schwellen. Speichere die aktuellen unter einem Namen und wechsle mit einem Klick.
+  download: JSON herunterladen
+  download-all: ⤓ Alle als JSON
+  upload: ↑ Aus JSON
+  imported: 'Profile hinzugefügt: {n}'
+  rename: Umbenennen
+  delete: Löschen
+  delete-confirm: Löschen?
+  trigger-body: 'Dein Profil „{name}“.'
+  local-note: 'Profile liegen nur in diesem Browser auf diesem Gerät — an einen Server geht nichts. Websitedaten gelöscht, anderer Browser oder anderes Handy — und sie sind hier nicht da. Zur Sicherheit JSON herunterladen: Es lässt sich jederzeit wieder laden.'
+
 trig:
   title: Wann es tönt
   custom: Eigene
