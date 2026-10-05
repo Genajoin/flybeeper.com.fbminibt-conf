@@ -415,6 +415,7 @@ sett:
 audio:
   source-label: Live tone source
   source-device: Device
+  source-device-off: Connect a device to play the sound on it
   source-browser: Browser
   source-off: Off
   demo: Demo

@@ -115,7 +115,8 @@ function simulate(p: ThresholdParams, averageS: number, air: (t: number) => numb
   let v = Math.round(smooth)
   let emaX10 = v * 10
   let side: ToneSide | null = null
-  let phase: 'idle' | 'sample' | 'pause' = 'idle'
+  type Phase = 'idle' | 'sample' | 'pause'
+  let phase = 'idle' as Phase
   let phaseEnd = 0
 
   const startSample = (at: number) => {
@@ -155,7 +156,8 @@ function simulate(p: ThresholdParams, averageS: number, air: (t: number) => numb
     v = Math.round(smooth)
     emaX10 = emaStep(emaX10, v)
     const ema = emaValue(emaX10)
-    if (phase !== 'sample') {
+    // The timers above move phase on behind TypeScript's back.
+    if ((phase as Phase) !== 'sample') {
       const r = decide(p, side, v, ema)
       side = toneSide(r.reason, r.toneOn)
       if (!r.toneOn)

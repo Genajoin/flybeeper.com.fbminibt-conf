@@ -413,6 +413,7 @@ sett:
 audio:
   source-label: Источник звука
   source-device: Устройство
+  source-device-off: Подключите прибор, чтобы звук шёл с него
   source-browser: Браузер
   source-off: Выкл
   demo: Демо

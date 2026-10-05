@@ -309,6 +309,7 @@ sett:
 audio:
   source-label: Tonquelle
   source-device: Gerät
+  source-device-off: Verbinde ein Gerät, damit der Ton von dort kommt
   source-browser: Browser
   source-off: Aus
   demo: Demo
