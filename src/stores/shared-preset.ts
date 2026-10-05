@@ -36,6 +36,8 @@ export interface StagedPreset {
    */
   adjusted?: number
   adjustedByUuid?: Record<string, number>
+  /** URL `&demo`: start the simulator demo on the Sound page once applied. */
+  demo?: boolean
 }
 
 export const useSharedPresetStore = defineStore('sharedPresetStore', {

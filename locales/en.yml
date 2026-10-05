@@ -129,6 +129,7 @@ pair:
   sim-stop: STOP
 
 preset:
+  demo-hint: Applying opens the Sound page and starts the simulator demo.
   import-eyebrow: Preset import
   import-default-name: Untitled preset
   bytes: BYTES
@@ -588,8 +589,8 @@ lab:
   chart-ema: EMA
   z-sink: Sink tone
   z-sink-body: 'Sinking faster than {so} m/s — the sink tone is always on, wherever you came from.'
-  z-sink-memory: After-sink window (sniffer)
-  z-sink-memory-body: 'Tone only if you came here from a sink stronger than {so} m/s: it then holds until the vario rises to {sf} m/s. Coming from above, it is silent here. Near zero this is the sniffer: after a sink the device keeps beeping in weak zero, which makes weak lift easier to find.'
+  z-sink-memory: After-sink window
+  z-sink-memory-body: 'Tone only if you came here from a sink stronger than {so} m/s: it then holds until the vario rises to {sf} m/s. Coming from above, it is silent here. If the window reaches zero, after a sink the device keeps beeping in weak zero too.'
   z-quiet: Silent
   z-quiet-body: 'From {sf} to {cf} m/s the device is silent. Any tone stops here, wherever you came from.'
   z-climb-memory: Climb hold
@@ -623,16 +624,16 @@ trig:
   mountain: Mountain
   mountain-body: 'Strong rough thermals. Tone from +0.30, no false beeps from turbulence; holds down to +0.10. Sink beyond −3.0. Long averaging: calmer but lagging.'
   sniffer: Sniffer
-  sniffer-body: 'Tone already from −0.30: the air is rising, though slower than the glider sinks. Helps find weak lift — like the Flymaster buzzer or Digifly pre-thermal. Between −0.30 and zero the curve plays its low tone.'
+  sniffer-body: 'Tone already from −0.30: the air is rising, though slower than the glider sinks. Helps find weak lift. Between −0.30 and zero the curve plays its own low tone — the same whichever way you came.'
   always: Always on
-  always-body: 'Sound almost always (Hugo mode). Climb sounds from 0 and holds down to −0.30, sink from −0.60 and holds up to −0.30. Silent only on the transitions: as a climb fades — from −0.30 to −0.60; coming out of a sink — from −0.30 to 0.'
+  always-body: 'Sound almost always. Climb sounds from 0 and holds down to −0.30, sink from −0.60 and holds up to −0.30. Silent only on the transitions: as a climb fades — from −0.30 to −0.60; coming out of a sink — from −0.30 to 0.'
   quiet: Quiet
   quiet-body: 'Minimum of sound: ridge soaring, acro, beginners. Climb from +0.30, sink only beyond −4.0 (spiral).'
 help:
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'The climb tone starts once the vario is above this value. Below it is silent unless the tone is being held (see “Climb tone holds down to”). Usually +0.05…+0.20 m/s. A negative value turns the device into a “sniffer” that beeps even in weak sink.'
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Climb tone hold. Once the climb tone is on, it does not stop right below “Start climbing” but holds until the vario drops to this value — so you keep hearing a weak core and the tone does not chatter at the threshold. Only works when the value is below “Start climbing”; equal or above means no hold. It is the opposite of “Early exit on weakening climb”: that one stops the tone earlier, the hold later. Pick one: for the hold set early exit to 0, otherwise it fires first on a fading climb.'
   b713f438-42fe-46fe-b052-371a3b9e433a: 'The sink tone starts once you sink faster than this value, e.g. −2.5 m/s. Between it and “Start climbing” it is silent.'
-  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sink tone hold. Once the sink tone is on, it holds until the vario rises to this value. Only works when the value is above “Start sinking”: with −2.5 and −1.8 the sink tone starts at −2.5 and stops only at −1.8. A value near zero or above makes the device a “sniffer”: after a sink it keeps beeping in weak zero which makes weak lift easier to find.'
+  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sink tone hold. Once the sink tone is on, it holds until the vario rises to this value. Only works when the value is above “Start sinking”: with −2.5 and −1.8 the sink tone starts at −2.5 and stops only at −1.8. With a value near zero or above, after a sink the device keeps beeping in weak zero too — the tone holds until the climb is clear.'
   0e984fe9-534c-4f13-969c-58ce03d33527: 'Early exit from a thermal. As soon as the climb weakens (vario below its ~0.4 s average), the climb tone threshold lifts by this value and the tone stops before the vario reaches “Start climbing”. This makes up for the smoothing lag: the climb stops, the device goes quiet right away. Once the climb grows again, the threshold drops back. Example: start climbing +0.05 with early exit 0.25 — on a fade the tone goes silent already at +0.30, and starts as usual above +0.05. 0 switches the early exit off; then the “Climb tone holds down to” hold works. See it over time on the “Last 20 seconds” chart under the simulator.'
   e88b07e7-9035-4afa-9fe8-206ddc34de61: 'On: a beep changes pitch while it sounds, following the vario. Off: each beep keeps the pitch it started with, so changes step from beep to beep.'
   7e035080-7417-4393-959a-58505ef9cf4a: 'Vario smoothing, in seconds. Longer is calmer but lags; shorter is quicker and jumpier. It acts on the vario reading the sound is driven by (factory 0.1 s). It is not the “trend average” (~0.4 s, fixed) the early exit works from: that one is taken from the smoothed vario. The simulator smooths the slider the same way — the “Last 20 seconds” chart shows the vario catching up with the slider.'

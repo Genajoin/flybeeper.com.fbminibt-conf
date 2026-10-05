@@ -47,7 +47,7 @@ const SCENARIOS: Record<Scenario, [number, number][]> = {
   demo: [[0, -3], [0.5, -3], [2.5, -1], [12.5, 1], [13, 1], [23, -1], [25, -3]],
 }
 
-/** Seconds in the sniffer window before the panel calls it "stuck". */
+/** Seconds in the after-sink window before the panel explains the held tone. */
 export const STUCK_AFTER_S = 5
 
 const live = reactive({
@@ -93,6 +93,11 @@ const historyVersion = ref(0)
 /** Scenario playback drives the simulator slider through this ref. */
 const driveMs = ref<number | null>(null)
 const activeScenario = ref<Scenario | null>(null)
+/** A `&demo` preset link asked for the demo; the simulator starts it once mounted. */
+export const demoRequested = ref(false)
+export function requestDemo() {
+  demoRequested.value = true
+}
 let scenarioTimer: ReturnType<typeof setInterval> | null = null
 
 export function useThresholdLab() {

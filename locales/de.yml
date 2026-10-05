@@ -415,6 +415,7 @@ update:
   latest-badge: NEUESTE
 
 preset:
+  demo-hint: Nach dem Übernehmen öffnet sich der Ton und die Simulator-Demo startet.
   import-eyebrow: Preset-Import
   import-default-name: Unbenanntes Preset
   bytes: BYTES
@@ -589,8 +590,8 @@ lab:
   chart-ema: EMA
   z-sink: Sinkton
   z-sink-body: 'Sinken stärker als {so} m/s — der Sinkton ist immer an, egal woher du kommst.'
-  z-sink-memory: Fenster nach dem Sinken (Sniffer)
-  z-sink-memory-body: 'Ton nur, wenn du aus einem Sinken stärker als {so} m/s kommst: dann hält er, bis das Vario auf {sf} m/s steigt. Von oben kommend ist es hier still. Um null ist das der Sniffer: nach dem Sinken piept das Gerät im schwachen Null weiter, so lässt sich schwache Thermik leichter finden.'
+  z-sink-memory: Fenster nach dem Sinken
+  z-sink-memory-body: 'Ton nur, wenn du aus einem Sinken stärker als {so} m/s kommst: dann hält er, bis das Vario auf {sf} m/s steigt. Von oben kommend ist es hier still. Reicht das Fenster bis null, piept das Gerät nach dem Sinken auch im schwachen Null weiter.'
   z-quiet: Still
   z-quiet-body: 'Von {sf} bis {cf} m/s ist das Gerät still. Jeder Ton endet hier, egal woher du kommst.'
   z-climb-memory: Steig-Halten
@@ -624,16 +625,16 @@ trig:
   mountain: Berge
   mountain-body: 'Starke turbulente Thermik. Ton ab +0,30, keine Fehlpiepser durch Turbulenz; hält bis +0,10. Sinken ab −3,0. Lange Mittelung: ruhiger, aber träger.'
   sniffer: Sniffer
-  sniffer-body: 'Ton schon ab −0,30: die Luft steigt, aber langsamer als der Schirm sinkt. Hilft schwache Thermik zu finden — wie der Flymaster-Buzzer oder Digifly Pre-Thermal. Zwischen −0,30 und null spielt die Kurve ihren tiefen Ton.'
+  sniffer-body: 'Ton schon ab −0,30: die Luft steigt, aber langsamer als der Schirm sinkt. Hilft schwache Thermik zu finden. Zwischen −0,30 und null spielt die Kurve ihren eigenen tiefen Ton — gleich, woher du kommst.'
   always: Immer an
-  always-body: 'Fast immer Ton (Hugo-Modus). Steigen tönt ab 0 und hält bis −0,30, Sinken ab −0,60 und hält bis −0,30. Still nur an den Übergängen: wenn das Steigen nachlässt — von −0,30 bis −0,60; beim Ausleiten aus dem Sinken — von −0,30 bis 0.'
+  always-body: 'Fast immer Ton. Steigen tönt ab 0 und hält bis −0,30, Sinken ab −0,60 und hält bis −0,30. Still nur an den Übergängen: wenn das Steigen nachlässt — von −0,30 bis −0,60; beim Ausleiten aus dem Sinken — von −0,30 bis 0.'
   quiet: Leise
   quiet-body: 'Minimum an Ton: Soaring, Acro, Anfänger. Steigen ab +0,30, Sinken erst ab −4,0 (Spirale).'
 help:
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'Der Steigton startet, sobald das Vario über diesem Wert liegt. Darunter ist es still, außer der Ton wird gehalten (siehe „Steigton hält bis“). Üblich sind +0,05…+0,20 m/s. Ein negativer Wert macht das Gerät zum „Sniffer“, der auch bei schwachem Sinken piept.'
   1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Steigton halten. Läuft der Steigton schon, endet er nicht sofort unter „Beginn des Aufstiegs“, sondern hält, bis das Vario auf diesen Wert fällt — so hörst du einen schwachen Kern und der Ton flattert nicht an der Schwelle. Wirkt nur, wenn der Wert unter „Beginn des Aufstiegs“ liegt; gleich oder darüber heißt kein Halten. Das Gegenteil von „Früher Ausstieg“: der beendet den Ton früher, das Halten später. Meist wählt man eins: für das Halten den frühen Ausstieg auf 0, sonst greift er beim Nachlassen zuerst.'
   b713f438-42fe-46fe-b052-371a3b9e433a: 'Der Sinkton startet, sobald du stärker als dieser Wert sinkst, z. B. −2,5 m/s. Zwischen ihm und „Beginn des Aufstiegs“ ist es still.'
-  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sinkton halten. Läuft der Sinkton schon, hält er, bis das Vario auf diesen Wert steigt. Wirkt nur, wenn der Wert über „Beginn des Sinkens“ liegt: bei −2,5 und −1,8 startet der Sinkton bei −2,5 und endet erst bei −1,8. Ein Wert um null oder darüber macht das Gerät zum „Sniffer“: nach dem Sinken piept es auch im schwachen Null so lässt sich schwache Thermik leichter finden.'
+  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sinkton halten. Läuft der Sinkton schon, hält er, bis das Vario auf diesen Wert steigt. Wirkt nur, wenn der Wert über „Beginn des Sinkens“ liegt: bei −2,5 und −1,8 startet der Sinkton bei −2,5 und endet erst bei −1,8. Bei einem Wert um null oder darüber piept das Gerät nach dem Sinken auch im schwachen Null weiter — der Ton hält, bis das Steigen klar ist.'
   0e984fe9-534c-4f13-969c-58ce03d33527: 'Früher Ausstieg aus dem Bart. Sobald das Steigen nachlässt (Vario unter seinem Mittel über ~0,4 s), hebt sich die Steigton-Schwelle um diesen Wert und der Ton endet, bevor das Vario „Beginn des Aufstiegs“ erreicht. Das gleicht die Glättungsverzögerung aus: Steigen hört auf, das Gerät verstummt sofort. Nimmt das Steigen wieder zu, fällt die Schwelle zurück. Beispiel: Beginn des Aufstiegs +0,05 und früher Ausstieg 0,25 — beim Nachlassen verstummt der Ton schon bei +0,30 und startet wie gewohnt über +0,05. 0 schaltet den frühen Ausstieg aus; dann wirkt das Halten „Steigton hält bis“. Den zeitlichen Verlauf zeigt die Grafik „Letzte 20 Sekunden“ unter dem Simulator.'
   e88b07e7-9035-4afa-9fe8-206ddc34de61: 'An: ein Piep ändert die Tonhöhe während er klingt, dem Vario folgend. Aus: jeder Piep behält die Tonhöhe seines Beginns, Änderungen springen von Piep zu Piep.'
   7e035080-7417-4393-959a-58505ef9cf4a: 'Glättung der Vario-Anzeige in Sekunden. Länger ist ruhiger, aber träger; kürzer ist schneller und unruhiger. Wirkt auf den Vario-Wert, nach dem der Ton arbeitet (Werk 0,1 s). Das ist nicht das „Trendmittel“ (~0,4 s, fest), nach dem der frühe Ausstieg arbeitet: das wird erst vom geglätteten Vario gebildet. Der Simulator glättet den Regler genauso — die Grafik „Letzte 20 Sekunden“ zeigt, wie das Vario dem Regler folgt.'

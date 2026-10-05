@@ -13,7 +13,7 @@
 import { DEMO_SETTINGS } from '~/composables/useDemoSnapshot'
 import type { Scenario } from '~/composables/useThresholdLab'
 import { SIM_MAX_MS, SIM_MIN_MS } from '~/composables/useCurveZoom'
-import { startBuzzerEmulator } from '~/composables/useThresholdLab'
+import { demoRequested, startBuzzerEmulator } from '~/composables/useThresholdLab'
 import { recordAction } from '~/utils/sessionJournal'
 
 const bt = useBluetoothStore()
@@ -200,6 +200,15 @@ function toggleScenario(key: Scenario) {
   recordAction('simulator', `scenario started (${source.value}): ${key}`)
   lab.runScenario(key)
 }
+
+// `&demo` preset link: start the demo as soon as the simulator is on screen.
+watch(demoRequested, (asked) => {
+  if (!asked)
+    return
+  demoRequested.value = false
+  if (lab.activeScenario.value !== 'demo')
+    toggleScenario('demo')
+}, { immediate: true })
 
 function onSliderGrab() {
   lab.stopScenario()

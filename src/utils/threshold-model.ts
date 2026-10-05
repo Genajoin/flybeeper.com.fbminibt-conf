@@ -1,5 +1,5 @@
 /**
- * Tone-threshold model for the sound emulator: XCTracer-style ON/OFF pairs
+ * Tone-threshold model for the sound emulator: ON/OFF threshold pairs
  * with memory, combined with the FlyBeeper trend hysteresis on the climb side.
  *
  * Pure functions, no Vue — unit-tested in test/threshold-model.test.ts.
@@ -16,7 +16,7 @@
  *    `vario < sink_on`).
  *
  * The firmware is stateless: the sound is on iff `vario > climb_th` or
- * `vario < sink_on`. The model adds one memory bit (XCTracer's toneIsOn): once
+ * `vario < sink_on`. The model adds one memory bit (which tone is playing): once
  * on, the sound turns off only inside [SinkOff … ClimbOffEff]. With
  * ClimbOff = ClimbOn and SinkOff = SinkOn the memory has nothing to hold.
  *
@@ -24,7 +24,7 @@
  * as weakening, so with hyst > 0 every fade of a climb ends at ClimbOn + hyst —
  * earlier than ClimbOn, to make up for the smoothing lag (owner's design). It
  * overrides the ClimbOff hold on a fade: the two pull opposite ways, and the
- * pilot picks one — hyst > 0 to go silent early, hyst = 0 for the XCTracer
+ * pilot picks one — hyst > 0 to go silent early, hyst = 0 for the classic
  * hold down to ClimbOff. The one departure: hyst = 0 really switches the trend
  * off; the firmware replaces hyst ≤ 0 with 25. With OFF = ON and hyst > 0
  * decide() is exactly the firmware rule (see the test).
@@ -36,7 +36,7 @@ export interface ThresholdParams {
   climbOff: number
   sinkOn: number
   sinkOff: number
-  /** Trend hysteresis on the climb side. 0 = no trend logic (pure XCTracer). */
+  /** Trend hysteresis on the climb side. 0 = no trend logic (plain ON/OFF pairs). */
   hyst: number
 }
 
@@ -97,7 +97,7 @@ export type Reason =
   | 'climb' // above the climb-on threshold
   | 'sink' // below the sink-on threshold
   | 'climb-hold' // on, held by memory between ClimbOff and ClimbOn
-  | 'sink-hold' // on, held by memory between SinkOn and SinkOff (sniffer window)
+  | 'sink-hold' // on, held by memory between SinkOn and SinkOff (after-sink window)
   | 'quiet' // off, inside the silent window
   | 'quiet-early' // off because the climb is weakening (early exit)
   | 'quiet-memory' // off, inside a memory zone entered from the silent side

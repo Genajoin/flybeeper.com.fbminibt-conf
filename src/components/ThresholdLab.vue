@@ -47,8 +47,8 @@ const trendText = computed(() => {
   return t(d > 0 ? 'lab.trend-up' : 'lab.trend-down')
 })
 
-// Only for a hold window in the glide range: around zero (the sniffer) a
-// lasting tone is the point, not something to explain.
+// Only for a hold window in the glide range: around zero a lasting tone is
+// the point, not something to explain.
 const stuck = computed(() => live.stuckS >= STUCK_AFTER_S && lab.params.value.sinkOff < 0)
 
 const zoneKinds = computed<ZoneKind[]>(() => lab.zones.value.map(z => z.kind))

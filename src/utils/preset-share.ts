@@ -179,12 +179,20 @@ export function decodePreset(fragment: string): EncodedPreset | null {
   }
 }
 
-/** Parse `window.location.hash` and return the decoded preset (or null). */
-export function readPresetFromUrl(hash: string): EncodedPreset | null {
-  const m = hash.match(/^#preset=(.+)$/)
+/**
+ * Parse `window.location.hash` and return the decoded preset (or null).
+ * Options may follow the code after `&` (base64url never contains one):
+ * `#preset=…&demo` also starts the simulator demo once the preset is applied.
+ */
+export function readPresetFromUrl(hash: string): (EncodedPreset & { demo: boolean }) | null {
+  const m = hash.match(/^#preset=([^&]+)(?:&(.*))?$/)
   if (!m)
     return null
-  return decodePreset(m[1])
+  const preset = decodePreset(m[1])
+  if (!preset)
+    return null
+  const options = (m[2] ?? '').split('&')
+  return { ...preset, demo: options.includes('demo') }
 }
 
 /** Build a full share URL: `<location.origin><pathname>#preset=…`. */

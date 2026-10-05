@@ -3,10 +3,9 @@
  * thresholds, their holds, the early exit and the vario averaging), as opposed
  * to the curve presets, which set HOW it sounds.
  *
- * Values in device units: thresholds m/s, averaging seconds. Ranges drawn from
- * the manuals of XC Tracer, Flymaster, BlueFly, Digifly, Syride and Flytec
- * (climb tone 0…+0.3, a sniffer from −0.2…−0.5, sink alarm −2…−3 and
- * more damping for rough air).
+ * Values in device units: thresholds m/s, averaging seconds. Ranges are the
+ * usual ones across varios on the market (climb tone 0…+0.3, a tone near zero
+ * from −0.2…−0.5, sink alarm −2…−3, more damping for rough air).
  */
 
 export const CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
@@ -46,9 +45,10 @@ export const TRIGGER_PRESETS = {
   flatland: { climbOn: 0.05, climbOff: -0.2, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.4 },
   // Strong rough mountain air: fewer false beeps, calmer tone.
   mountain: { climbOn: 0.3, climbOff: 0.1, sinkOn: -3, sinkOff: -2.5, hyst: 0, average: 0.6 },
-  // Air rising slower than the glider sinks: a tone from −0.3.
-  sniffer: { climbOn: -0.3, climbOff: -0.4, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.3 },
-  // Hugo's: climb tone from 0, sink tone from −0.6, both held to −0.3. Silent
+  // Sniffer: the curve's own tone near zero from −0.3 (air rising slower than
+  // the glider sinks), the same whichever way you come — no hold.
+  sniffer: { climbOn: -0.3, climbOff: -0.3, sinkOn: -2.5, sinkOff: -2.5, hyst: 0, average: 0.3 },
+  // Climb tone from 0, sink tone from −0.6, both held to −0.3. Silent
   // only on the way between them: −0.3…−0.6 down, −0.3…0 up.
   always: { climbOn: 0, climbOff: -0.3, sinkOn: -0.6, sinkOff: -0.3, hyst: 0, average: 0.3 },
   // Minimum of sound: ridge soaring, acro, beginners.

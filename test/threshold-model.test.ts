@@ -11,8 +11,8 @@ import {
   zonesFor,
 } from '../src/utils/threshold-model'
 
-const XCTRACER_DEFAULT: ThresholdParams = { climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 0 }
-const HUGO_SNIFFER: ThresholdParams = { climbOn: 10, climbOff: 10, sinkOn: -40, sinkOff: 5, hyst: 0 }
+const CLASSIC_PAIRS: ThresholdParams = { climbOn: 10, climbOff: 5, sinkOn: -70, sinkOff: -60, hyst: 0 }
+const AFTER_SINK_WINDOW: ThresholdParams = { climbOn: 10, climbOff: 10, sinkOn: -40, sinkOff: 5, hyst: 0 }
 
 /** The firmware's stateless rule, verbatim from buzzer.c. */
 function firmwareSounds(p: ThresholdParams, vario: number, avg: number): boolean {
@@ -67,24 +67,24 @@ describe('threshold model', () => {
     expect(firmwareParams(5, -250, 0).hyst).toBe(25)
   })
 
-  it('the XCTracer preset: climb tone holds between ClimbOff and ClimbOn only when coming from above', () => {
-    const p = XCTRACER_DEFAULT
+  it('classic pairs: climb tone holds between ClimbOff and ClimbOn only when coming from above', () => {
+    const p = CLASSIC_PAIRS
     expect(decide(p, 'climb', 7, 7).toneOn).toBe(true)
     expect(decide(p, null, 7, 7).toneOn).toBe(false)
     expect(decide(p, 'climb', 5, 5).toneOn).toBe(false)
   })
 
-  it('the Hugo sniffer: after a sink the tone holds up to +0.05, from above it is silent', () => {
-    const p = HUGO_SNIFFER
+  it('after-sink window: after a sink the tone holds up to +0.05, from above it is silent', () => {
+    const p = AFTER_SINK_WINDOW
     expect(decide(p, 'sink', -20, -20)).toEqual({ toneOn: true, reason: 'sink-hold' })
     expect(decide(p, 'sink', 4, 4).toneOn).toBe(true)
     expect(decide(p, 'sink', 5, 5).toneOn).toBe(false)
     expect(decide(p, null, -20, -20)).toEqual({ toneOn: false, reason: 'quiet-memory' })
   })
 
-  it('the Hugo sniffer: stuck in the window means the tone never stops', () => {
+  it('after-sink window: stuck in the window means the tone never stops', () => {
     const trace = [...Array.from({ length: 20 }, () => -150), ...Array.from({ length: 500 }, () => -20)]
-    expect(run(HUGO_SNIFFER, trace).at(-1)).toBe(true)
+    expect(run(AFTER_SINK_WINDOW, trace).at(-1)).toBe(true)
   })
 
   it('trend hysteresis cuts a fading climb early, a steady one keeps sounding', () => {
@@ -133,10 +133,10 @@ describe('threshold model', () => {
     expect(soundParams(10, 5, -40, 20, 25).sinkOff).toBe(5)
   })
 
-  it('zones: firmware has sink / quiet / early-exit / climb, Hugo has the sniffer window', () => {
+  it('zones: firmware has sink / quiet / early-exit / climb, an after-sink window shows up', () => {
     expect(zonesFor(firmwareParams(5, -250, 25)).map(z => z.kind)).toEqual(['sink', 'quiet', 'early-exit', 'climb'])
-    expect(zonesFor(HUGO_SNIFFER).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb'])
-    expect(zonesFor(XCTRACER_DEFAULT).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb-memory', 'climb'])
+    expect(zonesFor(AFTER_SINK_WINDOW).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb'])
+    expect(zonesFor(CLASSIC_PAIRS).map(z => z.kind)).toEqual(['sink', 'sink-memory', 'quiet', 'climb-memory', 'climb'])
   })
 
   it('vario averaging: firmware EMA per 16 ms sample, 63 % of a step after one period', () => {
