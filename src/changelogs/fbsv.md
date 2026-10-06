@@ -1,5 +1,11 @@
 ## Changelog
 
+**Version:** 0.30.0 | **Date:** 06.10.2026 | [**Download**](/firmware/fbsv/app_update.0.30.0.bin)
+
+- _Tone hold thresholds are back:_ the climb and sink "off" thresholds work again. Once a tone has started it now keeps sounding down to its own off threshold — the climb tone down to the climb-off value, the sink tone up to the sink-off value — instead of stopping the moment the reading crosses the switch-on threshold. Each hold keeps only its own tone, so a climb tone fading into sink territory goes quiet rather than turning into the sink tone. The default values give no hold, so the device sounds exactly as before until you change these settings.
+- _Early exit can be switched off:_ the climb hysteresis (the early silence when a climb is weakening) is turned off by setting it to 0. Previously 0 and negative values were silently replaced with 0.25 m/s. With a non-zero value the early exit still takes priority over the climb hold.
+- _Simulator sounds like the real thing:_ a vario value sent from the configurator's simulator now goes through the same averaging as the barometer, so the device sounds just like the sound emulator in the configurator.
+
 **Version:** 0.29.1 | **Date:** 17.09.2026 | [**Download**](/firmware/fbsv/app_update.0.29.1.bin)
 
 - _Louder in the weak band:_ the piezo was noticeably quieter between 1700 and 2100 Hz. The buzzer now uses a tuned duty cycle there instead of the fixed 50 %, which adds 7–11 dB right where it was missing. You will hear it in the vario tone around 3.6–4.5 m/s, in the last note of the power-on melody and in the middle ticks while holding the button; all other tones are unchanged.
