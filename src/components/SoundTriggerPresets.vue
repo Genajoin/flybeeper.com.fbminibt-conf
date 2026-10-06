@@ -3,6 +3,7 @@ import { StorageSerializers } from '@vueuse/core'
 import type { BleCharacteristic } from '~/utils/BleCharacteristic'
 import type { TriggerPresetKey, TriggerValues } from '~/utils/trigger-presets'
 import { recordAction } from '~/utils/sessionJournal'
+import { SOUND_HOLDS_FW } from '~/composables/useSoundLogic'
 import {
   TRIGGER_PRESETS,
   TRIGGER_PRESET_KEYS,
@@ -22,6 +23,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const logic = useSoundLogic()
 
 function charFor(field: keyof TriggerValues) {
   return props.chars.find(c => c.characteristic.uuid === TRIGGER_UUIDS[field])
@@ -98,6 +100,12 @@ const summary = computed(() => {
 
 <template>
   <div class="trig">
+    <p v-if="logic.legacy.value" class="trig__fw">
+      {{ t('trig.old-fw', { fw: logic.current.value, need: SOUND_HOLDS_FW }) }}
+      <RouterLink :to="logic.updatePath.value" class="trig__fw-link">
+        {{ t('trig.old-fw-update') }}
+      </RouterLink>
+    </p>
     <div class="trig__grid" role="radiogroup" :aria-label="t('trig.title')">
       <button
         v-for="k in TRIGGER_PRESET_KEYS"
@@ -146,6 +154,22 @@ const summary = computed(() => {
 <style scoped>
 .trig {
   margin-top: 10px;
+}
+
+.trig__fw {
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--ck-signal);
+  background: var(--ck-bg);
+  font-family: var(--ck-font-body);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.trig__fw-link {
+  color: var(--ck-signal);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .trig__grid {

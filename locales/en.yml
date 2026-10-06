@@ -633,6 +633,8 @@ prof:
   local-note: 'Profiles are kept only in this browser on this device — nothing is sent to a server. Clearing site data, another browser or another phone, and they are not there. To keep them safe, download the JSON: you can load it back any time.'
 
 trig:
+  old-fw: 'The device runs firmware {fw}. The "tone holds until" settings and early exit 0 work from firmware {need}: this device ignores them (it takes early exit 0 as 0.25), and the simulator plays what it would.'
+  old-fw-update: Update firmware →
   title: When it sounds
   custom: Own
   off: off

@@ -7,6 +7,7 @@ import {
   effectiveThresholds,
   emaStep,
   emaValue,
+  firmwareParams,
   isWeakening,
   soundParams,
   toneSide,
@@ -118,13 +119,17 @@ export function useThresholdLab() {
   })
 
   /** The sound settings from the Sound panel, ordered for the model. */
-  const params = computed<ThresholdParams>(() => soundParams(
-    readCmS(CLIMB_ON_UUID) ?? 5,
-    readCmS(CLIMB_OFF_UUID),
-    readCmS(SINK_ON_UUID) ?? -250,
-    readCmS(SINK_OFF_UUID),
-    readCmS(HYST_UUID) ?? 25,
-  ))
+  // A device older than 0.30.0 has no holds and turns hyst 0 into 0.25.
+  const logic = useSoundLogic()
+  const params = computed<ThresholdParams>(() => logic.legacy.value
+    ? firmwareParams(readCmS(CLIMB_ON_UUID) ?? 5, readCmS(SINK_ON_UUID) ?? -250, readCmS(HYST_UUID) ?? 25)
+    : soundParams(
+      readCmS(CLIMB_ON_UUID) ?? 5,
+      readCmS(CLIMB_OFF_UUID),
+      readCmS(SINK_ON_UUID) ?? -250,
+      readCmS(SINK_OFF_UUID),
+      readCmS(HYST_UUID) ?? 25,
+    ))
 
   const zones = computed(() => zonesFor(params.value))
 

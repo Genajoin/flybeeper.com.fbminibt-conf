@@ -634,6 +634,8 @@ prof:
   local-note: 'Profile liegen nur in diesem Browser auf diesem Gerät — an einen Server geht nichts. Websitedaten gelöscht, anderer Browser oder anderes Handy — und sie sind hier nicht da. Zur Sicherheit JSON herunterladen: Es lässt sich jederzeit wieder laden.'
 
 trig:
+  old-fw: 'Auf dem Gerät läuft Firmware {fw}. „Ton hält bis“ und Früher Ausstieg 0 wirken ab Firmware {need}: Dieses Gerät ignoriert sie (Früher Ausstieg 0 gilt als 0,25), und der Simulator klingt wie das Gerät.'
+  old-fw-update: Firmware aktualisieren →
   title: Wann es tönt
   custom: Eigene
   off: aus
