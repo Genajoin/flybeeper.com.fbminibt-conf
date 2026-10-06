@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { compareFwVersions } from '~/utils/firmwareVersion'
+import { recordEvent } from '~/utils/sessionJournal'
 
 const { isActive, valueMs, stop } = useSimulation()
 const bt = useBluetoothStore()
@@ -29,6 +31,26 @@ const deviceBuzzerVolume = computed<number | null>(() => {
 })
 const silentMode = computed(() =>
   bt.isConnected && source.value === 'device' && deviceBuzzerVolume.value === 0,
+)
+
+// silent_on_ground — since 0.28.3 the firmware mutes the buzzer on the ground
+// in this mode, simulator values included, and the configurator does not lift
+// it. On a desk the device is always "on the ground", so the simulator stays
+// silent and pilots take it for a defect. We only warn; the setting is the
+// pilot's and is never switched off behind their back.
+const CPF_SILENT_ON_GROUND_UUID = 'daadb8a9-a566-450e-97d0-990a0c8487dd'
+const SILENT_ON_GROUND_MUTES_SIM_FROM = '0.28.3'
+const deviceSilentOnGround = computed<boolean>(() => {
+  const ch = bt.bleCharacteristics.find(c => c.characteristic.uuid === CPF_SILENT_ON_GROUND_UUID)
+  const v = ch?.formattedValue ?? settings.local?.[CPF_SILENT_ON_GROUND_UUID]
+  return Boolean(v)
+})
+const firmwareMutesSim = computed(() => {
+  const fw = bt.dis.firmwareRevisionString.value as string | null
+  return !fw || compareFwVersions(fw, SILENT_ON_GROUND_MUTES_SIM_FROM) >= 0
+})
+const groundMode = computed(() =>
+  bt.isConnected && source.value === 'device' && deviceSilentOnGround.value && firmwareMutesSim.value,
 )
 
 /**
@@ -102,16 +124,30 @@ function openAudioSettings() {
   void router.push('/settings/audio')
 }
 
+function openBehaviourSettings() {
+  void router.push('/settings/behaviour')
+}
+
 // Which variant to actually render. Silent variant has priority over the
 // standard "sim active" message — if the device is muted, "vario simulation
 // active" is technically true but practically useless to the user.
-type Variant = 'silent' | 'sim' | null
+// Volume 0 goes first: it mutes the device in the air too, and it is the
+// first thing to fix; silent-on-ground only explains the silence on the desk.
+type Variant = 'silent' | 'ground' | 'sim' | null
 const variant = computed<Variant>(() => {
   if (!show.value)
     return null
   if (silentMode.value)
     return 'silent'
+  if (groundMode.value)
+    return 'ground'
   return 'sim'
+})
+
+// Support sees in the diagnostics report that the pilot was told why it was silent.
+watch(variant, (v, prev) => {
+  if (v !== prev && (v === 'silent' || v === 'ground'))
+    recordEvent(v === 'ground' ? 'warned: simulator muted by silent on the ground' : 'warned: simulator muted, buzzer volume 0')
 })
 </script>
 
@@ -128,6 +164,23 @@ const variant = computed<Variant>(() => {
       <template #actions>
         <button class="btn-primary--ink" type="button" @click="openAudioSettings">
           {{ t('audio.silent-device-cta') }}
+        </button>
+        <button type="button" @click="onStop">
+          {{ t('pair.sim-stop') }}
+        </button>
+      </template>
+    </CkBannerRow>
+    <CkBannerRow
+      v-else-if="variant === 'ground'"
+      class="sim"
+      accent="var(--ck-ink)"
+      :eyebrow="t('audio.silent-ground-eyebrow')"
+      :title="t('audio.silent-ground-title')"
+      :sub="t('audio.silent-ground-body')"
+    >
+      <template #actions>
+        <button class="btn-primary--ink" type="button" @click="openBehaviourSettings">
+          {{ t('audio.silent-ground-cta') }}
         </button>
         <button type="button" @click="onStop">
           {{ t('pair.sim-stop') }}

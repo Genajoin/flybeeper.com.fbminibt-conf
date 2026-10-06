@@ -25,6 +25,12 @@ function labelFor(ch: BleCharacteristic): string {
   return ch.userFormatDescriptor || ch.characteristic.uuid
 }
 
+const helpOpen = ref<Record<string, boolean>>({})
+function helpFor(ch: BleCharacteristic): string | null {
+  const k = `help.${ch.characteristic.uuid}`
+  return te(k) ? t(k) : null
+}
+
 const volumeValue = computed<number>(() => {
   const v = volumeChar.value?.formattedValue
   return typeof v === 'number' ? v : 0
@@ -58,6 +64,13 @@ function setVolume(v: number) {
 
     <div v-if="otherChars.length" class="vt__block">
       <CkEyebrow block>
+        {{ t('trig.title') }}
+      </CkEyebrow>
+      <SoundTriggerPresets :chars="otherChars" />
+    </div>
+
+    <div v-if="otherChars.length" class="vt__block">
+      <CkEyebrow block>
         {{ t('sett.group-audio') }}
       </CkEyebrow>
       <div class="vt__list">
@@ -69,7 +82,16 @@ function setVolume(v: number) {
               class="vt__toggle"
               @update:model-value="ch.formattedValue = $event"
             />
-            <span class="vt__toggle-label">{{ labelFor(ch) }}</span>
+            <span class="vt__toggle-label">
+              {{ labelFor(ch) }}<SettingHelpButton
+                v-if="helpFor(ch)"
+                v-model="helpOpen[ch.characteristic.uuid]"
+                :text="helpFor(ch)!"
+              />
+            </span>
+            <p v-if="helpOpen[ch.characteristic.uuid]" class="vt__help">
+              {{ helpFor(ch) }}
+            </p>
           </template>
           <TheSetting v-else :cha="ch" />
         </template>
@@ -140,6 +162,18 @@ function setVolume(v: number) {
  * edge in col 1. */
 .vt__toggle {
   justify-self: end;
+}
+
+.vt__help {
+  contain: inline-size;
+  grid-column: 1 / -1;
+  margin: -6px 0 4px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--ck-signal);
+  font-family: var(--ck-font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ck-ink);
 }
 
 .vt__toggle-label {

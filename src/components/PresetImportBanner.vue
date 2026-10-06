@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useSharedPresetStore } from '~/stores/shared-preset'
 import { useSettingsStore } from '~/stores/settings'
+import { requestDemo } from '~/composables/useThresholdLab'
+import { pickScope } from '~/utils/sound-profiles'
 
 const shared = useSharedPresetStore()
 const settings = useSettingsStore()
@@ -17,7 +19,17 @@ async function apply() {
   // replacing the bag would reset every key the preset omits back to the
   // factory demo value.
   settings.mergeLocal(shared.pending.settings)
+  const demo = shared.pending.demo
   shared.clear()
+  // A link with `&demo` (e.g. from an article) wants to be heard: open the
+  // Sound page and start the demo. The Apply click is the user gesture the
+  // browser needs before it lets the page make sound.
+  if (demo) {
+    requestDemo()
+    if (route.path !== '/settings/audio')
+      await router.push('/settings/audio')
+    return
+  }
   // The QR-scan landing is /share, which is the *export* page — staying
   // there hides the change. Jump to the most visual settings page so the
   // user immediately sees what was applied (volume, thresholds, curves).
@@ -25,6 +37,23 @@ async function apply() {
   // bounce the user away from a panel they're already reading.
   if (!route.path.startsWith('/settings'))
     await router.push('/settings/audio')
+}
+
+// A link or file with a sound part can go straight into "My profiles",
+// with or without applying it.
+const profiles = useSoundProfiles()
+const savedName = ref('')
+watch(() => shared.pending, () => {
+  savedName.value = ''
+})
+const savable = computed(() => {
+  const s = shared.pending?.settings
+  return Boolean(pickScope(s, 'curves') || pickScope(s, 'trigger'))
+})
+function saveToProfiles() {
+  if (!shared.pending || savedName.value)
+    return
+  savedName.value = profiles.save(shared.pending.name || t('preset.import-default-name'), shared.pending.settings).name
 }
 
 function discard() {
@@ -80,6 +109,9 @@ const sourceLabel = computed(() => {
             · {{ shared.pending.skipped }} {{ t('preset.skipped') }}
           </template>
         </div>
+        <div v-if="shared.pending.demo" class="banner-row__sub">
+          {{ t('preset.demo-hint') }}
+        </div>
         <div v-if="shared.pending.adjusted" class="banner-row__note">
           {{ t('preset.adjusted-note', { count: shared.pending.adjusted, detail: adjustedDetail }) }}
         </div>
@@ -87,9 +119,15 @@ const sourceLabel = computed(() => {
           <button class="banner-row__primary" type="button" @click="apply">
             {{ t('preset.apply') }}
           </button>
-          <button class="banner-row__secondary" type="button" @click="discard">
-            {{ t('preset.discard') }}
+          <button v-if="savable" class="banner-row__secondary" type="button" :disabled="!!savedName" @click="saveToProfiles">
+            {{ savedName ? t('prof.saved') : t('prof.save-import') }}
           </button>
+          <button class="banner-row__secondary" type="button" @click="discard">
+            {{ savedName ? t('prof.close') : t('preset.discard') }}
+          </button>
+        </div>
+        <div v-if="savedName" class="banner-row__sub">
+          {{ t('prof.saved-hint', { name: savedName }) }}
         </div>
       </div>
     </div>
@@ -171,6 +209,11 @@ const sourceLabel = computed(() => {
 
 .banner-row__secondary {
   border-left: var(--ck-stroke-rule) solid var(--ck-ink);
+}
+
+.banner-row__secondary:disabled {
+  color: var(--ck-dim);
+  cursor: default;
 }
 
 .preset-imp-enter-active,

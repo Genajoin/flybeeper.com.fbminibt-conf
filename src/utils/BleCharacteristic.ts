@@ -59,6 +59,9 @@ export interface LogEntry {
   value: any // Значение
 }
 
+/** Grace period before an unused notification stream is switched off on the device. */
+export const NOTIFY_OFF_DELAY_MS = 2000
+
 export interface BleCharacteristic {
   characteristic: BluetoothRemoteGATTCharacteristic
   descriptors: BluetoothRemoteGATTDescriptor[]
@@ -179,8 +182,33 @@ export class BleCharacteristicImpl implements BleCharacteristic {
   // Метод для удаления подписчика
   public unsubscribe(callback: (value: any) => void) {
     const index = this.subscribers.indexOf(callback)
-    if (index !== -1)
-      this.subscribers.splice(index, 1)
+    if (index === -1)
+      return
+    this.subscribers.splice(index, 1)
+    if (this.subscribers.length === 0)
+      this.scheduleNotifyOff()
+  }
+
+  /**
+   * Nobody listens any more — turn the notifications off on the device too
+   * (CCC write), not only in JS. Otherwise the firmware keeps its sensor
+   * running for a stream nobody reads until the link drops: /cockpit left
+   * SunVario's barometer on after the pilot navigated away (~0.13 mA, a lot
+   * for a capacitor-powered device). Delayed so a page switch that
+   * re-subscribes the same characteristic does not flap the CCC.
+   */
+  private notifyOffTimer: ReturnType<typeof setTimeout> | null = null
+
+  private scheduleNotifyOff() {
+    if (this.notifyOffTimer)
+      clearTimeout(this.notifyOffTimer)
+    this.notifyOffTimer = setTimeout(() => {
+      this.notifyOffTimer = null
+      if (this.subscribers.length || !this.isNotified)
+        return
+      void gattOp('notify off', () => this.unsubscribeFromNotifications())
+        .catch(err => log.debug('notify off failed', this.characteristic.uuid, err))
+    }, NOTIFY_OFF_DELAY_MS)
   }
 
   // Метод для оповещения всех подписчиков об изменении значения

@@ -42,6 +42,15 @@ describe('preset-share codec', () => {
     expect(decoded?.settings).toEqual(settings)
   })
 
+  it('readPresetFromUrl reads the &demo option after the code', () => {
+    const settings = { '67f82d94-2b2a-4123-81c9-058e460c3d01': 3 }
+    const fragment = encodePreset(settings, 'x')
+    expect(readPresetFromUrl(`#preset=${fragment}`)?.demo).toBe(false)
+    const withDemo = readPresetFromUrl(`#preset=${fragment}&demo`)
+    expect(withDemo?.demo).toBe(true)
+    expect(withDemo?.settings).toEqual(settings)
+  })
+
   it('readPresetFromUrl returns null when the hash does not match', () => {
     expect(readPresetFromUrl('#other=xyz')).toBeNull()
     expect(readPresetFromUrl('')).toBeNull()

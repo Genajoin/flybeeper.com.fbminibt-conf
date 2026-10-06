@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { StorageSerializers } from '@vueuse/core'
 import cloneDeep from 'lodash.clonedeep'
 import isEqual from 'lodash.isequal'
 import { recordAction } from '~/utils/sessionJournal'
@@ -48,6 +49,8 @@ const cpfCurves = computed<iVarioCurves | null>(() => {
 
 const CPF_CLIMB_ON_UUID = 'fcb14ed9-06e7-4a9e-b311-6eee676a2f48'
 const CPF_SINK_ON_UUID = 'b713f438-42fe-46fe-b052-371a3b9e433a'
+const CPF_CLIMB_OFF_UUID = '1673f137-66c1-4ff0-8db3-69b9ed7c33e0'
+const CPF_SINK_OFF_UUID = '8a78979b-1425-4160-b34b-ac5aadddeb21'
 
 function audioThreshold(uuid: string): number | undefined {
   const ch = audioChars.value.find(c => c.characteristic.uuid === uuid)
@@ -84,58 +87,41 @@ const presets = {
     buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
     buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
   },
-  'silent-gnd': {
-    buzzer_vario_dots: [-1000, -300, -55, -50, 0, 10, 115, 265, 425, 600, 800, 1000],
-    buzzer_frequency_dots: [200, 280, 300, 200, 400, 400, 550, 765, 985, 1235, 1520, 2000],
-    buzzer_cycle_dots: [100, 100, 500, 800, 600, 600, 550, 485, 410, 320, 240, 150],
-    buzzer_duty_dots: [100, 100, 100, 5, 10, 50, 52, 55, 58, 62, 66, 70],
+  // Loudest sound the firmware team tuned: climb tones sit around 3.5–3.8 kHz,
+  // the piezo's resonance, where it is loudest. From the shared "max-VOLUME"
+  // preset link.
+  'max-volume': {
+    buzzer_vario_dots: [-1400, -100, 0, 40, 40, 100, 200, 300, 450, 600, 1000, 2000],
+    buzzer_frequency_dots: [200, 390, 3500, 3530, 3560, 3615, 3665, 3700, 3730, 3760, 4000, 4500],
+    buzzer_cycle_dots: [850, 790, 320, 135, 715, 595, 430, 325, 265, 210, 120, 100],
+    buzzer_duty_dots: [100, 98, 15, 75, 38, 41, 43, 46, 49, 54, 78, 90],
   },
 } satisfies Record<string, iVarioCurves>
 
-/**
- * Tone thresholds that belong to a preset, in cm/s. DEFAULT is the factory
- * sound as a whole — curves AND the firmware's BUZZER_CLIMB/SINK_TONE_ON_THRESHOLD
- * (5 / -250 in both FbBT and FbFANET) — so moving "start sinking" off the
- * factory value is a custom sound, and picking DEFAULT puts it back.
- * AGGRESSIVE / SILENT GND define no thresholds of their own: they only swap
- * the curves and leave the pilot's thresholds as they are.
- */
-interface PresetThresholds { climbOnCmS: number, sinkOnCmS: number }
-const presetThresholds: Partial<Record<keyof typeof presets, PresetThresholds>> = {
-  default: { climbOnCmS: 5, sinkOnCmS: -250 },
-}
-
-// Last-known user-customised curves. Module-scoped so it survives audio.vue
-// remounts during a session (e.g. user navigates to /settings/power and back).
+// Last-known user-customised curves, kept per browser (survives reloads).
 // Captured whenever the user leaves the CUSTOM bucket for a preset, so that
 // returning to CUSTOM restores exactly what they had — instead of leaving them
 // staring at the preset's curves with the CUSTOM segment lit.
-let customSnapshot: { curves: iVarioCurves, climbOn?: number, sinkOn?: number } | null = null
+const customSnapshot = useLocalStorage<iVarioCurves | null>('curves-custom', null, { serializer: StorageSerializers.object })
 
 type PresetKey = keyof typeof presets
 
 /**
  * Active preset is derived from the live curves — drag a handle and it
  *  auto-switches to CUSTOM because the shape no longer matches any preset.
+ * Curve presets set how the vario sounds; when it sounds (thresholds, holds,
+ * averaging) has its own presets in the right column (SoundTriggerPresets).
  */
 const activePreset = computed<PresetKey | 'custom'>(() => {
   const c = cpfCurves.value
   if (!c)
     return 'custom'
   for (const [name, p] of Object.entries(presets)) {
-    if (isEqual(c, p) && thresholdsMatch(presetThresholds[name as PresetKey]))
+    if (isEqual(c, p))
       return name as PresetKey
   }
   return 'custom'
 })
-
-/** A device without a threshold characteristic cannot contradict the preset. */
-function thresholdsMatch(th: PresetThresholds | undefined): boolean {
-  if (!th)
-    return true
-  const same = (cur: number | undefined, want: number) => cur === undefined || Math.round(cur) === want
-  return same(climbOn.value, th.climbOnCmS) && same(sinkOn.value, th.sinkOnCmS)
-}
 
 function writeCurves(next: iVarioCurves) {
   if (!cpfReady.value)
@@ -158,35 +144,37 @@ const viewOptions = computed(() => [
 const presetOptions = [
   { label: 'DEFAULT', value: 'default' as const },
   { label: 'AGGRESSIVE', value: 'aggressive' as const },
-  { label: 'SILENT GND', value: 'silent-gnd' as const },
+  { label: 'MAX VOLUME', value: 'max-volume' as const },
   { label: 'CUSTOM*', value: 'custom' as const },
 ]
 
-function selectPreset(v: PresetKey | 'custom') {
+// A saved profile matching the curves lights the profile picker instead of
+// CUSTOM: CUSTOM means "values that are nowhere but on the device".
+const profiles = useSoundProfiles()
+const curveProfile = computed(() => (activePreset.value === 'custom' ? profiles.active('curves') : null))
+const segValue = computed<PresetKey | 'custom' | 'profile'>(() => (curveProfile.value ? 'profile' : activePreset.value))
+
+// Leaving own unsaved curves for a preset or a profile: stash them so a later
+// CUSTOM click can bring them back.
+function stashCustom() {
+  if (activePreset.value === 'custom' && !curveProfile.value && cpfCurves.value)
+    customSnapshot.value = cloneDeep(cpfCurves.value)
+}
+
+function selectPreset(v: PresetKey | 'custom' | 'profile') {
+  if (v === 'profile')
+    return
   recordAction('settings', `sound preset: ${v.toUpperCase()}`)
   if (v === 'custom') {
     // Restore the user's last custom sound if we have one stashed. If not
     // (first ever click on CUSTOM with no prior edits), leave it alone —
     // it IS the implicit starting point for the user's custom editing.
-    if (customSnapshot) {
-      writeCurves(cloneDeep(customSnapshot.curves))
-      if (customSnapshot.climbOn !== undefined)
-        writeThreshold(CPF_CLIMB_ON_UUID, customSnapshot.climbOn)
-      if (customSnapshot.sinkOn !== undefined)
-        writeThreshold(CPF_SINK_ON_UUID, customSnapshot.sinkOn)
-    }
+    if (customSnapshot.value && (curveProfile.value || activePreset.value !== 'custom'))
+      writeCurves(cloneDeep(customSnapshot.value))
     return
   }
-  // Leaving CUSTOM for a preset: snapshot the user's work (thresholds too)
-  // so a later CUSTOM click can bring it back.
-  if (activePreset.value === 'custom' && cpfCurves.value)
-    customSnapshot = { curves: cloneDeep(cpfCurves.value), climbOn: climbOn.value, sinkOn: sinkOn.value }
+  stashCustom()
   writeCurves(cloneDeep(presets[v]))
-  const th = presetThresholds[v]
-  if (th) {
-    writeThreshold(CPF_CLIMB_ON_UUID, th.climbOnCmS)
-    writeThreshold(CPF_SINK_ON_UUID, th.sinkOnCmS)
-  }
 }
 </script>
 
@@ -221,23 +209,29 @@ function selectPreset(v: PresetKey | 'custom') {
               :sink-on="sinkOn"
               @update:climb-on="writeThreshold(CPF_CLIMB_ON_UUID, $event)"
               @update:sink-on="writeThreshold(CPF_SINK_ON_UUID, $event)"
+              @update:climb-off="writeThreshold(CPF_CLIMB_OFF_UUID, $event)"
+              @update:sink-off="writeThreshold(CPF_SINK_OFF_UUID, $event)"
             />
             <p v-else class="empty">
               {{ t('msg.fetching') }}…
             </p>
           </div>
-          <CkSegmentedControl
-            class="sound__presets"
-            :model-value="activePreset"
-            :options="presetOptions"
-            :aria-label="t('sett.group-curves')"
-            @update:model-value="selectPreset"
-          />
+          <div class="sound__presets">
+            <CkSegmentedControl
+              class="sound__presets-seg"
+              :model-value="segValue"
+              :options="presetOptions"
+              :aria-label="t('sett.group-curves')"
+              @update:model-value="selectPreset"
+            />
+            <SoundProfileMenu v-if="cpfReady" class="sound__profiles" scope="curves" :preset-active="activePreset !== 'custom'" @before-apply="stashCustom" />
+          </div>
         </div>
 
         <div class="sound__sim">
           <SimulatorControls />
         </div>
+        <ThresholdLab />
       </div>
 
       <div class="sound__right">
@@ -301,7 +295,13 @@ function selectPreset(v: PresetKey | 'custom') {
 
 .sound__presets {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin: 12px 14px 0;
+}
+
+.sound__presets-seg {
+  display: flex;
 }
 
 .sound__sim {

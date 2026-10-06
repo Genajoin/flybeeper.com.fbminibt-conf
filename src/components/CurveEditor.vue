@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ZoneKind } from '~/utils/threshold-model'
+import { SIM_SPAN_CMS } from '~/composables/useCurveZoom'
 import {
   CURVE_LIMITS,
   CYCLE_DOTS_UUID,
@@ -32,13 +34,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:climbOn', valueCmS: number): void
   (e: 'update:sinkOn', valueCmS: number): void
+  (e: 'update:climbOff', valueCmS: number): void
+  (e: 'update:sinkOff', valueCmS: number): void
 }>()
 
 const sim = useSimulation()
 const { t } = useI18n()
 
 type CurveKey = 'frequency' | 'cycle' | 'duty'
-type ThresholdKey = 'climb-start' | 'sink-start'
+type ThresholdKey = 'climb-start' | 'climb-off' | 'sink-start' | 'sink-off'
 type TabKey = CurveKey | ThresholdKey
 
 interface CurveDef {
@@ -80,22 +84,26 @@ const curveDefs: Record<CurveKey, CurveDef> = {
 }
 
 const CURVE_ORDER: CurveKey[] = ['frequency', 'cycle', 'duty']
-const THRESHOLD_ORDER: ThresholdKey[] = ['climb-start', 'sink-start']
+const THRESHOLD_ORDER: ThresholdKey[] = ['climb-start', 'climb-off', 'sink-start', 'sink-off']
 const TAB_ORDER: TabKey[] = [...CURVE_ORDER, ...THRESHOLD_ORDER]
 
 // Literal hex (not CSS vars): SVG presentation attributes don't reliably
 // resolve var() across engines. With hex we can just pass line.color to
 // :fill / :stroke on the SVG element and trust it. Matches --ck-signal at
 // the time of writing.
-const thresholdMeta: Record<ThresholdKey, { color: string, label: string }> = {
-  'climb-start': { color: '#ff6a00', label: 'CLIMB-ON' },
-  'sink-start': { color: '#e08a00', label: 'SINK-ON' },
+// `level` staggers the value chips vertically so close thresholds (climb-on
+// at +0.10 next to sink-off at +0.05) don't print on top of each other.
+const thresholdMeta: Record<ThresholdKey, { color: string, label: string, level: number }> = {
+  'climb-start': { color: '#ff6a00', label: 'C-ON', level: 0 },
+  'sink-start': { color: '#e08a00', label: 'S-ON', level: 1 },
+  'climb-off': { color: '#ffa766', label: 'C-OFF', level: 2 },
+  'sink-off': { color: '#5cc3ef', label: 'S-OFF', level: 3 },
 }
 
 const activeTab = ref<TabKey>('frequency')
 
 const isThresholdTab = computed<boolean>(() =>
-  activeTab.value === 'climb-start' || activeTab.value === 'sink-start',
+  (THRESHOLD_ORDER as TabKey[]).includes(activeTab.value),
 )
 
 // Visual fall-back curve for axes / ticks when a threshold tab is active —
@@ -140,10 +148,14 @@ const baseCenterCmS = computed(() => (baseMinCmS.value + baseMaxCmS.value) / 2)
 // 10× is the high end (fine-tune around zero); 4× was too coarse for the
 // dead-band region just past the climb-on / sink-on thresholds.
 const ZOOM_PRESETS = [1, 2, 10]
-const { zoomLevel } = useCurveZoom()
+const { zoomLevel, viewWindowCmS } = useCurveZoom()
 const zoomCenterCmS = ref(0)
 
-const visibleRangeCmS = computed(() => baseRangeCmS.value / zoomLevel.value)
+// Zoomed in, the window is the simulator slider's span divided by the zoom,
+// so the slider under the chart covers exactly what the chart shows.
+const visibleRangeCmS = computed(() => zoomLevel.value === 1
+  ? baseRangeCmS.value
+  : Math.min(SIM_SPAN_CMS / zoomLevel.value, baseRangeCmS.value))
 const visibleHalfCmS = computed(() => visibleRangeCmS.value / 2)
 
 const viewMinCmS = computed(() => {
@@ -159,15 +171,29 @@ const viewMinCmS = computed(() => {
 const viewMaxCmS = computed(() => viewMinCmS.value + visibleRangeCmS.value)
 const viewRangeCmS = computed(() => viewMaxCmS.value - viewMinCmS.value || 1)
 
+watchEffect(() => {
+  viewWindowCmS.value = zoomLevel.value === 1 ? null : { min: viewMinCmS.value, max: viewMaxCmS.value }
+})
+onBeforeUnmount(() => {
+  viewWindowCmS.value = null
+})
+
 function setZoom(level: number) {
+  const levelChanged = zoomLevel.value !== level
   zoomLevel.value = level
   if (level === 1) {
     zoomCenterCmS.value = baseCenterCmS.value
     return
   }
-  const half = baseRangeCmS.value / level / 2
+  // Every zoom switch lands on the simulator position (0 when idle): the
+  // thresholds and the live overlay sit around there, and the slider under
+  // the chart spans this same window — centring on anything else (say, the
+  // previous zoom's centre) can leave the slider value outside its own scale.
+  if (levelChanged)
+    zoomCenterCmS.value = sim.previewCmS.value
+  const half = visibleHalfCmS.value
   zoomCenterCmS.value = Math.min(
-    Math.max(zoomCenterCmS.value || baseCenterCmS.value, baseMinCmS.value + half),
+    Math.max(zoomCenterCmS.value, baseMinCmS.value + half),
     baseMaxCmS.value - half,
   )
 }
@@ -275,19 +301,64 @@ const cursorX = computed(() => {
  * matching the active tab is drawn brighter + has a draggable triangle on
  * the top edge of the plot.
  */
+/* ---------------------------------------------------------------- threshold lab */
+// Zones and the live sound state come from the threshold lab (emulator only —
+// see useThresholdLab). They replace the old flat dead-band rectangle: the
+// silent zone is one of the zones.
+const lab = useThresholdLab()
+
+const ZONE_FILL: Record<ZoneKind, string> = {
+  'sink': 'url(#cz-sink)',
+  'sink-memory': 'url(#cz-sink-memory)',
+  'quiet': 'url(#cz-quiet)',
+  'climb-memory': 'url(#cz-climb-memory)',
+  'early-exit': 'url(#cz-early)',
+  'climb': 'url(#cz-climb)',
+}
+
+function clipX(cmS: number): number {
+  return clamp(xForCmS(cmS), PAD_LEFT, PAD_LEFT + plotW)
+}
+
+const zoneRects = computed(() => lab.zones.value
+  .map(z => ({ kind: z.kind, x: clipX(z.from), w: clipX(z.to) - clipX(z.from) }))
+  .filter(r => r.w > 0))
+
+/** The early-exit edge (ClimbOn + trend hysteresis), a thin non-draggable line. */
+const labLines = computed(() => {
+  const p = lab.params.value
+  const out: { key: string, x: number, label: string, color: string }[] = []
+  if (p.hyst > 0)
+    out.push({ key: 'early', x: xForCmS(p.climbOn + p.hyst), label: `C+H ${fmtMsPrecise(p.climbOn + p.hyst)}`, color: '#c2410c' })
+  return out.filter(l => l.x >= PAD_LEFT && l.x <= PAD_LEFT + plotW)
+})
+
 /**
- * Filled rectangle showing the silent zone (climb-on / sink-on dead-band)
- * — visible only when both thresholds are loaded and they don't collapse
- * onto a single point. Drawn beneath the curves so it doesn't muddy them.
+ * Live overlay while the emulator runs: the silent window in effect right now
+ * (it moves with the trend), the EMA and an arrow from the EMA to the current
+ * reading — its length is how fast the vario is moving.
  */
-const deadBandRect = computed<{ x: number, width: number } | null>(() => {
-  if (typeof props.climbOn !== 'number' || typeof props.sinkOn !== 'number')
+const liveOverlay = computed(() => {
+  const l = lab.live
+  if (!l.running || !l.engaged)
     return null
-  if (props.climbOn <= props.sinkOn)
-    return null
-  const xLo = xForCmS(props.sinkOn)
-  const xHi = xForCmS(props.climbOn)
-  return { x: xLo, width: xHi - xLo }
+  const w = lab.quietWindow.value
+  const xLo = clipX(w.from)
+  const xHi = clipX(w.to)
+  // Edge labels: with the tone on, the window is where it would stop; with
+  // the tone off, crossing an edge starts it.
+  const edges = [
+    { x: xForCmS(w.to), anchor: 'start', label: l.toneOn ? `OFF ≤ ${fmtMsPrecise(w.to)}` : `ON > ${fmtMsPrecise(w.to)}` },
+    { x: xForCmS(w.from), anchor: 'end', label: l.toneOn ? `OFF ≥ ${fmtMsPrecise(w.from)}` : `ON < ${fmtMsPrecise(w.from)}` },
+  ].filter(e => e.x >= PAD_LEFT && e.x <= PAD_LEFT + plotW)
+  return {
+    toneOn: l.toneOn,
+    win: { x: xLo, w: Math.max(xHi - xLo, 0) },
+    edges,
+    emaX: xForCmS(lab.emaCm.value),
+    curX: xForCmS(l.varioCm),
+    weakening: lab.weakening.value,
+  }
 })
 
 const thresholdLines = computed(() => {
@@ -309,6 +380,15 @@ const thresholdLines = computed(() => {
       active: activeTab.value === 'sink-start',
       label: fmtMsPrecise(props.sinkOn),
     })
+  }
+  // ClimbOff / SinkOff as the sound model reads them. While they coincide with their ON partner they are drawn only when their
+  // tab is open, so the default chart stays as uncluttered as before.
+  const p = lab.params.value
+  const offs: [ThresholdKey, number, number][] = [['climb-off', p.climbOff, p.climbOn], ['sink-off', p.sinkOff, p.sinkOn]]
+  for (const [kind, value, partner] of offs) {
+    if (value === partner && activeTab.value !== kind)
+      continue
+    out.push({ x: xForCmS(value), kind, color: thresholdMeta[kind].color, active: activeTab.value === kind, label: fmtMsPrecise(value) })
   }
   return out
 })
@@ -415,6 +495,16 @@ function onPointerMove(evt: PointerEvent) {
         next = Math.min(next, props.climbOn)
       emit('update:sinkOn', next)
     }
+    // "Holds to" thresholds stay inside their window: climb-off between
+    // sink-off and climb-on, sink-off between sink-on and climb-off.
+    else if (state.thresholdKind === 'climb-off') {
+      const p = lab.params.value
+      emit('update:climbOff', clamp(next, p.sinkOff, p.climbOn))
+    }
+    else if (state.thresholdKind === 'sink-off') {
+      const p = lab.params.value
+      emit('update:sinkOff', clamp(next, p.sinkOn, p.climbOff))
+    }
     return
   }
 
@@ -434,14 +524,82 @@ function onPointerUp(evt: PointerEvent) {
   interaction.value = { mode: 'idle', handleIndex: -1, thresholdKind: null, panStartX: 0, panStartCenter: 0 }
 }
 
+/* Hover / tap tooltip for the zone under the pointer. */
+const editorRef = ref<HTMLElement | null>(null)
+const tip = ref<{ left: number, top: number, kind: ZoneKind } | null>(null)
+let tipTimer: ReturnType<typeof setTimeout> | null = null
+let tapStart: { x: number, y: number } | null = null
+
+function zoneAt(evt: PointerEvent): ZoneKind | null {
+  const local = pointerToViewbox(evt)
+  if (!local || local.x < PAD_LEFT || local.x > PAD_LEFT + plotW)
+    return null
+  const cmS = cmSForX(local.x)
+  return lab.zones.value.find(z => cmS >= z.from && cmS < z.to)?.kind ?? null
+}
+
+function showTip(evt: PointerEvent) {
+  const host = editorRef.value
+  const kind = zoneAt(evt)
+  if (!host || !kind) {
+    tip.value = null
+    return
+  }
+  const r = host.getBoundingClientRect()
+  tip.value = { left: evt.clientX - r.left, top: evt.clientY - r.top, kind }
+}
+
+function onSvgHover(evt: PointerEvent) {
+  if (evt.pointerType !== 'mouse' || interaction.value.mode !== 'idle')
+    return
+  showTip(evt)
+}
+
+function onSvgTapStart(evt: PointerEvent) {
+  tapStart = { x: evt.clientX, y: evt.clientY }
+}
+
+function onSvgTapEnd(evt: PointerEvent) {
+  if (evt.pointerType === 'mouse' || !tapStart)
+    return
+  const moved = Math.hypot(evt.clientX - tapStart.x, evt.clientY - tapStart.y)
+  tapStart = null
+  if (moved > 8)
+    return
+  showTip(evt)
+  if (tipTimer)
+    clearTimeout(tipTimer)
+  tipTimer = setTimeout(() => (tip.value = null), 5000)
+}
+
+onBeforeUnmount(() => {
+  if (tipTimer)
+    clearTimeout(tipTimer)
+})
+
+// Zoomed in, the window follows the simulator: when the value goes past an
+// edge (dragging the slider beyond its end, the demo sweep, a snap button),
+// the window slides just far enough to keep it on that edge — like panning.
+// Otherwise the slider's thumb would sit pinned past its own scale. A pan the
+// pilot is doing on the chart right now wins.
+watch(() => sim.previewCmS.value, (cmS) => {
+  if (zoomLevel.value === 1 || interaction.value.mode === 'pan')
+    return
+  const over = cmS > viewMaxCmS.value ? cmS - viewMaxCmS.value : cmS < viewMinCmS.value ? cmS - viewMinCmS.value : 0
+  if (!over)
+    return
+  zoomCenterCmS.value = (viewMinCmS.value + viewMaxCmS.value) / 2 + over
+  setZoom(zoomLevel.value)
+})
+
 /* ---------------------------------------------------------------- grid */
 const gridXLines = computed(() => xTicks.value.map(t => t.x))
 const gridYLines = computed(() => yTicks.value.map(t => t.y))
 
 function tabColor(key: TabKey): string {
-  if (key === 'climb-start' || key === 'sink-start')
-    return thresholdMeta[key].color
-  return curveDefs[key].color
+  if (key in thresholdMeta)
+    return thresholdMeta[key as ThresholdKey].color
+  return curveDefs[key as CurveKey].color
 }
 
 /**
@@ -470,7 +628,8 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       return { value: `${fmtMsPrecise(xs[i])} m/s`, color: def.value.color }
   }
   if (state.mode === 'drag-threshold' && state.thresholdKind) {
-    const cmS = state.thresholdKind === 'climb-start' ? props.climbOn : props.sinkOn
+    const p = lab.params.value
+    const cmS = { 'climb-start': props.climbOn, 'sink-start': props.sinkOn, 'climb-off': p.climbOff, 'sink-off': p.sinkOff }[state.thresholdKind]
     if (typeof cmS === 'number')
       return { value: `${fmtMsPrecise(cmS)} m/s`, color: thresholdMeta[state.thresholdKind].color }
   }
@@ -479,7 +638,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
 </script>
 
 <template>
-  <div class="editor">
+  <div ref="editorRef" class="editor">
     <div class="editor__bar">
       <div class="editor__tabs" role="tablist">
         <button
@@ -522,11 +681,42 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       :class="{ 'editor__svg--pannable': zoomLevel > 1 }"
       :viewBox="`0 0 ${VB_W} ${VB_H}`"
       preserveAspectRatio="xMidYMid meet"
-      @pointerdown="onSvgPointerDown"
-      @pointermove="onPointerMove"
-      @pointerup="onPointerUp"
+      @pointerdown="onSvgTapStart($event); onSvgPointerDown($event)"
+      @pointermove="onSvgHover($event); onPointerMove($event)"
+      @pointerup="onSvgTapEnd($event); onPointerUp($event)"
       @pointercancel="onPointerUp"
+      @pointerleave="tip = null"
     >
+      <defs>
+        <!-- Literal hex, like the threshold colours: SVG paint servers don't
+             reliably resolve var(). Solid tints = the tone is decided by the
+             vario alone; hatches = memory, the tone depends on where you came
+             from; orange hatch = early exit by trend. -->
+        <pattern id="cz-sink" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#0aa0e0" opacity="0.13" />
+        </pattern>
+        <pattern id="cz-climb" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#ff6a00" opacity="0.12" />
+        </pattern>
+        <pattern id="cz-quiet" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="10" height="10" fill="#7a7a7a" opacity="0.08" />
+        </pattern>
+        <pattern id="cz-sink-memory" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="#0aa0e0" opacity="0.05" />
+          <rect width="4" height="12" fill="#0aa0e0" opacity="0.28" />
+        </pattern>
+        <pattern id="cz-climb-memory" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="#ff6a00" opacity="0.05" />
+          <rect width="4" height="12" fill="#ff6a00" opacity="0.28" />
+        </pattern>
+        <pattern id="cz-early" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <rect width="12" height="12" fill="#c2410c" opacity="0.06" />
+          <rect width="2" height="12" fill="#c2410c" opacity="0.4" />
+        </pattern>
+        <marker id="cz-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#e30613" />
+        </marker>
+      </defs>
       <rect
         :x="PAD_LEFT" :y="PAD_TOP" :width="plotW" :height="plotH"
         class="editor__frame"
@@ -570,21 +760,75 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
         {{ watermarkX.value }}
       </text>
 
-      <!-- Dead-band rectangle: the silent zone between sink-on and climb-on.
-           Renders only when both thresholds are known and sink-on < climb-on
-           (collapsed thresholds → no dead band). Makes the silent region
-           visually obvious before the user even reads the threshold values. -->
-      <rect
-        v-if="deadBandRect"
-        :x="deadBandRect.x"
-        :y="PAD_TOP"
-        :width="deadBandRect.width"
-        :height="plotH"
-        class="editor__deadband"
-      />
+      <!-- Threshold-lab zones along the vario axis (beneath the curves). -->
+      <g class="editor__zones">
+        <rect
+          v-for="z in zoneRects"
+          :key="`zone-${z.kind}`"
+          :x="z.x" :y="PAD_TOP" :width="z.w" :height="plotH"
+          :fill="ZONE_FILL[z.kind]"
+        />
+        <line
+          v-for="l in labLines"
+          :key="`labl-${l.key}`"
+          :x1="l.x" :y1="PAD_TOP" :x2="l.x" :y2="PAD_TOP + plotH"
+          :stroke="l.color"
+          stroke-dasharray="3 5"
+          stroke-width="1.5"
+          vector-effect="non-scaling-stroke"
+        />
+        <text
+          v-for="(l, i) in labLines"
+          :key="`labt-${l.key}`"
+          :x="l.x + 3"
+          :y="PAD_TOP + plotH - 30 - i * 14"
+          class="editor__lab-label"
+          :fill="l.color"
+        >
+          {{ l.label }}
+        </text>
+      </g>
 
-      <!-- Threshold verticals: only climb-on / sink-on. Climb-off and
-           sink-off are legacy fields exposed in the settings list only.
+      <!-- Live emulator overlay: silent window in effect now + EMA → vario
+           trend arrow. -->
+      <g v-if="liveOverlay" class="editor__live">
+        <rect
+          :x="liveOverlay.win.x" :y="PAD_TOP + 100" :width="liveOverlay.win.w" :height="plotH - 140"
+          class="editor__live-win"
+          :class="{ 'editor__live-win--on': liveOverlay.toneOn }"
+          vector-effect="non-scaling-stroke"
+        />
+        <text
+          v-for="(e, i) in liveOverlay.edges"
+          :key="`edge-${i}`"
+          :x="e.anchor === 'start' ? e.x + 4 : e.x - 4"
+          :y="PAD_TOP + 116"
+          :text-anchor="e.anchor"
+          class="editor__live-label"
+          :class="{ 'editor__live-label--on': liveOverlay.toneOn }"
+        >
+          {{ e.label }}
+        </text>
+        <line
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 130" :x2="liveOverlay.emaX" :y2="PAD_TOP + 158"
+          class="editor__live-ema"
+          vector-effect="non-scaling-stroke"
+        />
+        <text :x="liveOverlay.emaX" :y="PAD_TOP + 172" text-anchor="middle" class="editor__live-label">
+          {{ t('lab.chart-ema') }}
+        </text>
+        <line
+          v-if="Math.abs(liveOverlay.curX - liveOverlay.emaX) > 3"
+          :x1="liveOverlay.emaX" :y1="PAD_TOP + 144" :x2="liveOverlay.curX" :y2="PAD_TOP + 144"
+          class="editor__live-trend"
+          :class="{ 'editor__live-trend--weak': liveOverlay.weakening }"
+          marker-end="url(#cz-arrow)"
+          vector-effect="non-scaling-stroke"
+        />
+      </g>
+
+      <!-- Threshold verticals: climb-on / sink-on (device) and the lab's
+           climb-off / sink-off.
            vector-effect pins stroke WIDTH in CSS px so the line stays
            visible on narrow phones; the dasharray is still in SVG units so
            we pick large values (16/10) — on a 360 px screen that lands at
@@ -606,9 +850,9 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
              y = PAD_TOP+2..PAD_TOP+14, so chip starts at PAD_TOP+16). -->
         <g v-for="line in thresholdLines" :key="`thr-chip-${line.kind}`">
           <rect
-            :x="line.x - 22"
-            :y="PAD_TOP + 16"
-            :width="44"
+            :x="line.x - 42"
+            :y="PAD_TOP + 16 + thresholdMeta[line.kind].level * 20"
+            :width="84"
             :height="16"
             :fill="line.color"
             :opacity="line.active ? 1 : 0.95"
@@ -616,12 +860,12 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
           />
           <text
             :x="line.x"
-            :y="PAD_TOP + 27"
+            :y="PAD_TOP + 27 + thresholdMeta[line.kind].level * 20"
             text-anchor="middle"
             class="editor__threshold-label"
             :class="{ 'editor__threshold-label--active': line.active }"
           >
-            {{ line.label }}
+            {{ thresholdMeta[line.kind].label }} {{ line.label }}
           </text>
         </g>
       </g>
@@ -720,6 +964,15 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
       </template>
     </svg>
 
+    <div
+      v-if="tip"
+      class="editor__tip"
+      :style="{ left: `${tip.left}px`, top: `${tip.top}px` }"
+      role="tooltip"
+    >
+      <LabZoneText :kind="tip.kind" />
+    </div>
+
     <!-- Footer: legend (left) + x-axis label (right) in a single row. -->
     <div class="editor__footer">
       <div class="editor__legend">
@@ -740,6 +993,7 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
 
 <style scoped>
 .editor {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--ck-s-sm);
@@ -912,9 +1166,62 @@ const watermarkX = computed<{ value: string, color: string } | null>(() => {
   pointer-events: none;
 }
 
-.editor__deadband {
-  fill: var(--ck-ink);
-  opacity: 0.06;
+.editor__zones,
+.editor__live {
+  pointer-events: none;
+}
+
+.editor__lab-label,
+.editor__live-label {
+  font-family: var(--ck-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.editor__live-label {
+  fill: var(--ck-dim);
+}
+
+.editor__live-label--on {
+  fill: #e30613;
+}
+
+.editor__live-win {
+  fill: none;
+  stroke: var(--ck-dim);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.editor__live-win--on {
+  stroke: #e30613;
+}
+
+.editor__live-ema {
+  stroke: var(--ck-ink);
+  stroke-width: 2;
+}
+
+.editor__live-trend {
+  stroke: #e30613;
+  stroke-width: 3;
+}
+
+.editor__live-trend--weak {
+  stroke-dasharray: 5 3;
+}
+
+.editor__tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, 14px);
+  width: min(300px, 86vw);
+  padding: 10px 12px;
+  background: var(--ck-paper);
+  color: var(--ck-ink);
+  border: var(--ck-stroke-rule) solid var(--ck-ink);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
   pointer-events: none;
 }
 

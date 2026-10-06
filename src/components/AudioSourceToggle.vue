@@ -2,7 +2,7 @@
 import type { AudioSource } from '~/composables/useAudioSource'
 import { recordAction } from '~/utils/sessionJournal'
 
-const { source } = useAudioSource()
+const { source, deviceAvailable } = useAudioSource()
 const { t } = useI18n()
 
 const options: { value: AudioSource, labelKey: string }[] = [
@@ -12,6 +12,8 @@ const options: { value: AudioSource, labelKey: string }[] = [
 ]
 
 function pick(value: AudioSource) {
+  if (value === 'device' && !deviceAvailable.value)
+    return
   if (source.value !== value)
     recordAction('audio', `sound preview source: ${value}`)
   source.value = value
@@ -24,8 +26,13 @@ function pick(value: AudioSource) {
       v-for="opt in options"
       :key="opt.value"
       class="seg__option"
-      :class="{ 'seg__option--active': source === opt.value }"
+      :class="{
+        'seg__option--active': source === opt.value,
+        'seg__option--unavailable': opt.value === 'device' && !deviceAvailable,
+      }"
       :aria-checked="source === opt.value"
+      :aria-disabled="opt.value === 'device' && !deviceAvailable"
+      :title="opt.value === 'device' && !deviceAvailable ? t('audio.source-device-off') : undefined"
       role="radio"
       @click="pick(opt.value)"
     >
@@ -54,6 +61,11 @@ function pick(value: AudioSource) {
   border: none;
   cursor: pointer;
   border-right: var(--ck-stroke-hair) solid var(--ck-grid);
+}
+
+.seg__option--unavailable {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .seg__option:last-child {

@@ -228,9 +228,9 @@ sett:
   84ccd3d4-a262-45e6-b616-d4a4ae7c0d5b: UART-Protokoll (1 - PRS, 2 - POV)
   67f82d94-2b2a-4123-81c9-058e460c3d01: Summerlautstärke
   fcb14ed9-06e7-4a9e-b311-6eee676a2f48: Beginn des Aufstiegs (m/s)
-  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Ende des kleinen Aufstiegs (m/s)
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: Steigton hält bis (m/s)
   b713f438-42fe-46fe-b052-371a3b9e433a: Beginn des Sinkens (m/s)
-  8a78979b-1425-4160-b34b-ac5aadddeb21: Ende des kleinen Sinkens (m/s)
+  8a78979b-1425-4160-b34b-ac5aadddeb21: Sinkton hält bis (m/s)
   512d6d89-7a6f-461c-983e-902b68d40f56: Vario
   8c090502-81c4-4d29-8d10-6db20607ace9: Frequenz
   9c3b62c0-e227-4f1a-8342-7e647015555d: Zyklus
@@ -249,7 +249,7 @@ sett:
   9a560750-0bca-4d0c-a1fc-21bbc574d5a6: Zeit bis zur automatischen Abschaltung (Sek., 0 — aus)
   113bb48c-7e3f-4580-a561-acf6c9eb42a5: Das Duplizieren von Daten im UART-Emulator
   e88b07e7-9035-4afa-9fe8-206ddc34de61: Sanfte Frequenzänderung
-  0e984fe9-534c-4f13-969c-58ce03d33527: Steigflug-Hysterese (m/s)
+  0e984fe9-534c-4f13-969c-58ce03d33527: Früher Ausstieg bei nachlassendem Steigen (m/s)
 
   silent: Lautlos am Boden
   bt-never-sleep: Bluetooth schläft nie
@@ -309,14 +309,19 @@ sett:
 audio:
   source-label: Tonquelle
   source-device: Gerät
+  source-device-off: Verbinde ein Gerät, damit der Ton von dort kommt
   source-browser: Browser
   source-off: Aus
-  demo: ▶ Demo
-  demo-stop: ■ Stopp
+  demo: Demo
+  demo-stop: Stopp
   silent-device-eyebrow: GERÄT STUMM
   silent-device-title: Summer ist stumm
   silent-device-body: Die Lautstärke des Summers ist auf 0 — der Simulator bleibt stumm, bis du sie erhöhst.
   silent-device-cta: Audio-Einstellungen öffnen
+  silent-ground-eyebrow: GERÄT AM BODEN LAUTLOS
+  silent-ground-title: „Lautlos am Boden“ ist an
+  silent-ground-body: 'In diesem Modus bleibt der Summer am Boden stumm — auch bei Simulatorwerten und auch, solange das Gerät mit dem Konfigurator verbunden ist. Schalte ihn unter Verhalten aus, um den Simulator am Boden zu hören.'
+  silent-ground-cta: Verhalten öffnen
   preset-strong-sink: −3 m/s
   preset-zero: '0'
   preset-weak-climb: +1 m/s
@@ -411,6 +416,7 @@ update:
   latest-badge: NEUESTE
 
 preset:
+  demo-hint: Nach dem Übernehmen öffnet sich der Ton und die Simulator-Demo startet.
   import-eyebrow: Preset-Import
   import-default-name: Unbenanntes Preset
   bytes: BYTES
@@ -562,3 +568,99 @@ diag:
   mail-note: '„An den Support senden“ lädt die Berichtsdatei herunter und öffnet eine E-Mail an {email}. Der vollständige Bericht passt nicht in die E-Mail, bitte die Datei anhängen. Öffnet sich keine E-Mail-App, schick die Datei selbst an {email}.'
   mail-problem: 'Beschreibe hier das Problem:'
   mail-attach: 'Bitte hänge die gerade heruntergeladene Diagnosedatei ({file}) an — sie enthält den vollständigen Bericht.'
+lab:
+  avg: 'Regler {air} m/s, das Vario folgt mit {s} s Mittelung'
+  hist-air: Regler
+  sec-now: Jetzt
+  zones: Zonen
+  on: TON AN
+  off: STILL
+  ema: 'Trendmittel (~0,4 s, fest): {ema} m/s'
+  trend-weak: Steigen lässt nach
+  trend-up: steigend
+  trend-down: fallend
+  trend-flat: stabil
+  r-climb: 'Steigen stärker als {th} m/s.'
+  r-sink: 'Sinken stärker als {so} m/s.'
+  r-climb-hold: 'Ton gehalten: du kamst von oben. Endet bei {th} m/s oder sobald das Steigen nachlässt.'
+  r-sink-hold: 'Ton nach dem Sinken gehalten. Endet, sobald das Vario auf {sf} m/s steigt.'
+  r-quiet: 'Stille Zone. Ton startet über {co} oder unter {so} m/s.'
+  r-quiet-early: 'Steigen lässt nach — Ton früh beendet. Startet wieder über {early} m/s oder sobald das Steigen nicht mehr nachlässt.'
+  r-quiet-memory: 'Du kamst von der stillen Seite, daher kein Ton. Startet über {co} oder unter {so} m/s.'
+  stuck: 'Der Sinkton läuft seit {s} s: du kommst aus einem Sinken stärker als {so} m/s, und er läuft weiter, bis das Vario auf {sf} m/s steigt.'
+  chart-ema: EMA
+  z-sink: Sinkton
+  z-sink-body: 'Sinken stärker als {so} m/s — der Sinkton ist immer an, egal woher du kommst.'
+  z-sink-memory: Fenster nach dem Sinken
+  z-sink-memory-body: 'Ton nur, wenn du aus einem Sinken stärker als {so} m/s kommst: dann hält er, bis das Vario auf {sf} m/s steigt. Von oben kommend ist es hier still. Reicht das Fenster bis null, piept das Gerät nach dem Sinken auch im schwachen Null weiter.'
+  z-quiet: Still
+  z-quiet-body: 'Von {sf} bis {cf} m/s ist das Gerät still. Jeder Ton endet hier, egal woher du kommst.'
+  z-climb-memory: Steig-Halten
+  z-climb-memory-body: 'Der Steigton läuft weiter, wenn du von oben kommst (Steigen war stärker als {co} m/s), bis du auf {cf} m/s fällst. Von unten kommend ist es still: der Ton startet erst über {co} m/s.'
+  z-climb-memory-hyst: 'Ist aber der frühe Ausstieg an ({early} m/s), gewinnt er: lässt das Steigen nach, endet der Ton schon bei {early} m/s, das Halten bis {cf} m/s greift kaum. Für das Halten den frühen Ausstieg auf 0 setzen.'
+  z-early: Früher Ausstieg
+  z-early-body: 'Steigen zwischen {co} und {early} m/s. Solange das Steigen zunimmt oder hält, ist der Ton an. Sobald es nachlässt (Vario unter seinem Mittel), endet der Ton hier — bevor das Vario {co} m/s erreicht. Das gleicht die Verzögerung der Glättung aus: Steigen hört auf, das Gerät verstummt sofort. Startet wieder über {early} m/s oder sobald das Steigen nicht mehr nachlässt.'
+  z-climb: Steigton
+  z-climb-body: 'Steigen stärker als {early} m/s — der Steigton ist immer an.'
+  hist-title: Letzte 20 Sekunden
+  hist-vario: 'Vario (Mittelung {s} s)'
+  hist-ema: Trendmittel (~0,4 s)
+  hist-th: Steigschwelle jetzt
+  hist-tone: Ton
+  hist-weak: Steigen lässt nach
+  hist-empty: Schieberegler bewegen oder die Demo starten
+  hist-caption: 'So wirkt der frühe Ausstieg: fällt das Vario unter sein Mittel über ~0,4 s (gestrichelt), gilt das Steigen als nachlassend (Streifen unten) und die Steigschwelle (orange Linie) hebt sich von {co} auf {early} m/s — um {h}. Der Ton endet, bevor das Vario {co} erreicht — das gleicht die Glättungsverzögerung aus. Steigt das Vario wieder, fällt die Schwelle zurück auf {co}.'
+  hist-caption-off: 'Früher Ausstieg ist aus (0): die Steigschwelle ist immer {co} m/s, egal wie schnell das Steigen abbricht.'
+prof:
+  mine: Meine Profile
+  default-name: Mein Profil
+  name-placeholder: Profilname
+  save-curves: Kurven speichern
+  save-trigger: Schwellen speichern
+  save-import: Zu meinen Profilen
+  saved: Gespeichert ✓
+  close: Schließen
+  saved-hint: 'Gespeichert als „{name}“ — wählbar unter „Meine Profile“ auf der Ton-Seite.'
+  empty-curves: Noch keine eigenen Kurven. Speichere die aktuellen unter einem Namen und wechsle mit einem Klick.
+  empty-trigger: Noch keine eigenen Schwellen. Speichere die aktuellen unter einem Namen und wechsle mit einem Klick.
+  download: JSON herunterladen
+  download-all: ⤓ Alle als JSON
+  upload: ↑ Aus JSON
+  imported: 'Profile hinzugefügt: {n}'
+  rename: Umbenennen
+  delete: Löschen
+  delete-confirm: Löschen?
+  trigger-body: 'Dein Profil „{name}“.'
+  local-note: 'Profile liegen nur in diesem Browser auf diesem Gerät — an einen Server geht nichts. Websitedaten gelöscht, anderer Browser oder anderes Handy — und sie sind hier nicht da. Zur Sicherheit JSON herunterladen: Es lässt sich jederzeit wieder laden.'
+
+trig:
+  old-fw: 'Auf dem Gerät läuft Firmware {fw}. „Ton hält bis“ und Früher Ausstieg 0 wirken ab Firmware {need}: Dieses Gerät ignoriert sie (Früher Ausstieg 0 gilt als 0,25), und der Simulator klingt wie das Gerät.'
+  old-fw-update: Firmware aktualisieren →
+  title: Wann es tönt
+  custom: Eigene
+  off: aus
+  summary: 'Steigen {co} (hält bis {cf}) · Sinken {so} (hält bis {sf}) · früher Ausstieg {h} · Mittelung {avg} s'
+  custom-body: 'Die Werte passen zu keinem Preset — das ist deine eigene Einstellung. Wähle ein Preset, um Schwellen, Halten, frühen Ausstieg und Mittelung auf einmal zu setzen; die Tonkurven bleiben.'
+  factory: Werk
+  factory-body: 'Wie ein neues Gerät. Steigen ab +0,05, früher Ausstieg 0,25 beendet den Ton, sobald das Steigen nachlässt, Sinken ab −2,5. Schnelle Mittelung.'
+  sharp: Scharf
+  sharp-body: 'Aktives Zentrieren und Wettkampf. Geringste Verzögerung: der Ton endet, sobald das Steigen nachlässt, noch vor null — du merkst sofort, dass du aus dem Kern bist. Kurze Mittelung, Sinkton früher, ab −2,0.'
+  flatland: Flachland
+  flatland-body: 'Schwache zerrissene Thermik. Ton ab +0,05, hält bis −0,20, bis das Steigen ganz weg ist — ein schwacher Kern geht nicht verloren, der Ton flattert nicht an der Schwelle. Mittlere Mittelung.'
+  mountain: Berge
+  mountain-body: 'Starke turbulente Thermik. Ton ab +0,30, keine Fehlpiepser durch Turbulenz; hält bis +0,10. Sinken ab −3,0. Lange Mittelung: ruhiger, aber träger.'
+  sniffer: Sniffer
+  sniffer-body: 'Ton schon ab −0,30: die Luft steigt, aber langsamer als der Schirm sinkt. Hilft schwache Thermik zu finden. Zwischen −0,30 und null spielt die Kurve ihren eigenen tiefen Ton — gleich, woher du kommst.'
+  always: Immer an
+  always-body: 'Fast immer Ton. Steigen tönt ab 0 und hält bis −0,30, Sinken ab −0,60 und hält bis −0,30. Still nur an den Übergängen: wenn das Steigen nachlässt — von −0,30 bis −0,60; beim Ausleiten aus dem Sinken — von −0,30 bis 0.'
+  quiet: Leise
+  quiet-body: 'Minimum an Ton: Soaring, Acro, Anfänger. Steigen ab +0,30, Sinken erst ab −4,0 (Spirale).'
+help:
+  fcb14ed9-06e7-4a9e-b311-6eee676a2f48: 'Der Steigton startet, sobald das Vario über diesem Wert liegt. Darunter ist es still, außer der Ton wird gehalten (siehe „Steigton hält bis“). Üblich sind +0,05…+0,20 m/s. Ein negativer Wert macht das Gerät zum „Sniffer“, der auch bei schwachem Sinken piept.'
+  1673f137-66c1-4ff0-8db3-69b9ed7c33e0: 'Steigton halten. Läuft der Steigton schon, endet er nicht sofort unter „Beginn des Aufstiegs“, sondern hält, bis das Vario auf diesen Wert fällt — so hörst du einen schwachen Kern und der Ton flattert nicht an der Schwelle. Wirkt nur, wenn der Wert unter „Beginn des Aufstiegs“ liegt; gleich oder darüber heißt kein Halten. Das Gegenteil von „Früher Ausstieg“: der beendet den Ton früher, das Halten später. Meist wählt man eins: für das Halten den frühen Ausstieg auf 0, sonst greift er beim Nachlassen zuerst.'
+  b713f438-42fe-46fe-b052-371a3b9e433a: 'Der Sinkton startet, sobald du stärker als dieser Wert sinkst, z. B. −2,5 m/s. Zwischen ihm und „Beginn des Aufstiegs“ ist es still.'
+  8a78979b-1425-4160-b34b-ac5aadddeb21: 'Sinkton halten. Läuft der Sinkton schon, hält er, bis das Vario auf diesen Wert steigt. Wirkt nur, wenn der Wert über „Beginn des Sinkens“ liegt: bei −2,5 und −1,8 startet der Sinkton bei −2,5 und endet erst bei −1,8. Bei einem Wert um null oder darüber piept das Gerät nach dem Sinken auch im schwachen Null weiter — der Ton hält, bis das Steigen klar ist.'
+  0e984fe9-534c-4f13-969c-58ce03d33527: 'Früher Ausstieg aus dem Bart. Sobald das Steigen nachlässt (Vario unter seinem Mittel über ~0,4 s), hebt sich die Steigton-Schwelle um diesen Wert und der Ton endet, bevor das Vario „Beginn des Aufstiegs“ erreicht. Das gleicht die Glättungsverzögerung aus: Steigen hört auf, das Gerät verstummt sofort. Nimmt das Steigen wieder zu, fällt die Schwelle zurück. Beispiel: Beginn des Aufstiegs +0,05 und früher Ausstieg 0,25 — beim Nachlassen verstummt der Ton schon bei +0,30 und startet wie gewohnt über +0,05. 0 schaltet den frühen Ausstieg aus; dann wirkt das Halten „Steigton hält bis“. Den zeitlichen Verlauf zeigt die Grafik „Letzte 20 Sekunden“ unter dem Simulator.'
+  e88b07e7-9035-4afa-9fe8-206ddc34de61: 'An: ein Piep ändert die Tonhöhe während er klingt, dem Vario folgend. Aus: jeder Piep behält die Tonhöhe seines Beginns, Änderungen springen von Piep zu Piep.'
+  7e035080-7417-4393-959a-58505ef9cf4a: 'Glättung der Vario-Anzeige in Sekunden. Länger ist ruhiger, aber träger; kürzer ist schneller und unruhiger. Wirkt auf den Vario-Wert, nach dem der Ton arbeitet (Werk 0,1 s). Das ist nicht das „Trendmittel“ (~0,4 s, fest), nach dem der frühe Ausstieg arbeitet: das wird erst vom geglätteten Vario gebildet. Der Simulator glättet den Regler genauso — die Grafik „Letzte 20 Sekunden“ zeigt, wie das Vario dem Regler folgt.'
+  more: Mehr
