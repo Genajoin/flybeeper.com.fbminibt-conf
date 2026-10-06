@@ -1,5 +1,14 @@
 ## Changelog
 
+**Version:** 0.30.0 | **Date:** 06.10.2026 | [**Download**](/firmware/fbfv/app_update.0.30.0.bin)
+
+- _Tone hold thresholds are back:_ the climb and sink "off" thresholds work again. Once a tone has started it now keeps sounding down to its own off threshold — the climb tone down to the climb-off value, the sink tone up to the sink-off value — instead of stopping the moment the reading crosses the switch-on threshold. Each hold keeps only its own tone, so a climb tone fading into sink territory goes quiet rather than turning into the sink tone. The default values give no hold, so the device sounds exactly as before until you change these settings.
+- _Early exit can be switched off:_ the climb hysteresis (the early silence when a climb is weakening) is turned off by setting it to 0. Previously 0 and negative values were silently replaced with 0.25 m/s. With a non-zero value the early exit still takes priority over the climb hold.
+- _Simulator sounds like the real thing:_ a vario value sent from the configurator's simulator now goes through the same averaging as the barometer, so the device sounds just like the sound emulator in the configurator.
+- _Louder in the weak band:_ the piezo was noticeably quieter between 1700 and 2100 Hz. The buzzer now uses a tuned duty cycle there instead of the fixed 50 %, which adds 7–11 dB right where it was missing. You will hear it in the vario tone around 3.6–4.5 m/s, in the last note of the power-on melody and in the middle ticks while holding the button; all other tones are unchanged.
+- _ADS-L reception from other equipment:_ the device now hears ADS-L transmitters that do not add the compensating sync byte, such as SoftRF. Previously they saw us, but we did not see them.
+- _ADS-L timing:_ a position older than 500 ms is no longer sent — the age check now accounts for the time it takes to switch the radio into transmit. When the app asks for alternating receive channels, the channel is now picked at random rather than in strict turn, so two transmitters on the same rhythm can no longer stay hidden on the other channel.
+
 **Version:** 0.28.3 | **Date:** 30.08.2026 | [**Download**](/firmware/fbfv/app_update.0.28.3.bin)
 
 - _Over-the-air update fixed:_ versions 0.28.1 and 0.28.2 could not be installed on this device over the air — the file was transferred, the new firmware started, and the device came back on the old version. Two separate causes, both fixed: memory was full to the brim after the ADS-L module was enabled and the firmware could not write its own confirmation (3 KB freed); and the hardware watchdog, which keeps running through the software reset that starts an update, fired inside the bootloader's image check right after the swap finished. The watchdog window is now 6 seconds. On firmware older than this version the configurator installs the update in permanent mode to get past that watchdog.
