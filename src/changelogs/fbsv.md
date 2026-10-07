@@ -1,5 +1,9 @@
 ## Changelog
 
+**Version:** 0.31.1 | **Date:** 08.10.2026 | [**Download**](/firmware/fbsv/app_update.0.31.1.bin)
+
+- _Faster vario:_ the vario now reacts to the start of a climb or a sink noticeably faster — around 0.35 s instead of 0.55 s — while staying just as quiet when you are standing still.
+
 **Version:** 0.31.0 | **Date:** 08.10.2026 | [**Download**](/firmware/fbsv/app_update.0.31.0.bin)
 
 - _True m/s at any altitude:_ until now the reading was exact only around 800 m — at sea level it over-read a climb by 8 %, at 3000 m it under-read by 20 %. The vario is now correct at any altitude, so the sound thresholds trigger at exactly the speed set in the configurator.
