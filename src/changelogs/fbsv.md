@@ -1,5 +1,10 @@
 ## Changelog
 
+**Version:** 0.31.0 | **Date:** 08.10.2026 | [**Download**](/firmware/fbsv/app_update.0.31.0.bin)
+
+- _True m/s at any altitude:_ until now the reading was exact only around 800 m — at sea level it over-read a climb by 8 %, at 3000 m it under-read by 20 %. The vario is now correct at any altitude, so the sound thresholds trigger at exactly the speed set in the configurator.
+- _More precise at low speeds:_ small vario values are no longer under-read by 2–4 % and no longer "stick" within ±5 cm/s of zero.
+
 **Version:** 0.30.0 | **Date:** 06.10.2026 | [**Download**](/firmware/fbsv/app_update.0.30.0.bin)
 
 - _Tone hold thresholds are back:_ the climb and sink "off" thresholds work again. Once a tone has started it now keeps sounding down to its own off threshold — the climb tone down to the climb-off value, the sink tone up to the sink-off value — instead of stopping the moment the reading crosses the switch-on threshold. Each hold keeps only its own tone, so a climb tone fading into sink territory goes quiet rather than turning into the sink tone. The default values give no hold, so the device sounds exactly as before until you change these settings.
