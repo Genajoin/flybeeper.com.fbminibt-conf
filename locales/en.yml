@@ -383,6 +383,7 @@ sett:
   restart-device: After applying the changes, you must turn off and turn on the device again.
   group-audio: Audio
   group-curves: Curves
+  wizard-link: 'Can''t find your sound? Find it by ear ↗'
   group-behaviour: Behaviour
   group-uart: UART
   group-power: Power

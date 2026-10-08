@@ -11,7 +11,13 @@ interface iVarioCurves {
   buzzer_duty_dots: number[]
 }
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// Wizard "find your vario sound by ear" on alpisto.eu, in the page's language.
+const wizardUrl = computed(() => {
+  const l = String(locale.value).slice(0, 2)
+  return `https://alpisto.eu/${['ru', 'de', 'fr', 'it', 'sl'].includes(l) ? `${l}/` : ''}vario-sound/`
+})
 
 const audioChars = useCpfGroup('audio')
 const curveChars = useCpfGroup('curves')
@@ -225,6 +231,7 @@ function selectPreset(v: PresetKey | 'custom' | 'profile') {
               @update:model-value="selectPreset"
             />
             <SoundProfileMenu v-if="cpfReady" class="sound__profiles" scope="curves" :preset-active="activePreset !== 'custom'" @before-apply="stashCustom" />
+            <a class="sound__wizard" :href="wizardUrl" target="_blank" rel="noopener">{{ t('sett.wizard-link') }}</a>
           </div>
         </div>
 
@@ -298,6 +305,14 @@ function selectPreset(v: PresetKey | 'custom' | 'profile') {
   flex-direction: column;
   gap: 6px;
   margin: 12px 14px 0;
+}
+
+.sound__wizard {
+  align-self: flex-start;
+  font-family: var(--ck-font-mono);
+  font-size: 12px;
+  color: var(--ck-signal);
+  text-decoration: none;
 }
 
 .sound__presets-seg {

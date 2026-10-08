@@ -381,6 +381,7 @@ sett:
   restart-device: После применения изменений необходимо выключить и снова включить устройство.
   group-audio: Звук
   group-curves: Кривые
+  wizard-link: Не нашли свой звук? Подберите его на слух ↗
   group-behaviour: Поведение
   group-uart: UART
   group-power: Питание

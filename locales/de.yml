@@ -277,6 +277,7 @@ sett:
   restart-device: Nach dem Übernehmen der Änderungen muss das Gerät aus- und wieder eingeschaltet werden.
   group-audio: Audio
   group-curves: Kurven
+  wizard-link: Deinen Ton nicht gefunden? Finde ihn nach Gehör ↗
   group-behaviour: Verhalten
   group-uart: UART
   group-power: Energie
