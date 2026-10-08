@@ -1,5 +1,10 @@
 ## Changelog
 
+**Version:** 0.32.0 | **Date:** 08.10.2026 | [**Download**](/firmware/fbfv/app_update.0.32.0.bin)
+
+- _Genuine device check:_ the device can now prove to the FlyBeeper app that it is a genuine FlyBeeper. Every device has its own key, which stays the same through firmware updates and settings resets. The app uses it so that only real devices can vote for sound presets.
+- Sound, vario and flight behaviour are unchanged.
+
 **Version:** 0.31.0 | **Date:** 08.10.2026 | [**Download**](/firmware/fbfv/app_update.0.31.0.bin)
 
 - _Faster vario:_ the vario now reacts to the start of a climb or a sink about twice as fast — around 0.3 s instead of 0.6 s — while staying just as quiet when you are standing still.
